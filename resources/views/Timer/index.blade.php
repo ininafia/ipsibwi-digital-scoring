@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Timer Dashboard</title>
+
+    @vite('resources/css/app.css')
+
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+
+    <style>
+        body{
+            font-family: 'Poppins', sans-serif;
+        }
+    </style>
+</head>
+
+<body class="bg-gray-200 min-h-screen flex flex-col">
+
+    {{-- HEADER --}}
+    @include('Timer.header')
+
+    <div class="p-6 flex-grow flex flex-col">
+
+        <div class="bg-gray-100 border border-gray-300 shadow-md p-6 rounded-2xl flex-grow flex flex-col">
+
+            {{-- TOPBAR --}}
+            @include('Timer.topbar')
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6 items-stretch flex-grow">
+
+                {{-- ROUND CARD --}}
+                @include('Timer.round-card')
+
+                {{-- TIMER CARD --}}
+                @include('Timer.timer-card')
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- Axios for HTTP Requests -->
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            let currentRound = 1;
+            let timeRemaining = 120; // 2 minutes in seconds
+            let timerInterval = null;
+            let status = 'stopped';
+
+            const timerDisplay = document.getElementById('timer-display');
+            const roundBtns = document.querySelectorAll('.round-btn');
+            const btnRoundReset = document.getElementById('btn-round-reset');
+            
+            const btnTimerStart = document.getElementById('btn-timer-start');
+            const btnTimerPause = document.getElementById('btn-timer-pause');
+            const btnTimerReset = document.getElementById('btn-timer-reset');
+
+            function updateDisplay() {
+                const minutes = Math.floor(timeRemaining / 60);
+                const seconds = timeRemaining % 60;
+                timerDisplay.innerText = `${String(minutes).padStart(2, '0')} : ${String(seconds).padStart(2, '0')}`;
+                
+                // Update Round buttons
+                roundBtns.forEach(btn => {
+                    const roundNum = parseInt(btn.innerText);
+                    if (roundNum === currentRound) {
+                        btn.classList.remove('bg-cyan-100', 'hover:bg-cyan-200', 'text-black');
+                        btn.classList.add('bg-sky-300', 'hover:bg-sky-400', 'text-black');
+                    } else {
+                        btn.classList.remove('bg-sky-300', 'hover:bg-sky-400', 'text-black');
+                        btn.classList.add('bg-cyan-100', 'hover:bg-cyan-200', 'text-black');
+                    }
+                });
+            }
+
+            function syncState() {
+                axios.post('/timer/sync', {
+                    round: currentRound,
+                    time_remaining: timeRemaining,
+                    status: status,
+                    _token: '{{ csrf_token() }}'
+                }).catch(err => console.error(err));
+            }
+
+            function fetchState() {
+                axios.get('/timer/state').then(res => {
+                    const data = res.data;
+                    currentRound = data.round || 1;
+                    timeRemaining = data.time_remaining !== undefined ? data.time_remaining : 120;
+                    status = data.status || 'stopped';
+                    updateDisplay();
+
+                    if (status === 'playing' && !timerInterval) {
+                        startInterval();
+                    } else if (status !== 'playing' && timerInterval) {
+                        clearInterval(timerInterval);
+                        timerInterval = null;
+                    }
+                }).catch(err => console.error(err));
+            }
+
+            function startInterval() {
+                if (timerInterval) return;
+                timerInterval = setInterval(() => {
+                    if (timeRemaining > 0) {
+                        timeRemaining--;
+                        updateDisplay();
+                        // Optional: sync every second, or we can just sync on action. Syncing every second keeps it alive for other clients
+                        if (timeRemaining % 5 === 0) syncState(); 
+                    } else {
+                        status = 'stopped';
+                        clearInterval(timerInterval);
+                        timerInterval = null;
+                        syncState();
+                    }
+                }, 1000);
+            }
+
+            // Bind Round Buttons
+            roundBtns.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    currentRound = parseInt(btn.innerText);
+                    updateDisplay();
+                    syncState();
+                });
+            });
+
+            btnRoundReset.addEventListener('click', () => {
+                currentRound = 1;
+                updateDisplay();
+                syncState();
+            });
+
+            // Bind Timer Buttons
+            btnTimerStart.addEventListener('click', () => {
+                if (status === 'playing') return;
+                status = 'playing';
+                startInterval();
+                syncState();
+            });
+
+            btnTimerPause.addEventListener('click', () => {
+                status = 'paused';
+                if (timerInterval) {
+                    clearInterval(timerInterval);
+                    timerInterval = null;
+                }
+                syncState();
+            });
+
+            btnTimerReset.addEventListener('click', () => {
+                status = 'stopped';
+                timeRemaining = 120;
+                if (timerInterval) {
+                    clearInterval(timerInterval);
+                    timerInterval = null;
+                }
+                updateDisplay();
+                syncState();
+            });
+
+            // Initial fetch
+            fetchState();
+        });
+    </script>
+</body>
+</html>

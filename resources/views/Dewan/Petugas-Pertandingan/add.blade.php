@@ -1,0 +1,210 @@
+@extends('Dewan.Layout.app')
+
+@section('title', 'Penugasan Petugas')
+
+@section('sidebar')
+    @include('Dewan.Layout.sidebar-petugas')
+@endsection
+
+@section('content')
+    <div class="relative mb-6">
+        <h1 class="text-[28px] font-bold text-[#62cbf5] leading-none">Penugasan Petugas</h1>
+        <a href="{{ route('dewan.petugas') }}" class="absolute right-0 top-0 -mt-4 text-gray-500 hover:text-[#62cbf5] font-semibold flex items-center gap-2 transition-colors">
+            <i class="fa-solid fa-arrow-left"></i> Kembali
+        </a>
+    </div>
+    
+    {{-- ERROR MESSAGE --}}
+    @if(session('error'))
+    <div class="mb-5 bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-md text-sm">
+        {{ session('error') }}
+    </div>
+    @endif
+
+    {{-- VALIDATION ERROR --}}
+    @if($errors->any())
+    <div class="mb-5 bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-md text-sm">
+        <ul class="list-disc pl-5 space-y-1">
+            @foreach($errors->all() as $error)
+            <li>{{ $error }}</li>
+            @endforeach
+        </ul>
+    </div>
+    @endif
+
+    {{-- SUCCESS --}}
+    @if(session('success'))
+    <div class="mb-5 bg-green-50 border border-green-200 text-green-600 px-4 py-3 rounded-md text-sm">
+        {{ session('success') }}
+    </div>
+    @endif
+
+    @php
+        // Filter petugas berdasarkan role (access_type)
+        // 2: Ketua, 3: Dewan, 5: Juri, 6: Wasit, 7: Delegasi Teknik
+        $ketuaList    = array_filter($petugasList, fn($p) => $p->access_type == 2);
+        $dewanList    = array_filter($petugasList, fn($p) => $p->access_type == 3);
+        $wasitList    = array_filter($petugasList, fn($p) => $p->access_type == 6);
+        $juriList     = array_filter($petugasList, fn($p) => $p->access_type == 5);
+        $delegasiList = array_filter($petugasList, fn($p) => $p->access_type == 7);
+    @endphp
+
+    <div class="bg-white rounded-md shadow-sm p-8 max-w-6xl mb-10">
+        
+        <form action="{{ route('dewan.petugas.store') }}" method="POST">
+            @csrf
+
+            <div class="grid grid-cols-2 gap-x-12 gap-y-6">
+                
+                <!-- KOLOM KIRI -->
+                <div class="flex flex-col gap-6">
+                    
+                    <!-- Partai & Gelanggang -->
+                    <div>
+                        <label class="block text-[#62cbf5] font-bold text-sm mb-2">Pertandingan (Partai & Gelanggang)</label>
+                        <div class="relative">
+                            <select name="id_pertandingan" class="w-full appearance-none border border-gray-300 rounded-md px-4 py-3 text-sm text-gray-700 outline-none focus:border-[#62cbf5]">
+                                <option value="">Pilih Pertandingan</option>
+                                @foreach($pertandinganList as $match)
+                                <option value="{{ $match->id }}" {{ old('id_pertandingan') == $match->id ? 'selected' : '' }}>
+                                    Partai {{ $match->partai }} - Gelanggang {{ $match->gelanggang }}
+                                </option>
+                                @endforeach
+                            </select>
+                            <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-black">
+                                <i class="fa-solid fa-chevron-down"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Delegasi Teknik -->
+                    <div>
+                        <label class="block text-[#62cbf5] font-bold text-sm mb-2">Delegasi Teknik</label>
+                        <div class="relative">
+                            <select name="delegasi_teknik" class="w-full appearance-none border border-gray-300 rounded-md px-4 py-3 text-sm text-gray-700 outline-none focus:border-[#62cbf5]">
+                                <option value="">Pilih Delegasi Teknik</option>
+                                @foreach($delegasiList as $p)
+                                <option value="{{ $p->id }}" {{ old('delegasi_teknik') == $p->id ? 'selected' : '' }}>{{ $p->nama }}</option>
+                                @endforeach
+                            </select>
+                            <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-black">
+                                <i class="fa-solid fa-chevron-down"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Ketua Pertandingan -->
+                    <div>
+                        <label class="block text-[#62cbf5] font-bold text-sm mb-2">Ketua Pertandingan</label>
+                        <div class="relative">
+                            <select name="ketua" class="w-full appearance-none border border-gray-300 rounded-md px-4 py-3 text-sm text-gray-700 outline-none focus:border-[#62cbf5]">
+                                <option value="">Pilih Ketua Pertandingan</option>
+                                @foreach($ketuaList as $p)
+                                <option value="{{ $p->id }}" {{ old('ketua') == $p->id ? 'selected' : '' }}>{{ $p->nama }}</option>
+                                @endforeach
+                            </select>
+                            <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-black">
+                                <i class="fa-solid fa-chevron-down"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Dewan -->
+                    <div>
+                        <label class="block text-[#62cbf5] font-bold text-sm mb-2">Dewan</label>
+                        <div class="relative">
+                            <select name="dewan" class="w-full appearance-none border border-gray-300 rounded-md px-4 py-3 text-sm text-gray-700 outline-none focus:border-[#62cbf5]">
+                                <option value="">Pilih Dewan</option>
+                                @foreach($dewanList as $p)
+                                <option value="{{ $p->id }}" {{ old('dewan') == $p->id ? 'selected' : '' }}>{{ $p->nama }}</option>
+                                @endforeach
+                            </select>
+                            <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-black">
+                                <i class="fa-solid fa-chevron-down"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- KOLOM KANAN -->
+                <div class="flex flex-col gap-6">
+                    
+                    <!-- Wasit -->
+                    <div>
+                        <label class="block text-[#62cbf5] font-bold text-sm mb-2">Wasit</label>
+                        <div class="relative">
+                            <select name="wasit" class="w-full appearance-none border border-gray-300 rounded-md px-4 py-3 text-sm text-gray-700 outline-none focus:border-[#62cbf5]">
+                                <option value="">Pilih Wasit</option>
+                                @foreach($wasitList as $p)
+                                <option value="{{ $p->id }}" {{ old('wasit') == $p->id ? 'selected' : '' }}>{{ $p->nama }}</option>
+                                @endforeach
+                            </select>
+                            <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-black">
+                                <i class="fa-solid fa-chevron-down"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Juri 1 -->
+                    <div>
+                        <label class="block text-[#62cbf5] font-bold text-sm mb-2">Juri 1</label>
+                        <div class="relative">
+                            <select name="juri1" class="w-full appearance-none border border-gray-300 rounded-md px-4 py-3 text-sm text-gray-700 outline-none focus:border-[#62cbf5]">
+                                <option value="">Pilih Juri 1</option>
+                                @foreach($juriList as $p)
+                                <option value="{{ $p->id }}" {{ old('juri1') == $p->id ? 'selected' : '' }}>{{ $p->nama }}</option>
+                                @endforeach
+                            </select>
+                            <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-black">
+                                <i class="fa-solid fa-chevron-down"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Juri 2 -->
+                    <div>
+                        <label class="block text-[#62cbf5] font-bold text-sm mb-2">Juri 2</label>
+                        <div class="relative">
+                            <select name="juri2" class="w-full appearance-none border border-gray-300 rounded-md px-4 py-3 text-sm text-gray-700 outline-none focus:border-[#62cbf5]">
+                                <option value="">Pilih Juri 2</option>
+                                @foreach($juriList as $p)
+                                <option value="{{ $p->id }}" {{ old('juri2') == $p->id ? 'selected' : '' }}>{{ $p->nama }}</option>
+                                @endforeach
+                            </select>
+                            <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-black">
+                                <i class="fa-solid fa-chevron-down"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Juri 3 -->
+                    <div>
+                        <label class="block text-[#62cbf5] font-bold text-sm mb-2">Juri 3</label>
+                        <div class="relative">
+                            <select name="juri3" class="w-full appearance-none border border-gray-300 rounded-md px-4 py-3 text-sm text-gray-700 outline-none focus:border-[#62cbf5]">
+                                <option value="">Pilih Juri 3</option>
+                                @foreach($juriList as $p)
+                                <option value="{{ $p->id }}" {{ old('juri3') == $p->id ? 'selected' : '' }}>{{ $p->nama }}</option>
+                                @endforeach
+                            </select>
+                            <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-black">
+                                <i class="fa-solid fa-chevron-down"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+            </div>
+
+            <!-- Tombol Simpan -->
+            <div class="mt-8">
+                <button type="submit" class="bg-[#82c6ef] hover:bg-[#62cbf5] text-white font-bold py-3 px-8 rounded-md transition shadow-sm w-36">
+                    Simpan
+                </button>
+            </div>
+        </form>
+
+    </div>
+@endsection
