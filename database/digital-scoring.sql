@@ -36,7 +36,7 @@ CREATE TABLE users (
   deleted_at TIMESTAMP NULL DEFAULT NULL
 ) ENGINE=InnoDB;
 
--- default user operator (password: 123456)
+-- default users (password: 123456)
 INSERT INTO users (
     username,
     password,
@@ -49,6 +49,48 @@ VALUES
     'operator',
     '$2y$12$Jpvw3CNJEnZlU0aB3y8gne1tTsjTPm/m0Oa2p5d79K1Sf//N2704W',
     1,
+    1,
+    NOW()
+),
+(
+    'ketua',
+    '$2y$12$Jpvw3CNJEnZlU0aB3y8gne1tTsjTPm/m0Oa2p5d79K1Sf//N2704W',
+    2,
+    1,
+    NOW()
+),
+(
+    'dewan',
+    '$2y$12$Jpvw3CNJEnZlU0aB3y8gne1tTsjTPm/m0Oa2p5d79K1Sf//N2704W',
+    3,
+    1,
+    NOW()
+),
+(
+    'timer',
+    '$2y$12$Jpvw3CNJEnZlU0aB3y8gne1tTsjTPm/m0Oa2p5d79K1Sf//N2704W',
+    4,
+    1,
+    NOW()
+),
+(
+    'juri1',
+    '$2y$12$Jpvw3CNJEnZlU0aB3y8gne1tTsjTPm/m0Oa2p5d79K1Sf//N2704W',
+    5,
+    1,
+    NOW()
+),
+(
+    'juri2',
+    '$2y$12$Jpvw3CNJEnZlU0aB3y8gne1tTsjTPm/m0Oa2p5d79K1Sf//N2704W',
+    6,
+    1,
+    NOW()
+),
+(
+    'juri3',
+    '$2y$12$Jpvw3CNJEnZlU0aB3y8gne1tTsjTPm/m0Oa2p5d79K1Sf//N2704W',
+    7,
     1,
     NOW()
 );
