@@ -1,7 +1,7 @@
 SET FOREIGN_KEY_CHECKS = 0;
 
 -- =========================================
--- ROLES
+-- 1. ROLES
 -- =========================================
 DROP TABLE IF EXISTS roles;
 
@@ -21,7 +21,7 @@ INSERT INTO roles (nama) VALUES
 
 
 -- =========================================
--- USERS (FIXED FOR LOGIN + LARAVEL)
+-- 2. USERS (FIXED FOR LOGIN + LARAVEL)
 -- =========================================
 DROP TABLE IF EXISTS users;
 
@@ -37,67 +37,19 @@ CREATE TABLE users (
 ) ENGINE=InnoDB;
 
 -- default users (password: 123456)
-INSERT INTO users (
-    username,
-    password,
-    access_type,
-    is_active,
-    created_at
-)
+INSERT INTO users (username, password, access_type, is_active, created_at)
 VALUES
-(
-    'operator',
-    '$2y$12$Jpvw3CNJEnZlU0aB3y8gne1tTsjTPm/m0Oa2p5d79K1Sf//N2704W',
-    1,
-    1,
-    NOW()
-),
-(
-    'ketua',
-    '$2y$12$Jpvw3CNJEnZlU0aB3y8gne1tTsjTPm/m0Oa2p5d79K1Sf//N2704W',
-    2,
-    1,
-    NOW()
-),
-(
-    'dewan',
-    '$2y$12$Jpvw3CNJEnZlU0aB3y8gne1tTsjTPm/m0Oa2p5d79K1Sf//N2704W',
-    3,
-    1,
-    NOW()
-),
-(
-    'timer',
-    '$2y$12$Jpvw3CNJEnZlU0aB3y8gne1tTsjTPm/m0Oa2p5d79K1Sf//N2704W',
-    4,
-    1,
-    NOW()
-),
-(
-    'juri1',
-    '$2y$12$Jpvw3CNJEnZlU0aB3y8gne1tTsjTPm/m0Oa2p5d79K1Sf//N2704W',
-    5,
-    1,
-    NOW()
-),
-(
-    'juri2',
-    '$2y$12$Jpvw3CNJEnZlU0aB3y8gne1tTsjTPm/m0Oa2p5d79K1Sf//N2704W',
-    6,
-    1,
-    NOW()
-),
-(
-    'juri3',
-    '$2y$12$Jpvw3CNJEnZlU0aB3y8gne1tTsjTPm/m0Oa2p5d79K1Sf//N2704W',
-    7,
-    1,
-    NOW()
-);
+('operator', '$2y$12$Jpvw3CNJEnZlU0aB3y8gne1tTsjTPm/m0Oa2p5d79K1Sf//N2704W', 1, 1, NOW()),
+('ketua',    '$2y$12$Jpvw3CNJEnZlU0aB3y8gne1tTsjTPm/m0Oa2p5d79K1Sf//N2704W', 2, 1, NOW()),
+('dewan',    '$2y$12$Jpvw3CNJEnZlU0aB3y8gne1tTsjTPm/m0Oa2p5d79K1Sf//N2704W', 3, 1, NOW()),
+('timer',    '$2y$12$Jpvw3CNJEnZlU0aB3y8gne1tTsjTPm/m0Oa2p5d79K1Sf//N2704W', 4, 1, NOW()),
+('juri1',    '$2y$12$Jpvw3CNJEnZlU0aB3y8gne1tTsjTPm/m0Oa2p5d79K1Sf//N2704W', 5, 1, NOW()),
+('juri2',    '$2y$12$Jpvw3CNJEnZlU0aB3y8gne1tTsjTPm/m0Oa2p5d79K1Sf//N2704W', 6, 1, NOW()),
+('juri3',    '$2y$12$Jpvw3CNJEnZlU0aB3y8gne1tTsjTPm/m0Oa2p5d79K1Sf//N2704W', 7, 1, NOW());
 
 
 -- =========================================
--- DATA PETUGAS
+-- 3. DATA PETUGAS
 -- =========================================
 DROP TABLE IF EXISTS data_petugas;
 
@@ -105,131 +57,66 @@ CREATE TABLE data_petugas (
   id INT AUTO_INCREMENT PRIMARY KEY,
   nama VARCHAR(100) NOT NULL,
   id_user INT NOT NULL,
-
-  FOREIGN KEY (id_user)
-  REFERENCES users(id)
+  FOREIGN KEY (id_user) REFERENCES users(id)
 ) ENGINE=InnoDB;
 
 
 -- =========================================
--- KONTINGEN
+-- 4. KONTINGEN
 -- =========================================
 DROP TABLE IF EXISTS kontingen;
 
 CREATE TABLE kontingen (
   id INT AUTO_INCREMENT PRIMARY KEY,
   nama_kontingen VARCHAR(150) NOT NULL,
-
-  jenis ENUM(
-    'sekolah',
-    'perguruan',
-    'klub',
-    'universitas',
-    'daerah'
-  ) NOT NULL
+  jenis ENUM('sekolah', 'perguruan', 'klub', 'universitas', 'daerah') NOT NULL
 ) ENGINE=InnoDB;
 
-
 -- =========================================
--- ATLET
--- =========================================
-DROP TABLE IF EXISTS atlet;
-
-CREATE TABLE atlet (
-  id INT AUTO_INCREMENT PRIMARY KEY,
-  nama VARCHAR(100) NOT NULL,
-  id_kontingen INT NOT NULL,
-
-  FOREIGN KEY (id_kontingen)
-  REFERENCES kontingen(id)
-) ENGINE=InnoDB;
-
-
--- =========================================
--- PERTANDINGAN
+-- 5. PERTANDINGAN
 -- =========================================
 DROP TABLE IF EXISTS pertandingan;
 
 CREATE TABLE pertandingan (
     id INT AUTO_INCREMENT PRIMARY KEY,
-
     nomor INT NOT NULL,
     partai INT NOT NULL,
     gelanggang VARCHAR(50) NOT NULL,
-
-    kelas ENUM(
-        'A','B','C','D','E','F','G','H',
-        'I','J','K','L','M','N','O','P',
-        'Q','R','S',
-        'bebas',
-        'open',
-        'open-1',
-        'open-2'
-    ) NOT NULL,
-
-    golongan ENUM(
-        'pra usia dini',
-        'usia dini 1',
-        'usia dini 2',
-        'pra remaja',
-        'remaja',
-        'dewasa'
-    ) NOT NULL,
-
-    jenis_kelamin ENUM(
-        'putra',
-        'putri'
-    ) NOT NULL,
-
+    kelas ENUM('A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','bebas','open','open-1','open-2') NOT NULL,
+    golongan ENUM('pra usia dini', 'usia dini 1', 'usia dini 2', 'pra remaja', 'remaja', 'dewasa') NOT NULL,
+    jenis_kelamin ENUM('putra', 'putri') NOT NULL,
     sudut_biru VARCHAR(100) NULL,
     kontingen_biru VARCHAR(100) NULL,
-
     sudut_merah VARCHAR(100) NULL,
     kontingen_merah VARCHAR(100) NULL,
-
-    status ENUM(
-        'waiting',
-        'playing',
-        'finished',
-        'final'
-    ) DEFAULT 'waiting',
-
+    status ENUM('waiting', 'playing', 'finished', 'final') DEFAULT 'waiting',
     created_by INT NULL,
     updated_by INT NULL,
     deleted_by INT NULL,
-
     created_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     deleted_at TIMESTAMP NULL DEFAULT NULL
-
 ) ENGINE=InnoDB;
 
 
 -- =========================================
--- PETUGAS PERTANDINGAN
+-- 6. PETUGAS PERTANDINGAN
 -- =========================================
 DROP TABLE IF EXISTS petugas_pertandingan;
 
 CREATE TABLE petugas_pertandingan (
   id INT AUTO_INCREMENT PRIMARY KEY,
-
   id_petugas INT NOT NULL,
   id_pertandingan INT NOT NULL,
   id_role INT NOT NULL,
-
-  FOREIGN KEY (id_petugas)
-  REFERENCES data_petugas(id),
-
-  FOREIGN KEY (id_pertandingan)
-  REFERENCES pertandingan(id),
-
-  FOREIGN KEY (id_role)
-  REFERENCES roles(id)
+  FOREIGN KEY (id_petugas) REFERENCES data_petugas(id),
+  FOREIGN KEY (id_pertandingan) REFERENCES pertandingan(id),
+  FOREIGN KEY (id_role) REFERENCES roles(id)
 ) ENGINE=InnoDB;
 
 
 -- =========================================
--- BABAK
+-- 7. BABAK
 -- =========================================
 DROP TABLE IF EXISTS babak;
 
@@ -238,206 +125,117 @@ CREATE TABLE babak (
   babak_ke INT NOT NULL
 ) ENGINE=InnoDB;
 
-INSERT INTO babak (babak_ke) VALUES
-(1),
-(2),
-(3);
+INSERT INTO babak (babak_ke) VALUES (1), (2), (3);
 
 
 -- =========================================
--- KATEGORI NILAI
+-- 8. KATEGORI NILAI
 -- =========================================
 DROP TABLE IF EXISTS kategori_nilai;
 
 CREATE TABLE kategori_nilai (
   id INT AUTO_INCREMENT PRIMARY KEY,
-
   nama_nilai VARCHAR(100) NOT NULL,
-
   nilai INT NOT NULL,
-
   delay_max DECIMAL(4,2) NOT NULL DEFAULT 3.00
 ) ENGINE=InnoDB;
 
-INSERT INTO kategori_nilai (
-    nama_nilai,
-    nilai,
-    delay_max
-)
-VALUES
+INSERT INTO kategori_nilai (nama_nilai, nilai, delay_max) VALUES
 ('pukulan', 1, 3.00),
 ('tendangan', 2, 3.00);
 
 
 -- =========================================
--- INPUT NILAI JURI
--- =========================================
-DROP TABLE IF EXISTS input_nilai_juri;
-
-CREATE TABLE input_nilai_juri (
-    id BIGINT AUTO_INCREMENT PRIMARY KEY,
-
-    event_id VARCHAR(20) NOT NULL,
-
-    id_pertandingan INT NOT NULL,
-
-    id_babak INT NOT NULL,
-
-    id_petugas_pertandingan INT NOT NULL,
-
-    sudut ENUM(
-        'merah',
-        'biru'
-    ) NOT NULL,
-
-    id_kategori_nilai INT NOT NULL,
-
-    nilai INT NOT NULL,
-
-    waktu_input DECIMAL(8,3) NOT NULL,
-
-    status ENUM(
-        'pending',
-        'sah',
-        'tidak_sah',
-        'expired'
-    ) DEFAULT 'pending',
-
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-
-    FOREIGN KEY (id_pertandingan)
-    REFERENCES pertandingan(id),
-
-    FOREIGN KEY (id_babak)
-    REFERENCES babak(id),
-
-    FOREIGN KEY (id_petugas_pertandingan)
-    REFERENCES petugas_pertandingan(id),
-
-    FOREIGN KEY (id_kategori_nilai)
-    REFERENCES kategori_nilai(id)
-) ENGINE=InnoDB;
-
-
--- =========================================
--- HASIL VALIDASI NILAI
--- =========================================
-DROP TABLE IF EXISTS hasil_penilaian;
-
-CREATE TABLE hasil_penilaian (
-    id BIGINT AUTO_INCREMENT PRIMARY KEY,
-
-    event_id VARCHAR(20) UNIQUE NOT NULL,
-
-    id_pertandingan INT NOT NULL,
-
-    id_babak INT NOT NULL,
-
-    sudut ENUM(
-        'merah',
-        'biru'
-    ) NOT NULL,
-
-    id_kategori_nilai INT NOT NULL,
-
-    nilai INT NOT NULL,
-
-    waktu_event DECIMAL(8,3) NOT NULL,
-
-    jumlah_juri INT NOT NULL,
-
-    status ENUM(
-        'valid',
-        'rejected'
-    ) NOT NULL,
-
-    alasan VARCHAR(100) NOT NULL,
-
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-
-    FOREIGN KEY (id_pertandingan)
-    REFERENCES pertandingan(id),
-
-    FOREIGN KEY (id_babak)
-    REFERENCES babak(id),
-
-    FOREIGN KEY (id_kategori_nilai)
-    REFERENCES kategori_nilai(id)
-) ENGINE=InnoDB;
-
-
--- =========================================
--- TOTAL SKOR PERTANDINGAN
+-- 9. TOTAL SKOR PERTANDINGAN
 -- =========================================
 DROP TABLE IF EXISTS skor_pertandingan;
 
 CREATE TABLE skor_pertandingan (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
-
     id_pertandingan INT NOT NULL,
-
     skor_merah INT DEFAULT 0,
-
     skor_biru INT DEFAULT 0,
-
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-    ON UPDATE CURRENT_TIMESTAMP,
-
-    FOREIGN KEY (id_pertandingan)
-    REFERENCES pertandingan(id)
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (id_pertandingan) REFERENCES pertandingan(id)
 ) ENGINE=InnoDB;
 
 
 -- =========================================
--- AKURASI JURI
+-- 10. AKURASI JURI
 -- =========================================
 DROP TABLE IF EXISTS akurasi_juri;
 
 CREATE TABLE akurasi_juri (
   id INT AUTO_INCREMENT PRIMARY KEY,
-
   id_petugas_pertandingan INT NOT NULL,
-
   id_pertandingan INT NOT NULL,
-
   total_input INT NOT NULL,
-
   total_nilai_sah INT NOT NULL,
-
   total_nilai_tidak_sah INT NOT NULL,
-
   persentase_akurasi FLOAT NOT NULL,
-
   tanggal_dihitung DATETIME NOT NULL,
-
-  FOREIGN KEY (id_petugas_pertandingan)
-  REFERENCES petugas_pertandingan(id),
-
-  FOREIGN KEY (id_pertandingan)
-  REFERENCES pertandingan(id)
+  FOREIGN KEY (id_petugas_pertandingan) REFERENCES petugas_pertandingan(id),
+  FOREIGN KEY (id_pertandingan) REFERENCES pertandingan(id)
 ) ENGINE=InnoDB;
 
-
 -- =========================================
--- LOG VALIDASI NILAI
+-- 11. SCORE EVENTS (BARU - INPUT MENTAH JURI)
 -- =========================================
-DROP TABLE IF EXISTS log_validasi_nilai;
+DROP TABLE IF EXISTS score_events;
 
-CREATE TABLE log_validasi_nilai (
+CREATE TABLE score_events (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
-
-    event_id VARCHAR(20) NOT NULL,
-
-    proses_validasi TEXT,
-
-    hasil_validasi ENUM(
-        'valid',
-        'rejected',
-        'expired'
-    ) NOT NULL,
-
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    match_id INT NOT NULL,
+    round INT NOT NULL,
+    athlete ENUM('red', 'blue') NOT NULL,
+    judge_id INT NOT NULL,
+    technique ENUM('punch', 'kick') NOT NULL,
+    score_value INT NOT NULL,
+    server_time DECIMAL(8,3) NOT NULL,
+    status ENUM('pending', 'consumed', 'expired') DEFAULT 'pending',
+    award_id VARCHAR(20) NULL DEFAULT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (match_id) REFERENCES pertandingan(id),
+    FOREIGN KEY (round) REFERENCES babak(id),
+    FOREIGN KEY (judge_id) REFERENCES petugas_pertandingan(id)
 ) ENGINE=InnoDB;
 
+
+-- =========================================
+-- 12. SCORE AWARDS (BARU - SKOR DIAKUI SAH)
+-- =========================================
+DROP TABLE IF EXISTS score_awards;
+
+CREATE TABLE score_awards (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    match_id INT NOT NULL,
+    round INT NOT NULL,
+    athlete ENUM('red', 'blue') NOT NULL,
+    technique ENUM('punch', 'kick') NOT NULL,
+    score_value INT NOT NULL,
+    awarded_time DECIMAL(8,3) NOT NULL,
+    source ENUM('automatic', 'manual override') DEFAULT 'automatic',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (match_id) REFERENCES pertandingan(id),
+    FOREIGN KEY (round) REFERENCES babak(id)
+) ENGINE=InnoDB;
+
+
+-- =========================================
+-- 13. SCORE AWARD VOTES (BARU - JEMBATAN REALISASI)
+-- =========================================
+DROP TABLE IF EXISTS score_award_votes;
+
+CREATE TABLE score_award_votes (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    award_id BIGINT NOT NULL,
+    score_event_id BIGINT NOT NULL,
+    judge_id INT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (award_id) REFERENCES score_awards(id) ON DELETE CASCADE,
+    FOREIGN KEY (score_event_id) REFERENCES score_events(id) ON DELETE CASCADE,
+    FOREIGN KEY (judge_id) REFERENCES petugas_pertandingan(id),
+    UNIQUE KEY unique_award_judge (award_id, judge_id)
+) ENGINE=InnoDB;
 
 SET FOREIGN_KEY_CHECKS = 1;

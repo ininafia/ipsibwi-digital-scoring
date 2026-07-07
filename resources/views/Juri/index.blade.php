@@ -37,20 +37,6 @@
         let currentMatchId = '{{ $match->id ?? '' }}';
 
         function addScore(sudut, nilai) {
-            const box = document.getElementById(`score-${sudut}-${currentRound}`);
-            if (!box) return;
-
-            let displayValue = nilai === 1 ? '1' : '2';
-            if (box.children.length > 0) {
-                displayValue = '+' + displayValue;
-            }
-            
-            const span = document.createElement('span');
-            span.className = sudut === 'biru' ? 'text-blue-800' : 'text-red-700';
-            span.innerText = displayValue;
-
-            box.appendChild(span);
-
             if(!currentMatchId) return;
             fetch('{{ route('juri.input-score') }}', {
                 method: 'POST',
@@ -69,13 +55,6 @@
         }
 
         function deleteScore(sudut) {
-            const box = document.getElementById(`score-${sudut}-${currentRound}`);
-            if (!box) return;
-
-            if (box.lastElementChild) {
-                box.removeChild(box.lastElementChild);
-            }
-
             if(!currentMatchId) return;
             fetch('{{ route('juri.delete-score') }}', {
                 method: 'POST',
@@ -134,6 +113,9 @@
                                     if(idx > 0) displayValue = '+' + displayValue;
                                     const span = document.createElement('span');
                                     span.className = sudut === 'biru' ? 'text-blue-800' : 'text-red-700';
+                                    if (s.is_sah === false) {
+                                        span.className += ' line-through opacity-50';
+                                    }
                                     span.innerText = displayValue;
                                     box.appendChild(span);
                                 });
