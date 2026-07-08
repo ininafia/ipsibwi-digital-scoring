@@ -17,6 +17,14 @@ class PenilaianAtletUsecase extends Usecase
         $this->className = "PenilaianAtletUsecase";
     }
 
+    private function validateTimerState(int $id_pertandingan): void
+    {
+        $timerState = \Illuminate\Support\Facades\Cache::get('current_timer_state_' . $id_pertandingan, ['status' => 'stopped']);
+        if ($timerState['status'] !== 'playing') {
+            throw new Exception('Waktu pertandingan sedang berhenti (Timer pause/stop)');
+        }
+    }
+
     public function addJatuhan(int $id_pertandingan, string $sudut): array
     {
         $funcName = $this->className . ".addJatuhan";
@@ -28,6 +36,8 @@ class PenilaianAtletUsecase extends Usecase
         DB::beginTransaction();
 
         try {
+            $this->validateTimerState($id_pertandingan);
+
             $skorField = 'skor_' . $sudut;
             $jatuhanField = 'jatuhan_' . $sudut;
             $skorRecord = DB::table('skor_pertandingan')
@@ -77,6 +87,8 @@ class PenilaianAtletUsecase extends Usecase
         DB::beginTransaction();
 
         try {
+            $this->validateTimerState($id_pertandingan);
+
             $skorField = 'skor_' . $sudut;
             $jatuhanField = 'jatuhan_' . $sudut;
             $skorRecord = DB::table('skor_pertandingan')
@@ -121,6 +133,8 @@ class PenilaianAtletUsecase extends Usecase
         DB::beginTransaction();
 
         try {
+            $this->validateTimerState($id_pertandingan);
+
             $binaanField = 'binaan_' . $sudut;
             $skorRecord = DB::table('skor_pertandingan')
                 ->where('id_pertandingan', $id_pertandingan)
@@ -171,6 +185,8 @@ class PenilaianAtletUsecase extends Usecase
         DB::beginTransaction();
 
         try {
+            $this->validateTimerState($id_pertandingan);
+
             $teguranField = 'teguran_' . $sudut;
             $skorField = 'skor_' . $sudut;
             $skorRecord = DB::table('skor_pertandingan')
@@ -224,6 +240,8 @@ class PenilaianAtletUsecase extends Usecase
         DB::beginTransaction();
 
         try {
+            $this->validateTimerState($id_pertandingan);
+
             $peringatanField = 'peringatan_' . $sudut;
             $skorField = 'skor_' . $sudut;
             $skorRecord = DB::table('skor_pertandingan')
@@ -277,6 +295,8 @@ class PenilaianAtletUsecase extends Usecase
         DB::beginTransaction();
 
         try {
+            $this->validateTimerState($id_pertandingan);
+
             $binaanField = 'binaan_' . $sudut;
             $teguranField = 'teguran_' . $sudut;
             $peringatanField = 'peringatan_' . $sudut;
@@ -350,7 +370,7 @@ class PenilaianAtletUsecase extends Usecase
 
             $score = DB::table('skor_pertandingan')->where('id_pertandingan', $match->id)->first();
             
-            $timerState = \Illuminate\Support\Facades\Cache::get('current_timer_state', [
+            $timerState = \Illuminate\Support\Facades\Cache::get('current_timer_state_' . $match->id, [
                 'round' => 1,
                 'time_remaining' => 120,
                 'status' => 'stopped'

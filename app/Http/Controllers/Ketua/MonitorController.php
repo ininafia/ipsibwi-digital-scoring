@@ -59,7 +59,7 @@ class MonitorController extends Controller
             }
 
             // Timer state
-            $timerState = Cache::get('current_timer_state', [
+            $timerState = Cache::get('current_timer_state_' . $match->id, [
                 'round' => 1,
                 'time_remaining' => 120,
                 'status' => 'stopped'

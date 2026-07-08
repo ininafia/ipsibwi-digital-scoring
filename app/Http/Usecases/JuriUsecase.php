@@ -69,6 +69,12 @@ class JuriUsecase extends Usecase
                     return Response::buildErrorService('Pertandingan tidak sedang berlangsung');
                 }
 
+                // Cek status timer, hanya boleh input saat 'playing'
+                $timerState = \Illuminate\Support\Facades\Cache::get('current_timer_state_' . $idPertandingan, ['status' => 'stopped']);
+                if ($timerState['status'] !== 'playing') {
+                    return Response::buildErrorService('Waktu pertandingan sedang berhenti (Timer pause/stop)');
+                }
+
                 $kategori = DB::table('kategori_nilai')->where('id', $idKategoriNilai)->first();
                 if (!$kategori) {
                     return Response::buildErrorService('Kategori nilai tidak ditemukan');
