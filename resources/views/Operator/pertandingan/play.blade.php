@@ -45,7 +45,7 @@
                     {{ $data->golongan }}
                 </p>
                 <div class="mt-3">
-                    <span class="inline-block px-8 py-2 bg-gray-200 rounded-lg text-[18px] font-bold text-gray-800">
+                    <span id="displayRound" class="inline-block px-8 py-2 bg-gray-200 rounded-lg text-[18px] font-bold text-gray-800">
                         ROUND 1
                     </span>
                 </div>
@@ -57,7 +57,7 @@
                 {{-- SUDUT BIRU --}}
                 <div class="w-[300px] rounded-[20px] overflow-hidden bg-white shadow-lg border border-gray-100">
                     <div class="h-[190px] bg-gradient-to-b from-blue-600 to-blue-900 flex items-center justify-center">
-                        <span class="text-[100px] font-bold text-white leading-none">0</span>
+                        <span id="displayScoreBlue" class="text-[100px] font-bold text-white leading-none">0</span>
                     </div>
                     <div class="py-4 text-center">
                         <h3 class="text-[15px] font-semibold text-black">
@@ -77,7 +77,7 @@
                 {{-- SUDUT MERAH --}}
                 <div class="w-[300px] rounded-[20px] overflow-hidden bg-white shadow-lg border border-gray-100">
                     <div class="h-[190px] bg-gradient-to-b from-red-500 to-red-800 flex items-center justify-center">
-                        <span class="text-[100px] font-bold text-white leading-none">0</span>
+                        <span id="displayScoreRed" class="text-[100px] font-bold text-white leading-none">0</span>
                     </div>
                     <div class="py-4 text-center">
                         <h3 class="text-[15px] font-semibold text-black">
@@ -272,6 +272,30 @@
                 alert('Terjadi kesalahan saat mengambil skor.');
             });
     }
+
+    function updateOperatorUI() {
+        fetch('/operator/monitor-display/data')
+            .then(res => res.json())
+            .then(res => {
+                if (res.success && res.data) {
+                    let sBiru = res.data.skor_biru || 0;
+                    let sMerah = res.data.skor_merah || 0;
+                    
+                    document.getElementById('displayScoreBlue').innerText = sBiru;
+                    document.getElementById('displayScoreRed').innerText = sMerah;
+                    
+                    if (res.match && res.match.round) {
+                        document.getElementById('displayRound').innerText = 'ROUND ' + res.match.round;
+                    }
+                }
+            })
+            .catch(err => {
+                console.error(err);
+            });
+    }
+
+    setInterval(updateOperatorUI, 5000);
+    updateOperatorUI();
 
     function submitFinalisasi() {
         const sudut = document.getElementById('hidSudut').value;

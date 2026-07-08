@@ -33,7 +33,7 @@ Route::get('/operator/monitor-display/data', function () {
     $score = \Illuminate\Support\Facades\DB::table('skor_pertandingan')->where('id_pertandingan', $match->id)->first();
     
     // Fetch Timer State from Cache
-    $timerState = \Illuminate\Support\Facades\Cache::get('current_timer_state', [
+    $timerState = \Illuminate\Support\Facades\Cache::get('current_timer_state_' . $match->id, [
         'round' => 1,
         'time_remaining' => 120,
         'status' => 'stopped'
