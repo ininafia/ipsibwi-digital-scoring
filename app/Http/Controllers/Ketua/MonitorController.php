@@ -178,6 +178,58 @@ class MonitorController extends Controller
                 ];
             }
 
+            // ========================================
+            // RIWAYAT SCORE EVENTS PER JURI
+            // ========================================
+            $allEvents = DB::table('score_events')
+                ->where('match_id', $match->id)
+                ->whereIn('status', ['consumed', 'expired'])
+                ->orderBy('server_time', 'asc')
+                ->get();
+
+            // Ambil semua vote judge_id untuk menentukan sah/tidak sah
+            $allVoteJudgeIds = [];
+            if (!empty($awardIds)) {
+                $allVoteRows = DB::table('score_award_votes')
+                    ->whereIn('award_id', $awardIds)
+                    ->get();
+                foreach ($allVoteRows as $vr) {
+                    $allVoteJudgeIds[$vr->award_id . '_' . $vr->judge_id] = true;
+                }
+            }
+
+            // Group: juri_position -> round -> athlete -> [events]
+            $eventHistory = [];
+            foreach (['juri_1', 'juri_2', 'juri_3'] as $posisi) {
+                for ($r = 1; $r <= 3; $r++) {
+                    $eventHistory[$posisi][$r] = ['blue' => [], 'red' => []];
+                }
+            }
+
+            foreach ($allEvents as $evt) {
+                // Cari posisi juri dari judge_id
+                $juriPosisi = null;
+                foreach ($juriMap as $posisi => $info) {
+                    if ($info['pp_id'] == $evt->judge_id) {
+                        $juriPosisi = $posisi;
+                        break;
+                    }
+                }
+                if (!$juriPosisi) continue;
+
+                $isSah = false;
+                if ($evt->status === 'consumed' && $evt->award_id) {
+                    $key = $evt->award_id . '_' . $evt->judge_id;
+                    $isSah = isset($allVoteJudgeIds[$key]);
+                }
+
+                $eventHistory[$juriPosisi][$evt->round][$evt->athlete][] = [
+                    'value' => $evt->score_value,
+                    'sah' => $isSah,
+                    'technique' => $evt->technique,
+                ];
+            }
+
             // Pemenang
             $pemenang = 'Waiting....';
             if (in_array($match->status, ['finished', 'final'])) {
@@ -215,6 +267,7 @@ class MonitorController extends Controller
                 ],
                 'pemenang' => $pemenang,
                 'akurasi' => $akurasi->toArray(),
+                'event_history' => $eventHistory,
             ]);
 
         } catch (\Exception $e) {

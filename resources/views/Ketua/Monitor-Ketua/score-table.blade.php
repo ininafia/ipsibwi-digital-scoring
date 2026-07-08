@@ -18,6 +18,30 @@
     .main-border-wrap {
         border: 4px solid black;
     }
+    /* Event history boxes */
+    .evt-box {
+        display: inline-block;
+        min-width: 18px;
+        height: 18px;
+        line-height: 18px;
+        font-size: 11px;
+        font-weight: bold;
+        text-align: center;
+        margin: 1px;
+        border-radius: 2px;
+        color: white;
+    }
+    .evt-sah-blue { background-color: #0000cc; }
+    .evt-sah-red { background-color: #cc0000; }
+    .evt-sah-yellow { background-color: #daa520; color: black; }
+    .evt-tidak-sah { background-color: transparent; color: #666; font-style: italic; text-decoration: line-through; }
+    .evt-container {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 1px;
+        padding: 1px 2px;
+    }
 </style>
 
 <div class="h-full flex flex-col main-border-wrap bg-white">

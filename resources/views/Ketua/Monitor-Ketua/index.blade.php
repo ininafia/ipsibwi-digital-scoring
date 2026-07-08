@@ -55,6 +55,37 @@
             return String(m).padStart(2, '0') + ' : ' + String(s).padStart(2, '0');
         }
 
+        function renderEventBoxes(cellId, eventHistory, juriPos, round, athlete) {
+            const cell = document.getElementById(cellId);
+            if (!cell) return;
+
+            // Check if event_history data exists
+            if (!eventHistory || !eventHistory[juriPos] || !eventHistory[juriPos][round]) {
+                cell.innerHTML = '';
+                return;
+            }
+
+            const events = eventHistory[juriPos][round][athlete] || [];
+            if (events.length === 0) {
+                cell.innerHTML = '';
+                return;
+            }
+
+            let html = '<div class="evt-container">';
+            events.forEach(evt => {
+                if (evt.sah) {
+                    // Sah: colored box with value
+                    const colorClass = athlete === 'blue' ? 'evt-sah-blue' : 'evt-sah-red';
+                    html += '<span class="evt-box ' + colorClass + '">' + evt.value + '</span>';
+                } else {
+                    // Tidak sah: strikethrough style
+                    html += '<span class="evt-box evt-tidak-sah">' + evt.value + '</span>';
+                }
+            });
+            html += '</div>';
+            cell.innerHTML = html;
+        }
+
         function updateMonitor() {
             fetch('{{ route("ketua.monitor.data") }}')
                 .then(res => {
@@ -77,17 +108,16 @@
                     setText('peserta-kontingen-merah', data.match.kontingen_merah || '-');
                     setText('peserta-partai', data.match.partai || '-');
 
-                    // === JURI SCORES PER ROUND ===
+                    // === JURI SCORES PER ROUND (total angka) ===
                     const juriPositions = ['juri_1', 'juri_2', 'juri_3'];
                     juriPositions.forEach(pos => {
                         const juriData = data.juri_scores[pos];
                         if (!juriData) return;
 
                         for (let r = 1; r <= 3; r++) {
-                            const blueVal = juriData.rounds[r] ? juriData.rounds[r].blue : 0;
-                            const redVal = juriData.rounds[r] ? juriData.rounds[r].red : 0;
-                            setText('val-blue-' + pos + '-r' + r, blueVal || '');
-                            setText('val-red-' + pos + '-r' + r, redVal || '');
+                            // Render event history boxes instead of plain total
+                            renderEventBoxes('val-blue-' + pos + '-r' + r, data.event_history, pos, r, 'blue');
+                            renderEventBoxes('val-red-' + pos + '-r' + r, data.event_history, pos, r, 'red');
                         }
                     });
 
