@@ -280,15 +280,50 @@ class PenilaianAtletUsecase extends Usecase
             $binaanField = 'binaan_' . $sudut;
             $teguranField = 'teguran_' . $sudut;
             $peringatanField = 'peringatan_' . $sudut;
+            $skorField = 'skor_' . $sudut;
             
-            DB::table('skor_pertandingan')
+            $skorRecord = DB::table('skor_pertandingan')
                 ->where('id_pertandingan', $id_pertandingan)
-                ->update([
-                    $binaanField => 0,
-                    $teguranField => 0,
-                    $peringatanField => 0,
-                    'updated_at' => now(),
-                ]);
+                ->first();
+
+            if ($skorRecord) {
+                $currentBinaan = $skorRecord->{$binaanField};
+                $currentTeguran = $skorRecord->{$teguranField};
+                $currentPeringatan = $skorRecord->{$peringatanField};
+
+                $refund = 0;
+                $updateData = ['updated_at' => now()];
+
+                if ($currentPeringatan == 2) {
+                    $refund = 10;
+                    $updateData[$peringatanField] = 1;
+                } else if ($currentPeringatan == 1) {
+                    $refund = 5;
+                    $updateData[$peringatanField] = 0;
+                } else if ($currentTeguran == 2) {
+                    $refund = 2;
+                    $updateData[$teguranField] = 1;
+                } else if ($currentTeguran == 1) {
+                    $refund = 1;
+                    $updateData[$teguranField] = 0;
+                } else if ($currentBinaan == 2) {
+                    $refund = 0;
+                    $updateData[$binaanField] = 1;
+                } else if ($currentBinaan == 1) {
+                    $refund = 0;
+                    $updateData[$binaanField] = 0;
+                } else {
+                    return Response::buildErrorService("Tidak ada hukuman untuk dihapus pada sudut {$sudut}");
+                }
+
+                $updateData[$skorField] = DB::raw($skorField . ' + ' . $refund);
+
+                DB::table('skor_pertandingan')
+                    ->where('id_pertandingan', $id_pertandingan)
+                    ->update($updateData);
+            } else {
+                return Response::buildErrorService("Belum ada skor tercatat untuk pertandingan ini");
+            }
 
             DB::commit();
             return Response::buildSuccess(

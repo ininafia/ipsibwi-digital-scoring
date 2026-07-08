@@ -19,23 +19,7 @@ class PertandinganController extends Controller
         $this->usecase   = new PertandinganUsecase();
     }
 
-    /**
-     * =========================
-     * AUTH CHECK
-     * =========================
-     */
-    private function authCheck(): ?RedirectResponse
-    {
-        if (!session('user_id')) {
-            return redirect()->route('login');
-        }
 
-        if (session('role') != 1) {
-            abort(403, 'Akses ditolak');
-        }
-
-        return null;
-    }
 
     /**
      * =========================
@@ -59,9 +43,6 @@ class PertandinganController extends Controller
      */
     public function play(int $id): View|Response|RedirectResponse
     {
-        if ($r = $this->authCheck()) {
-            return $r;
-        }
 
         // Cek apakah ada pertandingan yang sedang berjalan
         $activeMatch = $this->usecase->getActiveMatch();
@@ -86,6 +67,9 @@ class PertandinganController extends Controller
         // 2. Ubah status menjadi 'playing'
         $this->usecase->updateStatus($id, 'playing');
 
+        // Reset timer cache
+        \Illuminate\Support\Facades\Cache::forget('current_timer_state_' . $id);
+
         // 3. Tampilkan halaman play dengan data pertandingan
         return view('Operator.pertandingan.play', [
             'data' => (object) $result['data'],
@@ -93,14 +77,14 @@ class PertandinganController extends Controller
     }
     public function finalisasi(\Illuminate\Http\Request $request, int $id): RedirectResponse
     {
-        if ($r = $this->authCheck()) {
-            return $r;
-        }
-
-        // Anda bisa memproses $request->sudut_pemenang dan $request->jenis_kemenangan di sini 
-        // jika sudah ada tabel/kolom yang disiapkan untuk menyimpannya.
+        // Parameter sudut_pemenang dan jenis_kemenangan dikirim dari form
+        $resultData = [
+            'sudut_pemenang'   => $request->input('sudut_pemenang'),
+            'nama_pemenang'    => $request->input('nama_pemenang'),
+            'jenis_kemenangan' => $request->input('jenis_kemenangan'),
+        ];
         
-        $result = $this->usecase->updateStatus($id, 'finished');
+        $result = $this->usecase->finalizeMatch($id, $resultData);
 
         if (!$this->isSuccess($result)) {
             return redirect()

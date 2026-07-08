@@ -7,12 +7,26 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use App\Http\Presenter\Response;
-use App\Entities\ResponseEntity;
 use Exception;
 
 class JuriUsecase extends Usecase
 {
     public string $className;
+
+    // Pemetaan id_kategori_nilai -> teknik. Sumber kebenaran tunggal,
+    // dipakai di semua tempat supaya tidak ada angka "1"/"2" tersebar (magic number).
+    private const TECHNIQUE_MAP = [
+        1 => 'punch', // pukulan
+        2 => 'kick',  // tendangan
+    ];
+
+    // Nilai skor SELALU ditentukan dari teknik, tidak pernah dari input client langsung.
+    private const SCORE_VALUE_MAP = [
+        'punch' => 1,
+        'kick'  => 2,
+    ];
+
+    private const DEFAULT_DELAY = 3.00;
 
     public function __construct()
     {
@@ -25,122 +39,132 @@ class JuriUsecase extends Usecase
     public function inputScore(Request $request): array
     {
         $funcName = $this->className . '.inputScore';
-        DB::beginTransaction();
+
+        // Bersihkan window kadaluarsa DI LUAR transaksi utama (hindari nested transaction).
+        $this->resolveExpiredEvents();
+
+        $idPertandingan  = $request->input('id_pertandingan');
+        $idBabak         = $request->input('id_babak');
+        $idPetugas       = $request->input('id_petugas_pertandingan'); // users.id dari session
+        $sudut           = $request->input('sudut'); // 'merah' atau 'biru'
+        $idKategoriNilai = (int) $request->input('id_kategori_nilai');
+
+        if (!$idPertandingan || !$idBabak || !$idPetugas
+            || !in_array($sudut, ['merah', 'biru'], true)
+            || !isset(self::TECHNIQUE_MAP[$idKategoriNilai])) {
+            return Response::buildErrorService('Parameter tidak valid');
+        }
+
+        $athlete    = $sudut === 'merah' ? 'red' : 'blue';
+        $technique  = self::TECHNIQUE_MAP[$idKategoriNilai];
+        $scoreValue = self::SCORE_VALUE_MAP[$technique]; // bukan dari client
 
         try {
-            $this->resolveExpiredEvents();
-
-            $idPertandingan = $request->input('id_pertandingan');
-            $idBabak = $request->input('id_babak');
-            $idPetugas = $request->input('id_petugas_pertandingan'); // Ini adalah users.id dari session
-            $sudut = $request->input('sudut'); // 'merah' atau 'biru'
-            $idKategoriNilai = $request->input('id_kategori_nilai');
-            $nilai = $request->input('nilai'); // 1 atau 2
-
-            // Pastikan pertandingan sedang berlangsung (status = 'playing')
-            $match = DB::table('pertandingan')->where('id', $idPertandingan)->first();
-            if (!$match || $match->status !== 'playing') {
-                return Response::buildErrorService('Pertandingan tidak sedang berlangsung');
-            }
-
-            // Cari kategori nilai untuk mendapatkan delay_max (batas waktu)
-            $kategori = DB::table('kategori_nilai')->where('id', $idKategoriNilai)->first();
-            if (!$kategori) {
-                return Response::buildErrorService('Kategori nilai tidak ditemukan');
-            }
-
-            $currentTime = microtime(true);
-
-            // Resolusi users.id -> data_petugas.id
-            $petugas = DB::table('data_petugas')->where('id_user', $idPetugas)->first();
-            if (!$petugas) {
-                return Response::buildErrorService('Data petugas tidak ditemukan');
-            }
-
-            // Resolusi data_petugas.id + id_pertandingan -> petugas_pertandingan.id
-            $petugasPertandingan = DB::table('petugas_pertandingan')
-                ->where('id_petugas', $petugas->id)
-                ->where('id_pertandingan', $idPertandingan)
-                ->first();
-
-            if (!$petugasPertandingan) {
-                return Response::buildErrorService('Penugasan petugas tidak ditemukan untuk pertandingan ini');
-            }
-
-            $judgeId = $petugasPertandingan->id;
-
-            // Pemetaan parameter ke database baru
-            $athlete = $sudut === 'merah' ? 'red' : 'blue';
-            $technique = $idKategoriNilai == 1 ? 'punch' : 'kick';
-
-            // Langkah 1 — Cari grup window (award_id) yang sedang berjalan (pending) untuk match, round, athlete ini
-            $activeWindow = DB::table('score_events')
-                ->where('match_id', $idPertandingan)
-                ->where('round', $idBabak)
-                ->where('athlete', $athlete)
-                ->where('status', 'pending')
-                ->orderBy('server_time', 'asc')
-                ->first();
-
-            $targetAwardId = null;
-
-            if ($activeWindow) {
-                // Tentukan delayMax dari kategori input pertama
-                $firstKategoriId = $activeWindow->technique === 'punch' ? 1 : 2;
-                $firstKategori = DB::table('kategori_nilai')->where('id', $firstKategoriId)->first();
-                $delayMax = $firstKategori ? (float) $firstKategori->delay_max : 3.00;
-
-                // Jika masih dalam rentang waktu delayMax sejak input pertama
-                if (($currentTime - $activeWindow->server_time) <= $delayMax) {
-                    $targetAwardId = $activeWindow->award_id;
+            return DB::transaction(function () use (
+                $idPertandingan, $idBabak, $idPetugas, $athlete, $technique, $scoreValue, $idKategoriNilai
+            ) {
+                // Kunci baris pertandingan supaya status tidak berubah di tengah proses
+                $match = DB::table('pertandingan')->where('id', $idPertandingan)->lockForUpdate()->first();
+                if (!$match || $match->status !== 'playing') {
+                    return Response::buildErrorService('Pertandingan tidak sedang berlangsung');
                 }
-            }
 
-            if (!$targetAwardId) {
-                // Inisiasi grup window baru dengan award_id acak
-                $targetAwardId = Str::random(15);
-            } else {
-                // Cek apakah juri ini sudah menginput di window yang sama
-                $alreadyInput = DB::table('score_events')
-                    ->where('award_id', $targetAwardId)
-                    ->where('judge_id', $judgeId)
-                    ->exists();
-
-                if ($alreadyInput) {
-                    DB::rollBack();
-                    return Response::buildSuccess(['message' => 'Sudah menginput di event ini (terabaikan)']);
+                $kategori = DB::table('kategori_nilai')->where('id', $idKategoriNilai)->first();
+                if (!$kategori) {
+                    return Response::buildErrorService('Kategori nilai tidak ditemukan');
                 }
-            }
 
-            // Simpan input juri ke score_events sebagai pending
-            $newEventId = DB::table('score_events')->insertGetId([
-                'match_id' => $idPertandingan,
-                'round' => $idBabak,
-                'athlete' => $athlete,
-                'judge_id' => $judgeId,
-                'technique' => $technique,
-                'score_value' => $nilai,
-                'server_time' => $currentTime,
-                'status' => 'pending',
-                'award_id' => $targetAwardId,
-                'created_at' => now(),
-            ]);
+                // Resolusi users.id -> data_petugas.id -> petugas_pertandingan.id
+                $petugas = DB::table('data_petugas')->where('id_user', $idPetugas)->first();
+                if (!$petugas) {
+                    return Response::buildErrorService('Data petugas tidak ditemukan');
+                }
 
-            DB::commit();
+                $petugasPertandingan = DB::table('petugas_pertandingan')
+                    ->where('id_petugas', $petugas->id)
+                    ->where('id_pertandingan', $idPertandingan)
+                    ->first();
 
-            // Cek jumlah input unik juri dalam grup window ini
-            $inputCount = DB::table('score_events')
-                ->where('award_id', $targetAwardId)
-                ->count();
+                if (!$petugasPertandingan) {
+                    return Response::buildErrorService('Penugasan petugas tidak ditemukan untuk pertandingan ini');
+                }
 
-            if ($inputCount >= 3) {
-                // Jika ketiga juri sudah memberikan input, selesaikan grup secara instan
-                $this->resolveGroup($targetAwardId);
-            }
+                $judgeId     = $petugasPertandingan->id;
+                $currentTime = microtime(true);
 
-            return Response::buildSuccess(['event_id' => $targetAwardId], 200, 'Berhasil mencatat nilai');
+                // KUNCI baris window pending untuk match+round+athlete ini.
+                // Ini mencegah 2 juri yang klik nyaris bersamaan membuat 2 award_id terpisah.
+                $activeWindow = DB::table('score_events')
+                    ->where('match_id', $idPertandingan)
+                    ->where('round', $idBabak)
+                    ->where('athlete', $athlete)
+                    ->where('technique', $technique)
+                    ->where('status', 'pending')
+                    ->orderBy('server_time', 'asc')
+                    ->lockForUpdate()
+                    ->first();
+
+                $targetAwardId = null;
+
+                if ($activeWindow) {
+                    // Delay ditentukan dari kategori juri PERTAMA yang membuka window ini
+                    $firstKategoriId = array_search($activeWindow->technique, self::TECHNIQUE_MAP, true);
+                    $firstKategori   = DB::table('kategori_nilai')->where('id', $firstKategoriId)->first();
+                    $delayMax        = $firstKategori ? (float) $firstKategori->delay_max : self::DEFAULT_DELAY;
+
+                    if (($currentTime - $activeWindow->server_time) <= $delayMax) {
+                        $targetAwardId = $activeWindow->award_id;
+                    }
+                }
+
+                if ($targetAwardId) {
+                    // Juri yang sama tidak boleh input dobel di window yang sama
+                    $alreadyInput = DB::table('score_events')
+                        ->where('award_id', $targetAwardId)
+                        ->where('judge_id', $judgeId)
+                        ->exists();
+
+                    if ($alreadyInput) {
+                        return Response::buildSuccess(['message' => 'Sudah menginput di event ini (terabaikan)']);
+                    }
+                } else {
+                    // Window baru (belum ada window aktif, atau window lama sudah lewat delay)
+                    $targetAwardId = (string) Str::random(15);
+                }
+
+                $newEventId = DB::table('score_events')->insertGetId([
+                    'match_id'    => $idPertandingan,
+                    'round'       => $idBabak,
+                    'athlete'     => $athlete,
+                    'judge_id'    => $judgeId,
+                    'technique'   => $technique,
+                    'score_value' => $scoreValue,
+                    'server_time' => $currentTime,
+                    'status'      => 'pending',
+                    'award_id'    => $targetAwardId,
+                    'created_at'  => now(),
+                ]);
+
+                $inputCount = DB::table('score_events')->where('award_id', $targetAwardId)->count();
+
+                // Kalau 3 juri sudah input semua, langsung selesaikan grup (tidak perlu menunggu delay habis)
+                if ($inputCount >= 3) {
+                    $this->resolveGroup($targetAwardId);
+                }
+
+                $juriName = match ($petugasPertandingan->posisi) {
+                    'juri_1' => 'JURI 1',
+                    'juri_2' => 'JURI 2',
+                    'juri_3' => 'JURI 3',
+                    default => 'JURI'
+                };
+                $techName = $technique === 'punch' ? 'pukulan' : 'tendangan';
+                $sudutName = $athlete === 'red' ? 'merah' : 'biru';
+                error_log("=== [ACTION] $juriName mencet $techName untuk sudut $sudutName ===");
+
+                return Response::buildSuccess(['event_id' => $targetAwardId, 'score_event_id' => $newEventId], 200, 'Berhasil mencatat nilai');
+            });
         } catch (Exception $e) {
-            DB::rollBack();
             Log::error($e->getMessage(), ['func_name' => $funcName]);
             return Response::buildErrorService($e->getMessage());
         }
@@ -152,108 +176,108 @@ class JuriUsecase extends Usecase
     public function resolveGroup(string $groupId): void
     {
         $funcName = $this->className . '.resolveGroup';
-        DB::beginTransaction();
 
         try {
-            // Cek kembali input untuk group ini (harus pending agar tidak diproses ganda)
-            $inputs = DB::table('score_events')
-                ->where('award_id', $groupId)
-                ->where('status', 'pending')
-                ->get();
+            DB::transaction(function () use ($groupId) {
+                // Kunci semua input pending di grup ini agar tidak diproses ganda oleh proses lain
+                $inputs = DB::table('score_events')
+                    ->where('award_id', $groupId)
+                    ->where('status', 'pending')
+                    ->lockForUpdate()
+                    ->get();
 
-            if ($inputs->isEmpty()) {
-                DB::rollBack();
-                return; // Mungkin sudah di-resolve
-            }
-
-            $firstInput = $inputs->first();
-            
-            // Hitung jumlah juri untuk masing-masing kategori teknik
-            $techCounts = [];
-            foreach ($inputs as $input) {
-                if (!isset($techCounts[$input->technique])) {
-                    $techCounts[$input->technique] = 0;
+                if ($inputs->isEmpty()) {
+                    return; // sudah diresolve sebelumnya
                 }
-                $techCounts[$input->technique]++;
-            }
 
-            // Cari kategori teknik dengan dukungan >= 2 juri
-            $winningTechnique = null;
-            foreach ($techCounts as $tech => $count) {
-                if ($count >= 2) {
-                    $winningTechnique = $tech;
-                    break;
-                }
-            }
-
-            if ($winningTechnique !== null) {
-                // KONSENSUS TERCAPAI (Ada >= 2 juri dengan kategori yang sama)
-                $winningInput = $inputs->where('technique', $winningTechnique)->first();
-                $winningScoreValue = $winningTechnique === 'punch' ? 1 : 2;
-
-                // 1. Simpan ke tabel score_awards
-                $awardIdDb = DB::table('score_awards')->insertGetId([
-                    'match_id' => $winningInput->match_id,
-                    'round' => $winningInput->round,
-                    'athlete' => $winningInput->athlete,
-                    'technique' => $winningTechnique,
-                    'score_value' => $winningScoreValue,
-                    'awarded_time' => $winningInput->server_time,
-                    'source' => 'automatic',
-                    'created_at' => now(),
-                ]);
-
-                // 2. Simpan ke tabel score_award_votes untuk juri pendukung yang sah (kategori sama)
+                // Hitung dukungan tiap teknik
+                $techCounts = [];
                 foreach ($inputs as $input) {
-                    if ($input->technique === $winningTechnique) {
-                        DB::table('score_award_votes')->insert([
-                            'award_id' => $awardIdDb,
-                            'score_event_id' => $input->id,
-                            'judge_id' => $input->judge_id,
-                            'created_at' => now(),
-                        ]);
+                    $techCounts[$input->technique] = ($techCounts[$input->technique] ?? 0) + 1;
+                }
+
+                // Cari teknik dengan dukungan >= 2 juri (minimal 2 dari 3 sepakat)
+                $winningTechnique = null;
+                foreach ($techCounts as $tech => $count) {
+                    if ($count >= 2) {
+                        $winningTechnique = $tech;
+                        break;
                     }
                 }
 
-                // 3. Ubah status semua input dalam grup menjadi consumed dan update award_id ke ID database
-                DB::table('score_events')
-                    ->where('award_id', $groupId)
-                    ->update([
-                        'status' => 'consumed',
-                        'award_id' => (string) $awardIdDb,
+                if ($winningTechnique !== null) {
+                    // KONSENSUS TERCAPAI
+                    $winningInput      = $inputs->firstWhere('technique', $winningTechnique);
+                    $winningScoreValue = self::SCORE_VALUE_MAP[$winningTechnique];
+
+                    $awardIdDb = DB::table('score_awards')->insertGetId([
+                        'match_id'     => $winningInput->match_id,
+                        'round'        => $winningInput->round,
+                        'athlete'      => $winningInput->athlete,
+                        'technique'    => $winningTechnique,
+                        'score_value'  => $winningScoreValue,
+                        'awarded_time' => $winningInput->server_time,
+                        'source'       => 'automatic',
+                        'created_at'   => now(),
                     ]);
 
-                // 4. Tambahkan poin ke tabel skor_pertandingan
-                $skorField = $winningInput->athlete === 'red' ? 'skor_merah' : 'skor_biru';
-                $skorRecord = DB::table('skor_pertandingan')
-                    ->where('id_pertandingan', $winningInput->match_id)
-                    ->first();
+                    // Catat vote untuk juri yang sepakat (teknik sama) -> dipakai utk tandai "sah"
+                    foreach ($inputs as $input) {
+                        if ($input->technique === $winningTechnique) {
+                            DB::table('score_award_votes')->insert([
+                                'award_id'       => $awardIdDb,
+                                'score_event_id' => $input->id,
+                                'judge_id'       => $input->judge_id,
+                                'created_at'     => now(),
+                            ]);
+                        }
+                    }
 
-                if ($skorRecord) {
-                    DB::table('skor_pertandingan')
-                        ->where('id_pertandingan', $winningInput->match_id)
+                    // Semua input dalam grup (termasuk yang minoritas/tidak sah) tetap ditandai consumed
+                    // supaya tetap muncul di score table, hanya saja tidak dapat vote -> dicoret di UI.
+                    DB::table('score_events')
+                        ->where('award_id', $groupId)
                         ->update([
-                            $skorField => DB::raw($skorField . ' + ' . $winningScoreValue),
-                            'updated_at' => now(),
+                            'status'   => 'consumed',
+                            'award_id' => (string) $awardIdDb,
                         ]);
+
+                    // Tambahkan poin ke skor_pertandingan
+                    $skorField = $winningInput->athlete === 'red' ? 'skor_merah' : 'skor_biru';
+
+                    $skorRecord = DB::table('skor_pertandingan')
+                        ->where('id_pertandingan', $winningInput->match_id)
+                        ->lockForUpdate()
+                        ->first();
+
+                    if ($skorRecord) {
+                        DB::table('skor_pertandingan')
+                            ->where('id_pertandingan', $winningInput->match_id)
+                            ->update([
+                                $skorField    => DB::raw($skorField . ' + ' . $winningScoreValue),
+                                'updated_at'  => now(),
+                            ]);
+                    } else {
+                        DB::table('skor_pertandingan')->insert([
+                            'id_pertandingan' => $winningInput->match_id,
+                            $skorField        => $winningScoreValue,
+                            'updated_at'      => now(),
+                        ]);
+                    }
+
+                    $winningTechName = $winningTechnique === 'punch' ? 'pukulan' : 'tendangan';
+                    $winningSudutName = $winningInput->athlete === 'red' ? 'merah' : 'biru';
+                    error_log("=== [KONSENSUS] SAH! Poin $winningTechName sudut $winningSudutName bertambah (nilai: $winningScoreValue) ===");
                 } else {
-                    DB::table('skor_pertandingan')->insert([
-                        'id_pertandingan' => $winningInput->match_id,
-                        $skorField => $winningScoreValue,
-                        'updated_at' => now(),
-                    ]);
+                    // KONSENSUS TIDAK TERCAPAI (mis. hanya 1 juri input, atau semua beda teknik)
+                    DB::table('score_events')
+                        ->where('award_id', $groupId)
+                        ->update(['status' => 'expired']);
+
+                    error_log("=== [KONSENSUS] GAGAL/EXPIRED! Tidak mencapai kesepakatan juri ===");
                 }
-
-            } else {
-                // KONSENSUS TIDAK TERCAPAI (Semua input dalam grup dinyatakan tidak sah)
-                DB::table('score_events')
-                    ->where('award_id', $groupId)
-                    ->update(['status' => 'expired']);
-            }
-
-            DB::commit();
+            });
         } catch (Exception $e) {
-            DB::rollBack();
             Log::error($e->getMessage(), ['func_name' => $funcName]);
         }
     }
@@ -264,10 +288,10 @@ class JuriUsecase extends Usecase
     public function resolveExpiredEvents(): void
     {
         $funcName = $this->className . '.resolveExpiredEvents';
+
         try {
             $currentTime = microtime(true);
-            
-            // Ambil semua group window (award_id) yang masih pending
+
             $pendingGroups = DB::table('score_events')
                 ->select('award_id')
                 ->selectRaw('MIN(server_time) as start_time')
@@ -277,16 +301,15 @@ class JuriUsecase extends Usecase
                 ->get();
 
             foreach ($pendingGroups as $group) {
-                // Cari input pertama untuk menentukan delayMax
                 $firstInput = DB::table('score_events')
                     ->where('award_id', $group->award_id)
                     ->orderBy('server_time', 'asc')
                     ->first();
-                
+
                 if ($firstInput) {
-                    $kategoriId = $firstInput->technique === 'punch' ? 1 : 2;
-                    $kategori = DB::table('kategori_nilai')->where('id', $kategoriId)->first();
-                    $delayMax = $kategori ? (float) $kategori->delay_max : 3.00;
+                    $kategoriId = array_search($firstInput->technique, self::TECHNIQUE_MAP, true);
+                    $kategori   = DB::table('kategori_nilai')->where('id', $kategoriId)->first();
+                    $delayMax   = $kategori ? (float) $kategori->delay_max : self::DEFAULT_DELAY;
 
                     if (($currentTime - $group->start_time) > $delayMax) {
                         $this->resolveGroup($group->award_id);
@@ -301,49 +324,60 @@ class JuriUsecase extends Usecase
     public function deleteScore(Request $request): array
     {
         $funcName = $this->className . '.deleteScore';
-        DB::beginTransaction();
+
+        $idPertandingan = $request->input('id_pertandingan');
+        $idBabak        = $request->input('id_babak');
+        $idPetugas      = $request->input('id_petugas_pertandingan');
+        $sudut          = $request->input('sudut');
+
+        if (!$idPertandingan || !$idBabak || !$idPetugas || !in_array($sudut, ['merah', 'biru'], true)) {
+            return Response::buildErrorService('Parameter tidak valid');
+        }
+
+        $athlete = $sudut === 'merah' ? 'red' : 'blue';
 
         try {
-            $idPertandingan = $request->input('id_pertandingan');
-            $idBabak = $request->input('id_babak');
-            $idPetugas = $request->input('id_petugas_pertandingan'); // users.id
-            $sudut = $request->input('sudut'); // 'merah' atau 'biru'
-            $athlete = $sudut === 'merah' ? 'red' : 'blue';
+            return DB::transaction(function () use ($idPertandingan, $idBabak, $idPetugas, $athlete) {
+                $petugas = DB::table('data_petugas')->where('id_user', $idPetugas)->first();
+                if (!$petugas) {
+                    return Response::buildErrorService('Petugas tidak ditemukan');
+                }
 
-            $petugas = DB::table('data_petugas')->where('id_user', $idPetugas)->first();
-            if (!$petugas) {
-                return Response::buildErrorService('Petugas tidak ditemukan');
-            }
+                $petugasPertandingan = DB::table('petugas_pertandingan')
+                    ->where('id_petugas', $petugas->id)
+                    ->where('id_pertandingan', $idPertandingan)
+                    ->first();
 
-            $petugasPertandingan = DB::table('petugas_pertandingan')
-                ->where('id_petugas', $petugas->id)
-                ->where('id_pertandingan', $idPertandingan)
-                ->first();
+                if (!$petugasPertandingan) {
+                    return Response::buildErrorService('Penugasan tidak ditemukan');
+                }
 
-            if (!$petugasPertandingan) {
-                return Response::buildErrorService('Penugasan tidak ditemukan');
-            }
+                $lastInput = DB::table('score_events')
+                    ->where('match_id', $idPertandingan)
+                    ->where('round', $idBabak)
+                    ->where('judge_id', $petugasPertandingan->id)
+                    ->where('athlete', $athlete)
+                    ->where('status', 'pending')
+                    ->orderBy('created_at', 'desc')
+                    ->lockForUpdate()
+                    ->first();
 
-            // Find the most recent pending input in score_events
-            $lastInput = DB::table('score_events')
-                ->where('match_id', $idPertandingan)
-                ->where('round', $idBabak)
-                ->where('judge_id', $petugasPertandingan->id)
-                ->where('athlete', $athlete)
-                ->where('status', 'pending')
-                ->orderBy('created_at', 'desc')
-                ->first();
+                if ($lastInput) {
+                    DB::table('score_events')->where('id', $lastInput->id)->delete();
+                    $juriName = match ($petugasPertandingan->posisi) {
+                        'juri_1' => 'JURI 1',
+                        'juri_2' => 'JURI 2',
+                        'juri_3' => 'JURI 3',
+                        default => 'JURI'
+                    };
+                    $sudutName = $athlete === 'red' ? 'merah' : 'biru';
+                    error_log("=== [ACTION] $juriName menghapus nilai pending untuk sudut $sudutName ===");
+                    return Response::buildSuccess(null, 200, 'Berhasil menghapus nilai pending');
+                }
 
-            if ($lastInput) {
-                DB::table('score_events')->where('id', $lastInput->id)->delete();
-                DB::commit();
-                return Response::buildSuccess(null, 200, 'Berhasil menghapus nilai pending');
-            }
-
-            DB::rollBack();
-            return Response::buildErrorService('Tidak ada nilai pending untuk dihapus');
+                return Response::buildErrorService('Tidak ada nilai pending untuk dihapus');
+            });
         } catch (Exception $e) {
-            DB::rollBack();
             Log::error($e->getMessage(), ['func_name' => $funcName]);
             return Response::buildErrorService($e->getMessage());
         }
@@ -352,10 +386,12 @@ class JuriUsecase extends Usecase
     public function getHistory(Request $request): array
     {
         $funcName = $this->className . '.getHistory';
+
         try {
             $this->resolveExpiredEvents();
+
             $idPertandingan = $request->input('id_pertandingan');
-            $idPetugas = $request->input('id_petugas_pertandingan'); // users.id
+            $idPetugas      = $request->input('id_petugas_pertandingan');
 
             $petugas = DB::table('data_petugas')->where('id_user', $idPetugas)->first();
             if (!$petugas) {
@@ -371,33 +407,34 @@ class JuriUsecase extends Usecase
                 return Response::buildSuccess([], 200, 'Berhasil mengambil riwayat (penugasan tidak ditemukan)');
             }
 
-            $history = DB::table('score_events')
+            $events = DB::table('score_events')
                 ->where('match_id', $idPertandingan)
                 ->where('judge_id', $petugasPertandingan->id)
-                ->where('status', 'consumed')
+                ->whereIn('status', ['consumed', 'pending'])
                 ->orderBy('server_time', 'asc')
-                ->get()
-                ->map(function($item) {
-                    // Check if this event got a vote in score_award_votes
-                    $hasVote = DB::table('score_award_votes')
-                        ->where('score_event_id', $item->id)
-                        ->exists();
-                    $isSah = $hasVote;
+                ->get();
 
-                    return [
-                        'id' => $item->id,
-                        'id_pertandingan' => $item->match_id,
-                        'id_babak' => $item->round,
-                        'id_petugas_pertandingan' => $item->judge_id,
-                        'sudut' => $item->athlete === 'red' ? 'merah' : 'biru',
-                        'nilai' => $item->score_value,
-                        'waktu_input' => $item->server_time,
-                        'status' => $item->status,
-                        'is_sah' => $isSah,
-                    ];
-                });
+            // Ambil semua vote sekaligus (hindari N+1 query exists() per baris)
+            $votedEventIds = DB::table('score_award_votes')
+                ->whereIn('score_event_id', $events->pluck('id'))
+                ->pluck('score_event_id')
+                ->flip();
 
-            return Response::buildSuccess($history, 200, 'Berhasil mengambil riwayat');
+            $history = $events->map(function ($item) use ($votedEventIds) {
+                return [
+                    'id'                       => $item->id,
+                    'id_pertandingan'          => $item->match_id,
+                    'id_babak'                 => $item->round,
+                    'id_petugas_pertandingan'  => $item->judge_id,
+                    'sudut'                    => $item->athlete === 'red' ? 'merah' : 'biru',
+                    'nilai'                    => $item->score_value,
+                    'waktu_input'              => $item->server_time,
+                    'status'                   => $item->status,
+                    'is_sah'                   => isset($votedEventIds[$item->id]),
+                ];
+            });
+
+            return Response::buildSuccess($history->toArray(), 200, 'Berhasil mengambil riwayat');
         } catch (Exception $e) {
             Log::error($e->getMessage(), ['func_name' => $funcName]);
             return Response::buildErrorService($e->getMessage());

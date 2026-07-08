@@ -21,22 +21,13 @@
     <!-- BUTTON -->
     <div class="flex justify-center items-center gap-4 mt-10 flex-wrap">
 
-        <!-- START -->
-        <button id="btn-timer-start"
+        <!-- TOGGLE -->
+        <button id="btn-timer-toggle"
             class="bg-green-500 hover:bg-green-600 transition
                    text-white font-bold text-lg
                    px-6 py-3 rounded-xl
                    min-w-[120px]">
             ▶ Start
-        </button>
-
-        <!-- PAUSE -->
-        <button id="btn-timer-pause"
-            class="bg-yellow-400 hover:bg-yellow-500 transition
-                   text-black font-bold text-lg
-                   px-6 py-3 rounded-xl
-                   min-w-[120px]">
-            ⏸ Pause
         </button>
 
         <!-- RESET -->

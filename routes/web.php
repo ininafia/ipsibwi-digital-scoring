@@ -22,47 +22,102 @@ Route::get('/login/dewan', [AuthController::class, 'login'])->name('dewan.login.
 
 Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
+// GLOBAL AJAX ROUTE (Dapat diakses berbagai role)
+Route::get('/operator/monitor-display/data', function () {
+    if (!session('user_id')) return response()->json(['success' => false, 'message' => 'Unauthorized'], 401);
+    
+    $match = \Illuminate\Support\Facades\DB::table('pertandingan')
+        ->where('status', 'playing')->whereNull('deleted_at')->first();
+    if (!$match) return response()->json(['success' => false]);
+    
+    $score = \Illuminate\Support\Facades\DB::table('skor_pertandingan')->where('id_pertandingan', $match->id)->first();
+    
+    // Fetch Timer State from Cache
+    $timerState = \Illuminate\Support\Facades\Cache::get('current_timer_state', [
+        'round' => 1,
+        'time_remaining' => 120,
+        'status' => 'stopped'
+    ]);
+
+    return response()->json([
+        'success' => true,
+        'match' => [
+            'id' => $match->id,
+            'partai' => $match->partai ?? '-',
+            'sudut_biru' => $match->sudut_biru ?? '-',
+            'kontingen_biru' => $match->kontingen_biru ?? '-',
+            'sudut_merah' => $match->sudut_merah ?? '-',
+            'kontingen_merah' => $match->kontingen_merah ?? '-',
+            'round' => $timerState['round'] ?? 1,
+            'time_remaining' => $timerState['time_remaining'] ?? 120,
+            'timer_status' => $timerState['status'] ?? 'stopped'
+        ],
+        'data' => [
+            'skor_biru' => $score->skor_biru ?? 0,
+            'skor_merah' => $score->skor_merah ?? 0,
+            'binaan_biru' => $score->binaan_biru ?? 0,
+            'binaan_merah' => $score->binaan_merah ?? 0,
+            'teguran_biru' => $score->teguran_biru ?? 0,
+            'teguran_merah' => $score->teguran_merah ?? 0,
+            'peringatan_biru' => $score->peringatan_biru ?? 0,
+            'peringatan_merah' => $score->peringatan_merah ?? 0,
+            'jatuhan_biru' => $score->jatuhan_biru ?? 0,
+            'jatuhan_merah' => $score->jatuhan_merah ?? 0,
+        ]
+    ]);
+})->name('operator.monitor-display.data');
+
 // TIMER
-Route::get('/timer', [TimerController::class, 'index'])->name('timer.dashboard');
-Route::post('/timer/sync', [TimerController::class, 'sync'])->name('timer.sync');
-Route::get('/timer/state', [TimerController::class, 'getState'])->name('timer.state');
+Route::middleware(['role:4'])->group(function () {
+    Route::get('/timer', [TimerController::class, 'index'])->name('timer.dashboard');
+    Route::post('/timer/sync', [TimerController::class, 'sync'])->name('timer.sync');
+    Route::get('/timer/state', [TimerController::class, 'getState'])->name('timer.state');
+});
 
 // KETUA PERTANDINGAN
 use App\Http\Controllers\Ketua\DashboardController as KetuaDashboardController;
 use App\Http\Controllers\Ketua\MonitorController;
-Route::get('/ketua/dashboard', [KetuaDashboardController::class, 'index'])->name('ketua.dashboard');
-Route::get('/ketua/monitor', [MonitorController::class, 'index'])->name('ketua.monitor');
+Route::middleware(['role:2'])->group(function () {
+    Route::get('/ketua/dashboard', [KetuaDashboardController::class, 'index'])->name('ketua.dashboard');
+    Route::get('/ketua/monitor', [MonitorController::class, 'index'])->name('ketua.monitor');
+    Route::get('/ketua/monitor/data', [MonitorController::class, 'data'])->name('ketua.monitor.data');
+});
 
 // DEWAN
 use App\Http\Controllers\Dewan\DashboardController as DewanDashboardController;
 use App\Http\Controllers\Dewan\PenilaianAtletController;
 use App\Http\Controllers\Dewan\PetugasPertandinganController;
-Route::get('/dewan/dashboard', [DewanDashboardController::class, 'index'])->name('dewan.dashboard');
-Route::get('/dewan/penilaian-atlet', [PenilaianAtletController::class, 'index'])->name('dewan.penilaian');
-Route::get('/dewan/penilaian-atlet/data', [PenilaianAtletController::class, 'getData'])->name('dewan.penilaian.data');
-Route::post('/dewan/penilaian-atlet/jatuhan', [PenilaianAtletController::class, 'addJatuhan'])->name('dewan.penilaian.jatuhan');
-Route::post('/dewan/penilaian-atlet/del-jatuhan', [PenilaianAtletController::class, 'delJatuhan'])->name('dewan.penilaian.del-jatuhan');
-Route::post('/dewan/penilaian-atlet/binaan', [PenilaianAtletController::class, 'addBinaan'])->name('dewan.penilaian.binaan');
-Route::post('/dewan/penilaian-atlet/teguran', [PenilaianAtletController::class, 'addTeguran'])->name('dewan.penilaian.teguran');
-Route::post('/dewan/penilaian-atlet/peringatan', [PenilaianAtletController::class, 'addPeringatan'])->name('dewan.penilaian.peringatan');
-Route::post('/dewan/penilaian-atlet/del-hukuman', [PenilaianAtletController::class, 'delHukuman'])->name('dewan.penilaian.delHukuman');
-Route::get('/dewan/petugas', [PetugasPertandinganController::class, 'index'])->name('dewan.petugas');
-Route::get('/dewan/petugas/add', [PetugasPertandinganController::class, 'add'])->name('dewan.petugas.add');
-Route::post('/dewan/petugas/store', [PetugasPertandinganController::class, 'store'])->name('dewan.petugas.store');
+Route::middleware(['role:3'])->group(function () {
+    Route::get('/dewan/dashboard', [DewanDashboardController::class, 'index'])->name('dewan.dashboard');
+    Route::get('/dewan/penilaian-atlet', [PenilaianAtletController::class, 'index'])->name('dewan.penilaian');
+    Route::get('/dewan/penilaian-atlet/data', [PenilaianAtletController::class, 'getData'])->name('dewan.penilaian.data');
+    Route::post('/dewan/penilaian-atlet/jatuhan', [PenilaianAtletController::class, 'addJatuhan'])->name('dewan.penilaian.jatuhan');
+    Route::post('/dewan/penilaian-atlet/del-jatuhan', [PenilaianAtletController::class, 'delJatuhan'])->name('dewan.penilaian.del-jatuhan');
+    Route::post('/dewan/penilaian-atlet/binaan', [PenilaianAtletController::class, 'addBinaan'])->name('dewan.penilaian.binaan');
+    Route::post('/dewan/penilaian-atlet/teguran', [PenilaianAtletController::class, 'addTeguran'])->name('dewan.penilaian.teguran');
+    Route::post('/dewan/penilaian-atlet/peringatan', [PenilaianAtletController::class, 'addPeringatan'])->name('dewan.penilaian.peringatan');
+    Route::post('/dewan/penilaian-atlet/del-hukuman', [PenilaianAtletController::class, 'delHukuman'])->name('dewan.penilaian.delHukuman');
+    Route::get('/dewan/petugas', [PetugasPertandinganController::class, 'index'])->name('dewan.petugas');
+    Route::get('/dewan/petugas/add', [PetugasPertandinganController::class, 'add'])->name('dewan.petugas.add');
+    Route::post('/dewan/petugas/store', [PetugasPertandinganController::class, 'store'])->name('dewan.petugas.store');
+    Route::post('/dewan/petugas/{id}/run', [PetugasPertandinganController::class, 'runPetugas'])->name('dewan.petugas.run');
+});
 
 // JURI
 use App\Http\Controllers\JuriController;
-Route::get('/juri1', [JuriController::class, 'index'])->name('juri1');
-Route::get('/juri2', [JuriController::class, 'index'])->name('juri2');
-Route::get('/juri3', [JuriController::class, 'index'])->name('juri3');
+Route::middleware(['role:5'])->group(function () {
+    Route::get('/juri1', [JuriController::class, 'index'])->name('juri1');
+    Route::get('/juri2', [JuriController::class, 'index'])->name('juri2');
+    Route::get('/juri3', [JuriController::class, 'index'])->name('juri3');
 
-Route::prefix('juri')->name('juri.')->group(function () {
-    Route::post('/input-score', [JuriController::class, 'inputScore'])->name('input-score');
-    Route::post('/delete-score', [JuriController::class, 'deleteScore'])->name('delete-score');
-    Route::get('/history', [JuriController::class, 'getHistory'])->name('history');
+    Route::prefix('juri')->name('juri.')->group(function () {
+        Route::post('/input-score', [JuriController::class, 'inputScore'])->name('input-score');
+        Route::post('/delete-score', [JuriController::class, 'deleteScore'])->name('delete-score');
+        Route::get('/history', [JuriController::class, 'getHistory'])->name('history');
+    });
 });
 
-Route::prefix('operator')->name('operator.')->group(function () {
+Route::prefix('operator')->name('operator.')->middleware(['role:1'])->group(function () {
 
     Route::prefix('tanding')->name('tanding.')->group(function () {
 
@@ -141,47 +196,6 @@ Route::prefix('operator')->name('operator.')->group(function () {
             ->where('status', 'playing')->whereNull('deleted_at')->first();
         return view('Operator.monitor-display.scoreboard', compact('match'));
     })->name('monitor-display');
-
-    Route::get('/monitor-display/data', function () {
-        $match = \Illuminate\Support\Facades\DB::table('pertandingan')
-            ->where('status', 'playing')->whereNull('deleted_at')->first();
-        if (!$match) return response()->json(['success' => false]);
-        
-        $score = \Illuminate\Support\Facades\DB::table('skor_pertandingan')->where('id_pertandingan', $match->id)->first();
-        
-        // Fetch Timer State from Cache
-        $timerState = \Illuminate\Support\Facades\Cache::get('current_timer_state', [
-            'round' => 1,
-            'time_remaining' => 120,
-            'status' => 'stopped'
-        ]);
-
-        return response()->json([
-            'success' => true,
-            'match' => [
-                'partai' => $match->partai ?? '-',
-                'sudut_biru' => $match->sudut_biru ?? '-',
-                'kontingen_biru' => $match->kontingen_biru ?? '-',
-                'sudut_merah' => $match->sudut_merah ?? '-',
-                'kontingen_merah' => $match->kontingen_merah ?? '-',
-                'round' => $timerState['round'] ?? 1,
-                'time_remaining' => $timerState['time_remaining'] ?? 120,
-                'timer_status' => $timerState['status'] ?? 'stopped'
-            ],
-            'data' => [
-                'skor_biru' => $score->skor_biru ?? 0,
-                'skor_merah' => $score->skor_merah ?? 0,
-                'binaan_biru' => $score->binaan_biru ?? 0,
-                'binaan_merah' => $score->binaan_merah ?? 0,
-                'teguran_biru' => $score->teguran_biru ?? 0,
-                'teguran_merah' => $score->teguran_merah ?? 0,
-                'peringatan_biru' => $score->peringatan_biru ?? 0,
-                'peringatan_merah' => $score->peringatan_merah ?? 0,
-                'jatuhan_biru' => $score->jatuhan_biru ?? 0,
-                'jatuhan_merah' => $score->jatuhan_merah ?? 0,
-            ]
-        ]);
-    })->name('monitor-display.data');
 
     Route::prefix('petugas')->name('petugas.')->group(function () {
         Route::get('/', [\App\Http\Controllers\Operator\PetugasController::class, 'index'])->name('index');

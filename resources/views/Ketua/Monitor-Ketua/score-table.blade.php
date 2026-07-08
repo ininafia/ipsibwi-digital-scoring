@@ -41,6 +41,7 @@
         <!-- Ronde 1, 2, 3 Loop -->
         @php
             $details = ['JURI 1', 'JURI 2', 'JURI 3', 'SCORE', 'JATUHAN', 'HUKUMAN', 'BINAAN'];
+            $detailKeys = ['juri_1', 'juri_2', 'juri_3', 'score', 'jatuhan', 'hukuman', 'binaan'];
         @endphp
 
         @for($round = 1; $round <= 3; $round++)
@@ -49,13 +50,15 @@
                 @php 
                     $isLast = ($index == count($details) - 1);
                     $rowClass = ($isLast && $round < 3) ? 'thick-border-bottom' : '';
+                    $key = $detailKeys[$index];
                 @endphp
 
                 <tr class="{{ $rowClass }} h-[20px]">
                     
-                    <!-- Total Kiri -->
+                    <!-- Total Kiri (Grand total, rowspan seluruh ronde) -->
                     @if($index == 0)
                         <td rowspan="{{ count($details) }}" class="w-[40px] align-top p-0 border-r-2 border-black {{ $round < 3 ? 'border-b-[4px]' : '' }}">
+                            <span id="round-total-blue-{{ $round }}"></span>
                         </td>
                         <td rowspan="3" class="w-[40px] align-top p-0 border-r-2 border-black">
                         </td>
@@ -65,7 +68,7 @@
                     @endif
                     
                     <!-- Detail Score Val Kiri -->
-                    <td class="w-auto bg-white border-r-2 border-black"></td>
+                    <td class="w-auto bg-white border-r-2 border-black" id="val-blue-{{ $key }}-r{{ $round }}"></td>
                     
                     <!-- Detail Score Text Kiri -->
                     <td class="uppercase text-right px-3 w-[120px] bg-white whitespace-nowrap border-l-2 border-black">{{ $detail }}</td>
@@ -81,13 +84,14 @@
                     <td class="uppercase text-left px-3 w-[120px] bg-white whitespace-nowrap border-r-2 border-black">{{ $detail }}</td>
                     
                     <!-- Detail Score Val Kanan -->
-                    <td class="w-auto bg-white border-l-2 border-black"></td>
+                    <td class="w-auto bg-white border-l-2 border-black" id="val-red-{{ $key }}-r{{ $round }}"></td>
 
                     <!-- Total Kanan -->
                     @if($index == 0)
                         <td rowspan="3" class="w-[40px] align-top p-0 border-l-2 border-black">
                         </td>
                         <td rowspan="{{ count($details) }}" class="w-[40px] align-top p-0 border-l-2 border-black {{ $round < 3 ? 'border-b-[4px]' : '' }}">
+                            <span id="round-total-red-{{ $round }}"></span>
                         </td>
                     @elseif($index >= 3)
                         <td class="w-[40px] align-top p-0 border-l-2 border-black">

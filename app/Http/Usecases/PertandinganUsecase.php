@@ -201,4 +201,59 @@ class PertandinganUsecase extends Usecase
             return Response::buildErrorService($e->getMessage());
         }
     }
+
+    /*
+    |--------------------------------------------------------------------------
+    | FINALIZE MATCH
+    | Finalisasi pertandingan beserta hasil kemenangannya.
+    |--------------------------------------------------------------------------
+    */
+    public function finalizeMatch(int $id, array $resultData): array
+    {
+        $funcName = $this->className . ".finalizeMatch";
+
+        DB::beginTransaction();
+
+        try {
+            $scoreRecord = DB::table('skor_pertandingan')->where('id_pertandingan', $id)->first();
+            $skorBiru = $scoreRecord ? $scoreRecord->skor_biru : 0;
+            $skorMerah = $scoreRecord ? $scoreRecord->skor_merah : 0;
+
+            $updated = DB::table('pertandingan')
+                ->where('id', $id)
+                ->whereNull('deleted_at')
+                ->update([
+                    'status'            => 'finished',
+                    'winner_corner'     => $resultData['sudut_pemenang'] ?? null,
+                    'winner_name'       => $resultData['nama_pemenang'] ?? null,
+                    'winning_method'    => $resultData['jenis_kemenangan'] ?? null,
+                    'final_score_biru'  => $skorBiru,
+                    'final_score_merah' => $skorMerah,
+                    'finalized_by'      => session('user_id'),
+                    'finalized_at'      => now(),
+                    'updated_by'        => session('user_id'),
+                    'updated_at'        => now(),
+                ]);
+
+            if (!$updated) {
+                DB::rollback();
+                throw new Exception("FAILED FINALIZE MATCH");
+            }
+
+            // Hitung akurasi juri secara otomatis
+            $akurasiUsecase = new \App\Http\Usecases\AkurasiJuriUsecase();
+            $akurasiUsecase->calculateForMatch($id);
+
+            DB::commit();
+
+            return Response::buildSuccess(
+                message: "Pertandingan berhasil difinalisasi"
+            );
+        } catch (Exception $e) {
+            DB::rollback();
+            Log::error($e->getMessage(), ['func_name' => $funcName]);
+
+            return Response::buildErrorService($e->getMessage());
+        }
+    }
 }

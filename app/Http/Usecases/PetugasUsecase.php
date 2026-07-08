@@ -75,7 +75,7 @@ class PetugasUsecase extends Usecase
 
         try {
 
-            $data = DB::table('petugas')
+            $data = DB::table('data_petugas')
                 ->whereNull('deleted_at')
                 ->where('id', $id)
                 ->first([
@@ -395,6 +395,7 @@ class PetugasUsecase extends Usecase
                 ->delete();
 
             $inserts = [];
+            $juriNumber = 1;
             foreach ($assignments as $roleId => $petugasId) {
                 if (is_array($petugasId)) {
                     foreach ($petugasId as $juriId) {
@@ -403,7 +404,9 @@ class PetugasUsecase extends Usecase
                                 'id_pertandingan' => $idPertandingan,
                                 'id_petugas'      => $juriId,
                                 'id_role'         => $roleId,
+                                'posisi'          => 'juri_' . $juriNumber,
                             ];
+                            $juriNumber++;
                         }
                     }
                 } else if ($petugasId) {
@@ -411,6 +414,7 @@ class PetugasUsecase extends Usecase
                         'id_pertandingan' => $idPertandingan,
                         'id_petugas'      => $petugasId,
                         'id_role'         => $roleId,
+                        'posisi'          => null,
                     ];
                 }
             }

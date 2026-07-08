@@ -37,7 +37,11 @@
         let currentMatchId = '{{ $match->id ?? '' }}';
 
         function addScore(sudut, nilai) {
-            if(!currentMatchId) return;
+            if(!currentMatchId) {
+                console.warn('addScore aborted: currentMatchId is empty');
+                alert('Gagal: Tidak ada pertandingan aktif yang terpantau.');
+                return;
+            }
             fetch('{{ route('juri.input-score') }}', {
                 method: 'POST',
                 headers: {
@@ -51,11 +55,25 @@
                     id_kategori_nilai: nilai,
                     nilai: nilai
                 })
-            }).catch(console.error);
+            })
+            .then(res => res.json())
+            .then(data => {
+                if(!data.success) {
+                    console.error('addScore error:', data.message);
+                    alert('Gagal menambah nilai: ' + data.message);
+                }
+            })
+            .catch(err => {
+                console.error(err);
+                alert('Terjadi kesalahan koneksi.');
+            });
         }
 
         function deleteScore(sudut) {
-            if(!currentMatchId) return;
+            if(!currentMatchId) {
+                alert('Gagal: Tidak ada pertandingan aktif.');
+                return;
+            }
             fetch('{{ route('juri.delete-score') }}', {
                 method: 'POST',
                 headers: {
@@ -67,13 +85,27 @@
                     id_babak: currentRound,
                     sudut: sudut
                 })
-            }).catch(console.error);
+            })
+            .then(res => res.json())
+            .then(data => {
+                if(!data.success) {
+                    console.error('deleteScore error:', data.message);
+                    alert('Gagal menghapus nilai: ' + data.message);
+                }
+            })
+            .catch(err => {
+                console.error(err);
+                alert('Terjadi kesalahan koneksi.');
+            });
         }
         function updateJuriDisplay() {
             fetch('{{ route('operator.monitor-display.data') }}')
                 .then(res => res.json())
                 .then(res => {
                     if(res.success && res.match) {
+                        // Update Match ID dynamically
+                        currentMatchId = res.match.id || '';
+
                         // Update Data Peserta
                         document.getElementById('juri-nama-biru').innerText = res.match.sudut_biru && res.match.sudut_biru !== '-' ? res.match.sudut_biru : 'Nama Atlet';
                         document.getElementById('juri-sekolah-biru').innerText = res.match.kontingen_biru && res.match.kontingen_biru !== '-' ? res.match.kontingen_biru : 'Asal Kontingen';
@@ -93,45 +125,49 @@
                                 }
                             }
                         }
+
+                        // Fetch history using the updated match ID
+                        fetch('{{ route('juri.history') }}?id_pertandingan=' + currentMatchId + '&id_babak=' + currentRound)
+                            .then(res => res.json())
+                            .then(res => {
+                                if(res.success && res.data) {
+                                    const scores = res.data;
+                                    
+                                    const renderScores = (sudut, arr, roundId) => {
+                                        const box = document.getElementById(`score-${sudut}-${roundId}`);
+                                        if(!box) return;
+                                        box.innerHTML = ''; // clear
+                                        arr.forEach((s, idx) => {
+                                            let displayValue = s.nilai == 1 ? '1' : '2';
+                                            if(idx > 0) displayValue = '+' + displayValue;
+                                            const span = document.createElement('span');
+                                            span.className = sudut === 'biru' ? 'text-blue-800' : 'text-red-700';
+                                            if (s.status === 'pending') {
+                                                span.className += ' animate-pulse opacity-60';
+                                            } else if (s.is_sah === false) {
+                                                span.className += ' line-through opacity-50';
+                                            }
+                                            span.innerText = displayValue;
+                                            box.appendChild(span);
+                                        });
+                                    };
+
+                                    for(let r = 1; r <= 3; r++) {
+                                        const roundScores = scores.filter(s => s.id_babak == r);
+                                        const blueScores = roundScores.filter(s => s.sudut === 'biru');
+                                        const redScores = roundScores.filter(s => s.sudut === 'merah');
+                                        renderScores('biru', blueScores, r);
+                                        renderScores('merah', redScores, r);
+                                    }
+                                }
+                            })
+                            .catch(console.error);
+                    } else {
+                        // Clear match ID if no active match
+                        currentMatchId = '';
                     }
                 })
                 .catch(console.error);
-
-            if(currentMatchId) {
-                fetch('{{ route('juri.history') }}?id_pertandingan=' + currentMatchId + '&id_babak=' + currentRound)
-                    .then(res => res.json())
-                    .then(res => {
-                        if(res.success && res.data) {
-                            const scores = res.data;
-                            
-                            const renderScores = (sudut, arr, roundId) => {
-                                const box = document.getElementById(`score-${sudut}-${roundId}`);
-                                if(!box) return;
-                                box.innerHTML = ''; // clear
-                                arr.forEach((s, idx) => {
-                                    let displayValue = s.nilai == 1 ? '1' : '2';
-                                    if(idx > 0) displayValue = '+' + displayValue;
-                                    const span = document.createElement('span');
-                                    span.className = sudut === 'biru' ? 'text-blue-800' : 'text-red-700';
-                                    if (s.is_sah === false) {
-                                        span.className += ' line-through opacity-50';
-                                    }
-                                    span.innerText = displayValue;
-                                    box.appendChild(span);
-                                });
-                            };
-
-                            for(let r = 1; r <= 3; r++) {
-                                const roundScores = scores.filter(s => s.id_babak == r);
-                                const blueScores = roundScores.filter(s => s.sudut === 'biru');
-                                const redScores = roundScores.filter(s => s.sudut === 'merah');
-                                renderScores('biru', blueScores, r);
-                                renderScores('merah', redScores, r);
-                            }
-                        }
-                    })
-                    .catch(console.error);
-            }
         }
 
         setInterval(updateJuriDisplay, 1000);

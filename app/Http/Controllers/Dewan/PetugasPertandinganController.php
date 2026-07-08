@@ -76,4 +76,39 @@ class PetugasPertandinganController extends Controller
             ->route('dewan.petugas')
             ->with('success', $result['message'] ?? 'Berhasil menugaskan petugas ke pertandingan');
     }
+
+    public function runPetugas($id): RedirectResponse
+    {
+        // HARUS LOGIN
+        if (!session('user_id')) {
+            return redirect('/login/dewan');
+        }
+
+        // KHUSUS DEWAN (Role = 3)
+        if (session('role') != 3) {
+            abort(403, 'Akses ditolak');
+        }
+
+        $pertandinganUsecase = new \App\Http\Usecases\PertandinganUsecase();
+        
+        // Cek apakah ada pertandingan yang sedang berjalan
+        $activeMatch = $pertandinganUsecase->getActiveMatch();
+        if (isset($activeMatch['success']) && $activeMatch['success'] === true && isset($activeMatch['data']['id']) && $activeMatch['data']['id'] != $id) {
+            return redirect()
+                ->route('dewan.petugas')
+                ->with('error', 'Tidak dapat memulai. Masih ada pertandingan yang sedang berlangsung (Partai ' . $activeMatch['data']['partai'] . ').');
+        }
+
+        $result = $pertandinganUsecase->updateStatus($id, 'playing');
+
+        if (empty($result['success']) || $result['success'] !== true) {
+            return redirect()
+                ->back()
+                ->with('error', $result['message'] ?? 'Terjadi kesalahan saat memulai penugasan');
+        }
+
+        return redirect()
+            ->route('dewan.penilaian')
+            ->with('success', 'Petugas pertandingan berhasil dijalankan.');
+    }
 }

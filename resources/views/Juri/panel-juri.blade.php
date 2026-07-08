@@ -75,11 +75,11 @@
                 alt="Logo IPSI">
 
             <h2 class="text-xl font-extrabold text-black leading-tight">
-                {{ $nama }}
+                {{ $namaPosisi }}
             </h2>
 
             <p class="text-sm font-bold text-black">
-                {{ $nama }}
+                {{ $namaPetugas }}
             </p>
 
         </div>

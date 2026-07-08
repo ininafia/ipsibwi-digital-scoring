@@ -56,8 +56,7 @@
             const roundBtns = document.querySelectorAll('.round-btn');
             const btnRoundReset = document.getElementById('btn-round-reset');
             
-            const btnTimerStart = document.getElementById('btn-timer-start');
-            const btnTimerPause = document.getElementById('btn-timer-pause');
+            const btnTimerToggle = document.getElementById('btn-timer-toggle');
             const btnTimerReset = document.getElementById('btn-timer-reset');
 
             function updateDisplay() {
@@ -76,6 +75,15 @@
                         btn.classList.add('bg-cyan-100', 'hover:bg-cyan-200', 'text-black');
                     }
                 });
+
+                // Update Toggle Button UI
+                if (status === 'playing') {
+                    btnTimerToggle.innerHTML = '⏸ Pause';
+                    btnTimerToggle.className = 'transition font-bold text-lg px-6 py-3 rounded-xl min-w-[120px] bg-yellow-400 hover:bg-yellow-500 text-black';
+                } else {
+                    btnTimerToggle.innerHTML = '▶ Start';
+                    btnTimerToggle.className = 'transition font-bold text-lg px-6 py-3 rounded-xl min-w-[120px] bg-green-500 hover:bg-green-600 text-white';
+                }
             }
 
             function syncState() {
@@ -137,19 +145,20 @@
             });
 
             // Bind Timer Buttons
-            btnTimerStart.addEventListener('click', () => {
-                if (status === 'playing') return;
-                status = 'playing';
-                startInterval();
-                syncState();
-            });
-
-            btnTimerPause.addEventListener('click', () => {
-                status = 'paused';
-                if (timerInterval) {
-                    clearInterval(timerInterval);
-                    timerInterval = null;
+            btnTimerToggle.addEventListener('click', () => {
+                if (status === 'playing') {
+                    // Pause it
+                    status = 'paused';
+                    if (timerInterval) {
+                        clearInterval(timerInterval);
+                        timerInterval = null;
+                    }
+                } else {
+                    // Start it
+                    status = 'playing';
+                    startInterval();
                 }
+                updateDisplay();
                 syncState();
             });
 

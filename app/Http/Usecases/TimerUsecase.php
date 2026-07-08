@@ -6,34 +6,51 @@ use Illuminate\Support\Facades\Cache;
 
 class TimerUsecase extends Usecase
 {
-    private $cacheKey = 'current_timer_state';
-
-    public function syncState(array $data)
+    private function getCacheKey(int $id_pertandingan): string
     {
-        $state = Cache::get($this->cacheKey, [
+        return 'current_timer_state_' . $id_pertandingan;
+    }
+
+    public function syncState(int $id_pertandingan, array $data)
+    {
+        $cacheKey = $this->getCacheKey($id_pertandingan);
+        
+        $state = Cache::get($cacheKey, [
             'round' => 1,
             'time_remaining' => 120,
             'status' => 'stopped'
         ]);
 
         if (isset($data['round'])) {
-            $state['round'] = (int) $data['round'];
+            $round = (int) $data['round'];
+            if ($round >= 1 && $round <= 3) {
+                $state['round'] = $round;
+            }
         }
+        
         if (isset($data['time_remaining'])) {
-            $state['time_remaining'] = (int) $data['time_remaining'];
+            $time = (int) $data['time_remaining'];
+            if ($time >= 0) {
+                $state['time_remaining'] = $time;
+            }
         }
+        
         if (isset($data['status'])) {
-            $state['status'] = $data['status'];
+            $status = $data['status'];
+            if (in_array($status, ['playing', 'paused', 'stopped'])) {
+                $state['status'] = $status;
+            }
         }
 
-        Cache::put($this->cacheKey, $state);
+        Cache::put($cacheKey, $state);
 
         return ['success' => true, 'state' => $state];
     }
 
-    public function getState()
+    public function getState(int $id_pertandingan)
     {
-        return Cache::get($this->cacheKey, [
+        $cacheKey = $this->getCacheKey($id_pertandingan);
+        return Cache::get($cacheKey, [
             'round' => 1,
             'time_remaining' => 120,
             'status' => 'stopped'

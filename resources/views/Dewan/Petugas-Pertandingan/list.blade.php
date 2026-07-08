@@ -69,7 +69,12 @@
                             <td class="border border-black py-3 text-black">{{ $item['juri2'] }}</td>
                             <td class="border border-black py-3 text-black">{{ $item['juri3'] }}</td>
                             <td class="border border-black py-3 text-black">
-                                <!-- Action kosong sesuai gambar -->
+                                <form action="{{ route('dewan.petugas.run', $item['id']) }}" method="POST">
+                                    @csrf
+                                    <button type="submit" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-1.5 px-3 rounded text-xs shadow flex items-center justify-center mx-auto gap-1">
+                                        <i class="fa-solid fa-play"></i> Mulai
+                                    </button>
+                                </form>
                             </td>
                         </tr>
                     @empty

@@ -3,11 +3,11 @@
     <!-- BIG SCORE -->
     <div class="flex h-[100px]">
         <div class="flex-1 bg-[#0000cc] flex items-center justify-center text-white text-[60px] font-bold leading-none pb-2">
-            8
+            <span id="grand-total-blue">0</span>
         </div>
         <div class="w-[5px] bg-white flex-shrink-0"></div>
         <div class="flex-1 bg-[#cc0000] flex items-center justify-center text-white text-[60px] font-bold leading-none pb-2">
-            8
+            <span id="grand-total-red">0</span>
         </div>
     </div>
 
@@ -18,7 +18,7 @@
     
     <!-- PEMENANG VALUE -->
     <div class="bg-[#e5e5e5] text-black flex items-center justify-center py-3 text-sm font-medium border-b-[4px] border-black">
-        Waiting....
+        <span id="pemenang-value">Waiting....</span>
     </div>
 
     <!-- TIMER LABEL -->
@@ -28,7 +28,7 @@
     
     <!-- TIMER VALUE -->
     <div class="bg-[#e5e5e5] text-black flex items-center justify-center h-[90px]">
-        <span class="text-[45px] font-bold leading-none tracking-widest">00 : 00</span>
+        <span id="timer-value" class="text-[45px] font-bold leading-none tracking-widest">00 : 00</span>
     </div>
 
 </div>

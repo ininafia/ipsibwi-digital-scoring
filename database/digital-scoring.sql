@@ -44,8 +44,10 @@ VALUES
 ('dewan',    '$2y$12$Jpvw3CNJEnZlU0aB3y8gne1tTsjTPm/m0Oa2p5d79K1Sf//N2704W', 3, 1, NOW()),
 ('timer',    '$2y$12$Jpvw3CNJEnZlU0aB3y8gne1tTsjTPm/m0Oa2p5d79K1Sf//N2704W', 4, 1, NOW()),
 ('juri1',    '$2y$12$Jpvw3CNJEnZlU0aB3y8gne1tTsjTPm/m0Oa2p5d79K1Sf//N2704W', 5, 1, NOW()),
-('juri2',    '$2y$12$Jpvw3CNJEnZlU0aB3y8gne1tTsjTPm/m0Oa2p5d79K1Sf//N2704W', 6, 1, NOW()),
-('juri3',    '$2y$12$Jpvw3CNJEnZlU0aB3y8gne1tTsjTPm/m0Oa2p5d79K1Sf//N2704W', 7, 1, NOW());
+('juri2',    '$2y$12$Jpvw3CNJEnZlU0aB3y8gne1tTsjTPm/m0Oa2p5d79K1Sf//N2704W', 5, 1, NOW()),
+('juri3',    '$2y$12$Jpvw3CNJEnZlU0aB3y8gne1tTsjTPm/m0Oa2p5d79K1Sf//N2704W', 5, 1, NOW()),
+('wasit',    '$2y$12$Jpvw3CNJEnZlU0aB3y8gne1tTsjTPm/m0Oa2p5d79K1Sf//N2704W', 6, 1, NOW()),
+('dt',       '$2y$12$Jpvw3CNJEnZlU0aB3y8gne1tTsjTPm/m0Oa2p5d79K1Sf//N2704W', 7, 1, NOW());
 
 
 -- =========================================
@@ -59,6 +61,18 @@ CREATE TABLE data_petugas (
   id_user INT NOT NULL,
   FOREIGN KEY (id_user) REFERENCES users(id)
 ) ENGINE=InnoDB;
+
+-- default data_petugas (sesuaikan dengan default users id)
+-- Asumsi id users: 1=operator, 2=ketua, 3=dewan, 4=timer, 5=juri1, 6=juri2, 7=juri3, 8=wasit, 9=dt
+INSERT INTO data_petugas (nama, id_user)
+VALUES
+('Ketua Test', 2),
+('Dewan Test', 3),
+('Juri 1 Test', 5),
+('Juri 2 Test', 6),
+('Juri 3 Test', 7),
+('Wasit Test', 8),
+('DT Test', 9);
 
 
 -- =========================================
@@ -90,6 +104,13 @@ CREATE TABLE pertandingan (
     sudut_merah VARCHAR(100) NULL,
     kontingen_merah VARCHAR(100) NULL,
     status ENUM('waiting', 'playing', 'finished', 'final') DEFAULT 'waiting',
+    winner_corner VARCHAR(255) NULL,
+    winner_name VARCHAR(255) NULL,
+    winning_method VARCHAR(255) NULL,
+    final_score_biru INT NULL,
+    final_score_merah INT NULL,
+    finalized_by INT NULL,
+    finalized_at TIMESTAMP NULL,
     created_by INT NULL,
     updated_by INT NULL,
     deleted_by INT NULL,
@@ -109,6 +130,7 @@ CREATE TABLE petugas_pertandingan (
   id_petugas INT NOT NULL,
   id_pertandingan INT NOT NULL,
   id_role INT NOT NULL,
+  posisi VARCHAR(255) NULL,
   FOREIGN KEY (id_petugas) REFERENCES data_petugas(id),
   FOREIGN KEY (id_pertandingan) REFERENCES pertandingan(id),
   FOREIGN KEY (id_role) REFERENCES roles(id)
@@ -155,6 +177,14 @@ CREATE TABLE skor_pertandingan (
     id_pertandingan INT NOT NULL,
     skor_merah INT DEFAULT 0,
     skor_biru INT DEFAULT 0,
+    binaan_biru INT DEFAULT 0,
+    binaan_merah INT DEFAULT 0,
+    teguran_biru INT DEFAULT 0,
+    teguran_merah INT DEFAULT 0,
+    peringatan_biru INT DEFAULT 0,
+    peringatan_merah INT DEFAULT 0,
+    jatuhan_biru INT DEFAULT 0,
+    jatuhan_merah INT DEFAULT 0,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (id_pertandingan) REFERENCES pertandingan(id)
 ) ENGINE=InnoDB;

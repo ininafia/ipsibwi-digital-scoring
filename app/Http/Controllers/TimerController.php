@@ -40,12 +40,32 @@ class TimerController extends Controller
     {
         if (session('role') != 4) return response()->json(['error' => 'Unauthorized'], 403);
         
+        $matchId = $request->input('id_pertandingan');
+        if (!$matchId) {
+            $match = \Illuminate\Support\Facades\DB::table('pertandingan')
+                ->where('status', 'playing')
+                ->whereNull('deleted_at')
+                ->first();
+            if (!$match) return response()->json(['error' => 'No active match'], 404);
+            $matchId = $match->id;
+        }
+
         $data = $request->only(['round', 'time_remaining', 'status']);
-        return response()->json($this->usecase->syncState($data));
+        return response()->json($this->usecase->syncState($matchId, $data));
     }
 
-    public function getState()
+    public function getState(\Illuminate\Http\Request $request)
     {
-        return response()->json($this->usecase->getState());
+        $matchId = $request->input('id_pertandingan');
+        if (!$matchId) {
+            $match = \Illuminate\Support\Facades\DB::table('pertandingan')
+                ->where('status', 'playing')
+                ->whereNull('deleted_at')
+                ->first();
+            if (!$match) return response()->json(['error' => 'No active match'], 404);
+            $matchId = $match->id;
+        }
+
+        return response()->json($this->usecase->getState($matchId));
     }
 }
