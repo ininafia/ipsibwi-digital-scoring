@@ -74,7 +74,7 @@
         .then(data => {
             if(!data.success) {
                 console.error('Gagal: ' + data.message);
-                // alert('Gagal: ' + data.message); // Uncomment jika ingin tetap menampilkan error
+                alert('Gagal: ' + data.message);
             }
         })
         .catch(err => {
