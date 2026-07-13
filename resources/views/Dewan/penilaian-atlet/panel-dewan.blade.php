@@ -8,14 +8,14 @@
                 <button onclick="sendDewanAction('del-jatuhan', 'biru', this)" class="bg-black hover:bg-gray-800 text-white font-bold py-3 px-2 rounded flex-1 text-[13px] shadow border border-gray-700 transition-all active:scale-95">DEL JATUHAN</button>
             </div>
             <div class="flex gap-2">
-                <button id="btn-binaan-biru" onclick="sendDewanAction('binaan', 'biru', this)" class="bg-[#100bd3] hover:bg-blue-800 text-white font-bold py-3 px-2 rounded w-[calc(50%-0.25rem)] text-[13px] shadow disabled:opacity-50 disabled:cursor-not-allowed transition-all active:scale-95">BINAAN</button>
+                <button id="btn-binaan-biru" onclick="sendDewanAction('binaan', 'biru', this)" class="bg-[#100bd3] hover:bg-blue-800 text-white font-bold py-3 px-2 rounded w-[calc(50%-0.25rem)] text-[13px] shadow transition-all active:scale-95">BINAAN</button>
             </div>
             <div class="flex gap-2">
-                <button id="btn-teguran-biru" onclick="sendDewanAction('teguran', 'biru', this)" class="bg-[#100bd3] hover:bg-blue-800 text-white font-bold py-3 px-2 rounded flex-1 text-[13px] shadow disabled:opacity-50 disabled:cursor-not-allowed transition-all active:scale-95">TEGURAN</button>
+                <button id="btn-teguran-biru" onclick="sendDewanAction('teguran', 'biru', this)" class="bg-[#100bd3] hover:bg-blue-800 text-white font-bold py-3 px-2 rounded flex-1 text-[13px] shadow transition-all active:scale-95">TEGURAN</button>
                 <button onclick="sendDewanAction('del-hukuman', 'biru', this)" class="bg-[#100bd3] hover:bg-blue-800 text-white font-bold py-3 px-2 rounded flex-1 text-[13px] shadow transition-all active:scale-95">DEL HUKUMAN</button>
             </div>
             <div class="flex gap-2">
-                <button id="btn-peringatan-biru" onclick="sendDewanAction('peringatan', 'biru', this)" class="bg-[#100bd3] hover:bg-blue-800 text-white font-bold py-3 px-2 rounded w-[calc(50%-0.25rem)] text-[13px] shadow disabled:opacity-50 disabled:cursor-not-allowed transition-all active:scale-95">PERINGATAN</button>
+                <button id="btn-peringatan-biru" onclick="sendDewanAction('peringatan', 'biru', this)" class="bg-[#100bd3] hover:bg-blue-800 text-white font-bold py-3 px-2 rounded w-[calc(50%-0.25rem)] text-[13px] shadow transition-all active:scale-95">PERINGATAN</button>
             </div>
         </div>
 
@@ -35,14 +35,14 @@
                 <button onclick="sendDewanAction('jatuhan', 'merah', this)" class="bg-[#cc0000] hover:bg-red-800 text-white font-bold py-3 px-2 rounded flex-1 text-[13px] shadow transition-all active:scale-95">JATUHAN</button>
             </div>
             <div class="flex gap-2 w-full justify-end">
-                <button id="btn-binaan-merah" onclick="sendDewanAction('binaan', 'merah', this)" class="bg-[#cc0000] hover:bg-red-800 text-white font-bold py-3 px-2 rounded w-[calc(50%-0.25rem)] text-[13px] shadow disabled:opacity-50 disabled:cursor-not-allowed transition-all active:scale-95">BINAAN</button>
+                <button id="btn-binaan-merah" onclick="sendDewanAction('binaan', 'merah', this)" class="bg-[#cc0000] hover:bg-red-800 text-white font-bold py-3 px-2 rounded w-[calc(50%-0.25rem)] text-[13px] shadow transition-all active:scale-95">BINAAN</button>
             </div>
             <div class="flex gap-2 w-full justify-end">
                 <button onclick="sendDewanAction('del-hukuman', 'merah', this)" class="bg-[#100bd3] hover:bg-blue-800 text-white font-bold py-3 px-2 rounded flex-1 text-[13px] shadow transition-all active:scale-95">DEL HUKUMAN</button>
-                <button id="btn-teguran-merah" onclick="sendDewanAction('teguran', 'merah', this)" class="bg-[#cc0000] hover:bg-red-800 text-white font-bold py-3 px-2 rounded flex-1 text-[13px] shadow disabled:opacity-50 disabled:cursor-not-allowed transition-all active:scale-95">TEGURAN</button>
+                <button id="btn-teguran-merah" onclick="sendDewanAction('teguran', 'merah', this)" class="bg-[#cc0000] hover:bg-red-800 text-white font-bold py-3 px-2 rounded flex-1 text-[13px] shadow transition-all active:scale-95">TEGURAN</button>
             </div>
             <div class="flex gap-2 w-full justify-end">
-                <button id="btn-peringatan-merah" onclick="sendDewanAction('peringatan', 'merah', this)" class="bg-[#cc0000] hover:bg-red-800 text-white font-bold py-3 px-2 rounded w-[calc(50%-0.25rem)] text-[13px] shadow disabled:opacity-50 disabled:cursor-not-allowed transition-all active:scale-95">PERINGATAN</button>
+                <button id="btn-peringatan-merah" onclick="sendDewanAction('peringatan', 'merah', this)" class="bg-[#cc0000] hover:bg-red-800 text-white font-bold py-3 px-2 rounded w-[calc(50%-0.25rem)] text-[13px] shadow transition-all active:scale-95">PERINGATAN</button>
             </div>
         </div>
 
