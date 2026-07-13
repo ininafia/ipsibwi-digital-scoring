@@ -195,6 +195,11 @@ class PenilaianAtletUsecase extends Usecase
 
             if ($skorRecord) {
                 $currentTeguran = $skorRecord->{$teguranField};
+                $currentBinaan = $skorRecord->{'binaan_' . $sudut};
+
+                if ($currentBinaan < 2) {
+                    return Response::buildErrorService("Harus menyelesaikan Binaan (2x) terlebih dahulu sebelum memberikan Teguran untuk sudut {$sudut}");
+                }
 
                 if ($currentTeguran >= 2) {
                     return Response::buildErrorService("Teguran maksimal 2 kali untuk sudut {$sudut}");
@@ -210,18 +215,7 @@ class PenilaianAtletUsecase extends Usecase
                         'updated_at' => now(),
                     ]);
             } else {
-                DB::table('skor_pertandingan')->insert([
-                    'id_pertandingan' => $id_pertandingan,
-                    'skor_biru' => $sudut === 'biru' ? -1 : 0,
-                    'skor_merah' => $sudut === 'merah' ? -1 : 0,
-                    'binaan_biru' => 0,
-                    'binaan_merah' => 0,
-                    'teguran_biru' => $sudut === 'biru' ? 1 : 0,
-                    'teguran_merah' => $sudut === 'merah' ? 1 : 0,
-                    'jatuhan_biru' => 0,
-                    'jatuhan_merah' => 0,
-                    'updated_at' => now(),
-                ]);
+                return Response::buildErrorService("Harus menyelesaikan Binaan (2x) terlebih dahulu sebelum memberikan Teguran untuk sudut {$sudut}");
             }
 
             DB::commit();
@@ -256,6 +250,11 @@ class PenilaianAtletUsecase extends Usecase
 
             if ($skorRecord) {
                 $currentPeringatan = $skorRecord->{$peringatanField};
+                $currentTeguran = $skorRecord->{'teguran_' . $sudut};
+
+                if ($currentTeguran < 2) {
+                    return Response::buildErrorService("Harus menyelesaikan Teguran (2x) terlebih dahulu sebelum memberikan Peringatan untuk sudut {$sudut}");
+                }
 
                 if ($currentPeringatan >= 2) {
                     return Response::buildErrorService("Peringatan maksimal 2 kali untuk sudut {$sudut}");
@@ -271,20 +270,7 @@ class PenilaianAtletUsecase extends Usecase
                         'updated_at' => now(),
                     ]);
             } else {
-                DB::table('skor_pertandingan')->insert([
-                    'id_pertandingan' => $id_pertandingan,
-                    'skor_biru' => $sudut === 'biru' ? -5 : 0,
-                    'skor_merah' => $sudut === 'merah' ? -5 : 0,
-                    'binaan_biru' => 0,
-                    'binaan_merah' => 0,
-                    'teguran_biru' => 0,
-                    'teguran_merah' => 0,
-                    'peringatan_biru' => $sudut === 'biru' ? 1 : 0,
-                    'peringatan_merah' => $sudut === 'merah' ? 1 : 0,
-                    'jatuhan_biru' => 0,
-                    'jatuhan_merah' => 0,
-                    'updated_at' => now(),
-                ]);
+                return Response::buildErrorService("Harus menyelesaikan Teguran (2x) terlebih dahulu sebelum memberikan Peringatan untuk sudut {$sudut}");
             }
 
             DB::commit();
