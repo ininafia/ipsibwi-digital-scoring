@@ -12,10 +12,10 @@
 
                 <!-- PUKULAN -->
                 <button
-                    onclick="addScore('biru', 1)"
+                    onclick="addScore('biru', 1, this)"
                     class="flex-1 xl:w-36 h-12 md:h-14 bg-blue-700 hover:bg-blue-800
                            rounded-md text-white font-bold text-[10px] md:text-[11px]
-                           shadow transition flex items-center
+                           shadow transition-all active:scale-95 flex items-center
                            justify-center gap-1 md:gap-2">
 
                     <!-- ICON -->
@@ -31,10 +31,10 @@
 
                 <!-- TENDANGAN -->
                 <button
-                    onclick="addScore('biru', 2)"
+                    onclick="addScore('biru', 2, this)"
                     class="flex-1 xl:w-36 h-12 md:h-14 bg-blue-700 hover:bg-blue-800
                            rounded-md text-white font-bold text-[10px] md:text-[11px]
-                           shadow transition flex items-center
+                           shadow transition-all active:scale-95 flex items-center
                            justify-center gap-1 md:gap-2">
 
                     <!-- ICON -->
@@ -52,10 +52,10 @@
 
             <!-- DELETE -->
             <button
-                onclick="deleteScore('biru')"
+                onclick="deleteScore('biru', this)"
                 class="w-full xl:w-36 h-10 xl:h-14 bg-blue-700 hover:bg-blue-800
                        rounded-md text-white font-bold text-[10px] md:text-[11px]
-                       shadow transition flex items-center
+                       shadow transition-all active:scale-95 flex items-center
                        justify-center mt-1 xl:mt-0">
 
                 <span>DELETE SCORE</span>
@@ -91,10 +91,10 @@
 
             <!-- DELETE -->
             <button
-                onclick="deleteScore('merah')"
+                onclick="deleteScore('merah', this)"
                 class="w-full xl:w-36 h-10 xl:h-14 bg-red-600 hover:bg-red-700
                        rounded-md text-white font-bold text-[10px] md:text-[11px]
-                       shadow transition flex items-center
+                       shadow transition-all active:scale-95 flex items-center
                        justify-center mb-1 xl:mb-0 hidden xl:flex">
 
                 <span>DELETE SCORE</span>
@@ -106,10 +106,10 @@
 
                 <!-- PUKULAN -->
                 <button
-                    onclick="addScore('merah', 1)"
+                    onclick="addScore('merah', 1, this)"
                     class="flex-1 xl:w-36 h-12 md:h-14 bg-red-600 hover:bg-red-700
                            rounded-md text-white font-bold text-[10px] md:text-[11px]
-                           shadow transition flex items-center
+                           shadow transition-all active:scale-95 flex items-center
                            justify-center gap-1 md:gap-2">
 
                     <img
@@ -123,10 +123,10 @@
 
                 <!-- TENDANGAN -->
                 <button
-                    onclick="addScore('merah', 2)"
+                    onclick="addScore('merah', 2, this)"
                     class="flex-1 xl:w-36 h-12 md:h-14 bg-red-600 hover:bg-red-700
                            rounded-md text-white font-bold text-[10px] md:text-[11px]
-                           shadow transition flex items-center
+                           shadow transition-all active:scale-95 flex items-center
                            justify-center gap-1 md:gap-2">
 
                     <img
@@ -142,10 +142,10 @@
             
             <!-- DELETE MOBILE -->
             <button
-                onclick="deleteScore('merah')"
+                onclick="deleteScore('merah', this)"
                 class="w-full xl:w-36 h-10 xl:h-14 bg-red-600 hover:bg-red-700
                        rounded-md text-white font-bold text-[10px] md:text-[11px]
-                       shadow transition flex items-center
+                       shadow transition-all active:scale-95 flex items-center
                        justify-center mt-1 xl:mt-0 xl:hidden">
 
                 <span>DELETE SCORE</span>

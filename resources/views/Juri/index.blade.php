@@ -36,7 +36,14 @@
 
         let currentMatchId = '{{ $match->id ?? '' }}';
 
-        function addScore(sudut, nilai) {
+        function addScore(sudut, nilai, btn) {
+            if(btn) {
+                btn.classList.add('opacity-75', 'scale-95');
+                setTimeout(() => {
+                    btn.classList.remove('opacity-75', 'scale-95');
+                }, 150);
+            }
+
             if(!currentMatchId) {
                 console.warn('addScore aborted: currentMatchId is empty');
                 alert('Gagal: Tidak ada pertandingan aktif yang terpantau.');
@@ -61,6 +68,10 @@
                 if(!data.success) {
                     console.error('addScore error:', data.message);
                     alert('Gagal menambah nilai: ' + data.message);
+                } else {
+                    if (typeof updateJuriDisplay === 'function') {
+                        updateJuriDisplay();
+                    }
                 }
             })
             .catch(err => {
@@ -69,7 +80,14 @@
             });
         }
 
-        function deleteScore(sudut) {
+        function deleteScore(sudut, btn) {
+            if(btn) {
+                btn.classList.add('opacity-75', 'scale-95');
+                setTimeout(() => {
+                    btn.classList.remove('opacity-75', 'scale-95');
+                }, 150);
+            }
+
             if(!currentMatchId) {
                 alert('Gagal: Tidak ada pertandingan aktif.');
                 return;
@@ -91,6 +109,10 @@
                 if(!data.success) {
                     console.error('deleteScore error:', data.message);
                     alert('Gagal menghapus nilai: ' + data.message);
+                } else {
+                    if (typeof updateJuriDisplay === 'function') {
+                        updateJuriDisplay();
+                    }
                 }
             })
             .catch(err => {
