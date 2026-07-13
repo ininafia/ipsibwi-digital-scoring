@@ -1,7 +1,12 @@
 <aside
     x-show="open"
-    x-transition
-    class="w-[238px] bg-white border-r border-gray-200 flex flex-col shrink-0">
+    x-transition:enter="transition ease-out duration-300"
+    x-transition:enter-start="-translate-x-full"
+    x-transition:enter-end="translate-x-0"
+    x-transition:leave="transition ease-in duration-300"
+    x-transition:leave-start="translate-x-0"
+    x-transition:leave-end="-translate-x-full"
+    class="absolute z-40 md:relative h-full w-[238px] bg-white border-r border-gray-200 flex flex-col shrink-0">
 
     {{-- LOGO --}}
     <div class="h-[78px] flex items-center px-5 border-b border-gray-100">

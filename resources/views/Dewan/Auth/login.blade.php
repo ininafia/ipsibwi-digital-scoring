@@ -2,9 +2,9 @@
 
 @section('content')
 
-<div class="bg-white w-[420px] max-w-[90%] rounded-2xl shadow-md px-10 py-12">
+<div class="bg-white w-[420px] max-w-[90%] rounded-2xl shadow-md px-6 py-8 sm:px-10 sm:py-12">
 
-    <h1 class="text-3xl font-bold text-gray-900 mb-6 text-center">
+    <h1 class="text-2xl sm:text-3xl font-bold text-gray-900 mb-6 text-center">
         Login
     </h1>
 
