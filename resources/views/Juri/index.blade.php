@@ -8,7 +8,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
 
-<body class="bg-gray-200 min-h-screen font-sans overflow-hidden">
+<body class="bg-gray-200 min-h-screen font-sans overflow-x-hidden overflow-y-auto">
 
     {{-- HEADER --}}
     @include('Juri.header')
