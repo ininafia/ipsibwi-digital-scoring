@@ -14,12 +14,12 @@
     </p>
 
     {{-- CARD MENU --}}
-    <div class="flex flex-wrap gap-7 mt-14">
+    <div class="flex gap-7 mt-14">
 
         {{-- CARD OPERATOR --}}
         <a 
             href="{{ route('operator.tanding.index') }}"
-            class="w-full sm:w-[170px] rounded-[18px] bg-[#fdfdfd] border border-gray-300 shadow-md overflow-hidden hover:scale-105 transition duration-300 cursor-pointer"
+            class="w-[170px] rounded-[18px] bg-[#fdfdfd] border border-gray-300 shadow-md overflow-hidden hover:scale-105 transition duration-300 cursor-pointer"
         >
 
             {{-- ICON --}}
@@ -42,7 +42,7 @@
 
         {{-- CARD MONITOR DISPLAY --}}
         <a href="{{ route('operator.monitor-display') }}"
-            class="block w-full sm:w-[170px] rounded-[18px] bg-[#fdfdfd] border border-gray-300 shadow-md overflow-hidden hover:scale-105 transition duration-300 cursor-pointer">
+            class="block w-[170px] rounded-[18px] bg-[#fdfdfd] border border-gray-300 shadow-md overflow-hidden hover:scale-105 transition duration-300 cursor-pointer">
 
             {{-- ICON --}}
             <div class="h-[110px] flex items-center justify-center">

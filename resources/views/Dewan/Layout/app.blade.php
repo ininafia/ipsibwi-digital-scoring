@@ -11,12 +11,9 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 </head>
 
-<body x-data="{ open: window.innerWidth >= 768 }" @resize.window="open = window.innerWidth >= 768" class="bg-[#f4f4f4] min-h-screen font-[Poppins] overflow-hidden">
+<body x-data="{ open: true }" class="bg-[#f4f4f4] min-h-screen font-[Poppins]">
 
-<div class="flex min-h-screen relative">
-
-    <!-- MOBILE OVERLAY -->
-    <div x-show="open && window.innerWidth < 768" @click="open = false" x-transition.opacity class="fixed inset-0 bg-black/50 z-30 md:hidden"></div>
+<div class="flex min-h-screen">
 
     <!-- SIDEBAR -->
     @yield('sidebar')

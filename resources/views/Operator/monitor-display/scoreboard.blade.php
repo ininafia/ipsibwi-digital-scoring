@@ -20,8 +20,8 @@
 </div>
 
 <!-- Konten Utama (Scoreboard) -->
-<div class="flex-1 flex items-center justify-center py-2 px-2 w-full overflow-x-auto">
-    <div class="w-full min-w-[800px] max-w-[1300px] bg-white border border-gray-300 shadow-md p-2 lg:p-4">
+<div class="flex-1 flex items-center justify-center py-2 px-2 w-full">
+    <div class="w-full max-w-[1300px] bg-white border border-gray-300 shadow-md p-2 lg:p-4">
         
         @include('Operator.monitor-display.header')
 
