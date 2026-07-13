@@ -97,8 +97,8 @@
                             let btnPeringatan = document.getElementById('btn-peringatan-' + sudut);
 
                             if (btnBinaan) btnBinaan.disabled = (b >= 2);
-                            if (btnTeguran) btnTeguran.disabled = (b < 2 || t >= 2);
-                            if (btnPeringatan) btnPeringatan.disabled = (t < 2 || p >= 2);
+                            if (btnTeguran) btnTeguran.disabled = (t >= 2);
+                            if (btnPeringatan) btnPeringatan.disabled = (p >= 2);
                         });
                     }
                 })
