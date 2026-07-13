@@ -8,21 +8,21 @@
         <div class="flex flex-row items-stretch gap-2 order-2 md:order-1 w-full justify-center md:justify-start">
 
             <!-- TOMBOL (Kiri) -->
-            <div class="flex flex-col gap-2 w-1/2 xl:w-40">
+            <div class="flex flex-col gap-2 w-1/2 md:w-48 xl:w-56">
 
                 <!-- PUKULAN -->
                 <button
                     onclick="addScore('biru', 1, this)"
-                    class="w-full h-12 md:h-14 bg-blue-700 hover:bg-blue-800
-                           rounded-md text-white font-bold text-[10px] md:text-[11px]
+                    class="w-full h-14 md:h-16 xl:h-20 bg-blue-700 hover:bg-blue-800
+                           rounded-md text-white font-bold text-[12px] md:text-[14px] xl:text-[18px]
                            shadow transition-all active:scale-95 flex items-center
-                           justify-center gap-1 md:gap-2">
+                           justify-center gap-2 md:gap-3">
 
                     <!-- ICON -->
                     <img
                         src="{{ asset('images/icons/pukul 1.png') }}"
                         alt="Pukulan"
-                        class="w-5 h-5 md:w-7 md:h-7 object-contain">
+                        class="w-6 h-6 md:w-8 md:h-8 xl:w-12 xl:h-12 object-contain">
 
                     <!-- TEXT -->
                     <span>PUKULAN</span>
@@ -32,16 +32,16 @@
                 <!-- TENDANGAN -->
                 <button
                     onclick="addScore('biru', 2, this)"
-                    class="w-full h-12 md:h-14 bg-blue-700 hover:bg-blue-800
-                           rounded-md text-white font-bold text-[10px] md:text-[11px]
+                    class="w-full h-14 md:h-16 xl:h-20 bg-blue-700 hover:bg-blue-800
+                           rounded-md text-white font-bold text-[12px] md:text-[14px] xl:text-[18px]
                            shadow transition-all active:scale-95 flex items-center
-                           justify-center gap-1 md:gap-2">
+                           justify-center gap-2 md:gap-3">
 
                     <!-- ICON -->
                     <img
                         src="{{ asset('images/icons/tendang 2.png') }}"
                         alt="Tendangan"
-                        class="w-5 h-5 md:w-7 md:h-7 object-contain">
+                        class="w-6 h-6 md:w-8 md:h-8 xl:w-12 xl:h-12 object-contain">
 
                     <!-- TEXT -->
                     <span>TENDANGAN</span>
@@ -53,8 +53,8 @@
             <!-- DELETE (Kanan) -->
             <button
                 onclick="deleteScore('biru', this)"
-                class="w-1/2 xl:w-32 h-auto bg-blue-700 hover:bg-blue-800
-                       rounded-md text-white font-bold text-[10px] md:text-[11px]
+                class="w-1/2 md:w-48 xl:w-64 h-auto bg-blue-700 hover:bg-blue-800
+                       rounded-md text-white font-bold text-[12px] md:text-[14px] xl:text-[18px]
                        shadow transition-all active:scale-95 flex items-center
                        justify-center">
 
@@ -92,8 +92,8 @@
             <!-- DELETE (Kiri, Mirroring Biru) -->
             <button
                 onclick="deleteScore('merah', this)"
-                class="w-1/2 xl:w-32 h-auto bg-red-600 hover:bg-red-700
-                       rounded-md text-white font-bold text-[10px] md:text-[11px]
+                class="w-1/2 md:w-48 xl:w-64 h-auto bg-red-600 hover:bg-red-700
+                       rounded-md text-white font-bold text-[12px] md:text-[14px] xl:text-[18px]
                        shadow transition-all active:scale-95 flex items-center
                        justify-center">
 
@@ -102,20 +102,20 @@
             </button>
 
             <!-- TOMBOL (Kanan) -->
-            <div class="flex flex-col gap-2 w-1/2 xl:w-40">
+            <div class="flex flex-col gap-2 w-1/2 md:w-48 xl:w-56">
 
                 <!-- PUKULAN -->
                 <button
                     onclick="addScore('merah', 1, this)"
-                    class="w-full h-12 md:h-14 bg-red-600 hover:bg-red-700
-                           rounded-md text-white font-bold text-[10px] md:text-[11px]
+                    class="w-full h-14 md:h-16 xl:h-20 bg-red-600 hover:bg-red-700
+                           rounded-md text-white font-bold text-[12px] md:text-[14px] xl:text-[18px]
                            shadow transition-all active:scale-95 flex items-center
-                           justify-center gap-1 md:gap-2">
+                           justify-center gap-2 md:gap-3">
 
                     <img
                         src="{{ asset('images/icons/pukul 1.png') }}"
                         alt="Pukulan"
-                        class="w-5 h-5 md:w-7 md:h-7 object-contain">
+                        class="w-6 h-6 md:w-8 md:h-8 xl:w-12 xl:h-12 object-contain">
 
                     <span>PUKULAN</span>
 
@@ -124,15 +124,15 @@
                 <!-- TENDANGAN -->
                 <button
                     onclick="addScore('merah', 2, this)"
-                    class="w-full h-12 md:h-14 bg-red-600 hover:bg-red-700
-                           rounded-md text-white font-bold text-[10px] md:text-[11px]
+                    class="w-full h-14 md:h-16 xl:h-20 bg-red-600 hover:bg-red-700
+                           rounded-md text-white font-bold text-[12px] md:text-[14px] xl:text-[18px]
                            shadow transition-all active:scale-95 flex items-center
-                           justify-center gap-1 md:gap-2">
+                           justify-center gap-2 md:gap-3">
 
                     <img
                         src="{{ asset('images/icons/tendang 2.png') }}"
                         alt="Tendangan"
-                        class="w-5 h-5 md:w-7 md:h-7 object-contain">
+                        class="w-6 h-6 md:w-8 md:h-8 xl:w-12 xl:h-12 object-contain">
 
                     <span>TENDANGAN</span>
 
