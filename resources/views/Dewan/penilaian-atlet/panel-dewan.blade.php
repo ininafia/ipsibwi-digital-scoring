@@ -51,11 +51,12 @@
 
 <script>
     function sendDewanAction(action, sudut, btn) {
-        let originalText = '';
         if(btn) {
-            originalText = btn.innerText;
-            btn.innerText = '...';
             btn.classList.add('opacity-75', 'scale-95');
+            // Remove the scale effect after a short delay for tactile feedback
+            setTimeout(() => {
+                btn.classList.remove('opacity-75', 'scale-95');
+            }, 150);
         }
 
         let url = '';
@@ -82,18 +83,15 @@
             if(!data.success) {
                 console.error('Gagal: ' + data.message);
                 alert('Gagal: ' + data.message);
-            }
-            if(btn) {
-                btn.innerText = originalText;
-                btn.classList.remove('opacity-75', 'scale-95');
+            } else {
+                // Update UI immediately after successful action
+                if (typeof updateDewanUI === 'function') {
+                    updateDewanUI();
+                }
             }
         })
         .catch(err => {
             console.error(err);
-            if(btn) {
-                btn.innerText = originalText;
-                btn.classList.remove('opacity-75', 'scale-95');
-            }
         });
     }
 </script>
