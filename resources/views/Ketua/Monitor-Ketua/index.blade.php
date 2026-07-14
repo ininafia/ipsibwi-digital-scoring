@@ -55,6 +55,29 @@
             return String(m).padStart(2, '0') + ' : ' + String(s).padStart(2, '0');
         }
 
+        const awardColors = [
+            'bg-[#ff3b8f] text-white', // pink
+            'bg-[#ffcc00] text-black', // yellow
+            'bg-[#2d2d2d] text-white', // black
+            'bg-[#8b3dff] text-white', // purple
+            'bg-[#10b981] text-white', // green
+            'bg-[#f97316] text-white', // orange
+            'bg-[#0ea5e9] text-white', // light blue
+            'bg-[#eab308] text-white', // dark yellow
+            'bg-[#ec4899] text-white', // alternate pink
+            'bg-[#84cc16] text-white'  // lime
+        ];
+
+        function getColorForAward(awardId) {
+            if (!awardId) return 'bg-gray-400 text-white';
+            let hash = 0;
+            for (let i = 0; i < awardId.length; i++) {
+                hash = awardId.charCodeAt(i) + ((hash << 5) - hash);
+            }
+            const index = Math.abs(hash) % awardColors.length;
+            return awardColors[index];
+        }
+
         function renderEventBoxes(cellId, eventHistory, juriPos, round, athlete) {
             const cell = document.getElementById(cellId);
             if (!cell) return;
@@ -74,13 +97,37 @@
             let html = '<div class="evt-container">';
             events.forEach(evt => {
                 if (evt.sah) {
-                    // Sah: colored box with value
-                    const colorClass = athlete === 'blue' ? 'evt-sah-blue' : 'evt-sah-red';
-                    html += '<span class="evt-box ' + colorClass + '">' + evt.value + '</span>';
+                    // Sah: colored box based on award_id
+                    const colorClass = evt.award_id ? getColorForAward(evt.award_id) : (athlete === 'blue' ? 'evt-sah-blue' : 'evt-sah-red');
+                    html += `<span class="evt-box ${colorClass}">${evt.value}</span>`;
                 } else {
                     // Tidak sah: strikethrough style
-                    html += '<span class="evt-box evt-tidak-sah">' + evt.value + '</span>';
+                    html += `<span class="evt-box evt-tidak-sah">${evt.value}</span>`;
                 }
+            });
+            html += '</div>';
+            cell.innerHTML = html;
+        }
+
+        function renderAwardBoxes(cellId, awardHistory, round, athlete) {
+            const cell = document.getElementById(cellId);
+            if (!cell) return;
+
+            if (!awardHistory || !awardHistory[round] || !awardHistory[round][athlete]) {
+                cell.innerHTML = '';
+                return;
+            }
+
+            const events = awardHistory[round][athlete];
+            if (events.length === 0) {
+                cell.innerHTML = '';
+                return;
+            }
+
+            let html = '<div class="evt-container">';
+            events.forEach(evt => {
+                const colorClass = evt.award_id ? getColorForAward(evt.award_id) : (athlete === 'blue' ? 'evt-sah-blue' : 'evt-sah-red');
+                html += `<span class="evt-box ${colorClass}">${evt.value}</span>`;
             });
             html += '</div>';
             cell.innerHTML = html;
@@ -123,9 +170,16 @@
 
                     // === SCORE TOTALS PER ROUND ===
                     for (let r = 1; r <= 3; r++) {
+                        // Render kotak nilai tervalidasi untuk baris SCORE
+                        renderAwardBoxes('val-blue-score-r' + r, data.award_history, r, 'blue');
+                        renderAwardBoxes('val-red-score-r' + r, data.award_history, r, 'red');
+
                         const rt = data.round_totals[r];
-                        setText('val-blue-score-r' + r, rt ? rt.blue : '');
-                        setText('val-red-score-r' + r, rt ? rt.red : '');
+                        // Menampilkan Total Juri per ronde
+                        setText('juri-total-blue-' + r, rt ? rt.blue : '');
+                        setText('juri-total-red-' + r, rt ? rt.red : '');
+
+                        // Menampilkan Grand Total per ronde (untuk sementara nilainya disamakan atau biarkan seperti ini)
                         setText('round-total-blue-' + r, rt ? rt.blue : '');
                         setText('round-total-red-' + r, rt ? rt.red : '');
                     }

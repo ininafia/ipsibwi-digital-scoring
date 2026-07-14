@@ -39,7 +39,7 @@ class JuriController extends Controller
         return null;
     }
 
-    public function index(): View|Response|RedirectResponse
+    public function index(Request $request): View|Response|RedirectResponse
     {
         // HARUS LOGIN
         if (!session('user_id')) {
@@ -53,32 +53,35 @@ class JuriController extends Controller
             abort(403, 'Akses ditolak');
         }
 
+        $routeName = $request->route()->getName(); // 'juri1', 'juri2', 'juri3'
+        $juriNumber = str_replace('juri', '', $routeName); // '1', '2', '3'
+        // Default fallback to 1 if route is something else
+        if (!in_array($juriNumber, ['1', '2', '3'])) {
+            $juriNumber = '1';
+        }
+        $posisiTarget = 'juri_' . $juriNumber;
+
         $match = DB::table('pertandingan')
             ->where('status', 'playing')
             ->whereNull('deleted_at')
             ->first();
 
-        $namaPosisi = 'JURI';
-        $namaPetugas = 'JURI';
+        $namaPosisi = 'JURI ' . $juriNumber;
+        $namaPetugas = 'MENUNGGU PENUGASAN';
+        
         if ($match) {
-            $petugas = DB::table('data_petugas')
-                ->where('id_user', session('user_id'))
-                ->first();
-            
-            if ($petugas) {
-                $namaPetugas = strtoupper($petugas->nama);
-                $posisi = DB::table('petugas_pertandingan')
-                    ->where('id_pertandingan', $match->id)
-                    ->where('id_petugas', $petugas->id)
-                    ->value('posisi');
+            $assignment = DB::table('petugas_pertandingan')
+                ->join('data_petugas', 'petugas_pertandingan.id_petugas', '=', 'data_petugas.id')
+                ->where('petugas_pertandingan.id_pertandingan', $match->id)
+                ->where('petugas_pertandingan.posisi', $posisiTarget)
+                ->first(['data_petugas.nama']);
                 
-                if ($posisi) {
-                    $namaPosisi = strtoupper(str_replace('_', ' ', $posisi));
-                }
+            if ($assignment) {
+                $namaPetugas = strtoupper($assignment->nama);
             }
         }
 
-        return view('Juri.index', compact('namaPosisi', 'namaPetugas', 'match'));
+        return view('Juri.index', compact('namaPosisi', 'namaPetugas', 'match', 'posisiTarget', 'juriNumber'));
     }
 
     public function inputScore(Request $request)
@@ -86,8 +89,6 @@ class JuriController extends Controller
         if ($unauthorized = $this->requireJuriAjax()) {
             return $unauthorized;
         }
-
-        $request->merge(['id_petugas_pertandingan' => session('user_id')]);
         return response()->json($this->usecase->inputScore($request));
     }
 
@@ -96,8 +97,6 @@ class JuriController extends Controller
         if ($unauthorized = $this->requireJuriAjax()) {
             return $unauthorized;
         }
-
-        $request->merge(['id_petugas_pertandingan' => session('user_id')]);
         return response()->json($this->usecase->deleteScore($request));
     }
 
@@ -106,8 +105,6 @@ class JuriController extends Controller
         if ($unauthorized = $this->requireJuriAjax()) {
             return $unauthorized;
         }
-
-        $request->merge(['id_petugas_pertandingan' => session('user_id')]);
         return response()->json($this->usecase->getHistory($request));
     }
 }

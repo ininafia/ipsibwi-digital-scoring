@@ -111,14 +111,44 @@ class PenilaianAtletController extends Controller
         return response()->json(['success' => true, 'message' => $res['message']]);
     }
 
-    public function delHukuman(\Illuminate\Http\Request $request, \App\Http\Usecases\PenilaianAtletUsecase $penilaianAtletUsecase)
+    public function delBinaan(\Illuminate\Http\Request $request, \App\Http\Usecases\PenilaianAtletUsecase $penilaianAtletUsecase)
     {
         $request->validate([
             'id_pertandingan' => 'required|integer',
             'sudut' => 'required|in:biru,merah'
         ]);
 
-        $res = $penilaianAtletUsecase->delHukuman($request->id_pertandingan, $request->sudut);
+        $res = $penilaianAtletUsecase->delBinaan($request->id_pertandingan, $request->sudut);
+        if (!$res['success']) {
+            return response()->json(['success' => false, 'message' => $res['message']], 400);
+        }
+
+        return response()->json(['success' => true, 'message' => $res['message']]);
+    }
+
+    public function delTeguran(\Illuminate\Http\Request $request, \App\Http\Usecases\PenilaianAtletUsecase $penilaianAtletUsecase)
+    {
+        $request->validate([
+            'id_pertandingan' => 'required|integer',
+            'sudut' => 'required|in:biru,merah'
+        ]);
+
+        $res = $penilaianAtletUsecase->delTeguran($request->id_pertandingan, $request->sudut);
+        if (!$res['success']) {
+            return response()->json(['success' => false, 'message' => $res['message']], 400);
+        }
+
+        return response()->json(['success' => true, 'message' => $res['message']]);
+    }
+
+    public function delPeringatan(\Illuminate\Http\Request $request, \App\Http\Usecases\PenilaianAtletUsecase $penilaianAtletUsecase)
+    {
+        $request->validate([
+            'id_pertandingan' => 'required|integer',
+            'sudut' => 'required|in:biru,merah'
+        ]);
+
+        $res = $penilaianAtletUsecase->delPeringatan($request->id_pertandingan, $request->sudut);
         if (!$res['success']) {
             return response()->json(['success' => false, 'message' => $res['message']], 400);
         }

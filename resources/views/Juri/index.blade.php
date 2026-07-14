@@ -33,8 +33,8 @@
 
     <script>
         let currentRound = 1;
-
         let currentMatchId = '{{ $match->id ?? '' }}';
+        let currentJuriPosition = '{{ $posisiTarget ?? '' }}';
 
         function addScore(sudut, nilai) {
             if(!currentMatchId) {
@@ -42,6 +42,7 @@
                 alert('Gagal: Tidak ada pertandingan aktif yang terpantau.');
                 return;
             }
+
             fetch('{{ route('juri.input-score') }}', {
                 method: 'POST',
                 headers: {
@@ -53,7 +54,8 @@
                     id_babak: currentRound,
                     sudut: sudut,
                     id_kategori_nilai: nilai,
-                    nilai: nilai
+                    nilai: nilai,
+                    juri_position: currentJuriPosition
                 })
             })
             .then(res => res.json())
@@ -61,6 +63,8 @@
                 if(!data.success) {
                     console.error('addScore error:', data.message);
                     alert('Gagal menambah nilai: ' + data.message);
+                } else {
+                    updateJuriDisplay();
                 }
             })
             .catch(err => {
@@ -74,6 +78,7 @@
                 alert('Gagal: Tidak ada pertandingan aktif.');
                 return;
             }
+
             fetch('{{ route('juri.delete-score') }}', {
                 method: 'POST',
                 headers: {
@@ -83,7 +88,8 @@
                 body: JSON.stringify({
                     id_pertandingan: currentMatchId,
                     id_babak: currentRound,
-                    sudut: sudut
+                    sudut: sudut,
+                    juri_position: currentJuriPosition
                 })
             })
             .then(res => res.json())
@@ -91,6 +97,8 @@
                 if(!data.success) {
                     console.error('deleteScore error:', data.message);
                     alert('Gagal menghapus nilai: ' + data.message);
+                } else {
+                    updateJuriDisplay();
                 }
             })
             .catch(err => {
@@ -127,11 +135,16 @@
                         }
 
                         // Fetch history using the updated match ID
-                        fetch('{{ route('juri.history') }}?id_pertandingan=' + currentMatchId + '&id_babak=' + currentRound)
+                        fetch('{{ route('juri.history') }}?id_pertandingan=' + currentMatchId + '&id_babak=' + currentRound + '&juri_position=' + currentJuriPosition)
                             .then(res => res.json())
                             .then(res => {
                                 if(res.success && res.data) {
-                                    const scores = res.data;
+                                    const scores = res.data.history;
+                                    const juri = res.data.juri;
+
+                                    // Update Nama Juri & Posisi Juri di panel
+                                    document.getElementById('juri-nama-petugas').innerText = juri.nama;
+                                    document.getElementById('juri-nama-posisi').innerText = juri.posisi;
                                     
                                     const renderScores = (sudut, arr, roundId) => {
                                         const box = document.getElementById(`score-${sudut}-${roundId}`);

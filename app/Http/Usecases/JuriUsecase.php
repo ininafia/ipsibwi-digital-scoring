@@ -45,11 +45,11 @@ class JuriUsecase extends Usecase
 
         $idPertandingan  = $request->input('id_pertandingan');
         $idBabak         = $request->input('id_babak');
-        $idPetugas       = $request->input('id_petugas_pertandingan'); // users.id dari session
+        $juriPosition    = $request->input('juri_position'); // 'juri_1', 'juri_2', dsb. dari frontend
         $sudut           = $request->input('sudut'); // 'merah' atau 'biru'
         $idKategoriNilai = (int) $request->input('id_kategori_nilai');
 
-        if (!$idPertandingan || !$idBabak || !$idPetugas
+        if (!$idPertandingan || !$idBabak || !$juriPosition
             || !in_array($sudut, ['merah', 'biru'], true)
             || !isset(self::TECHNIQUE_MAP[$idKategoriNilai])) {
             return Response::buildErrorService('Parameter tidak valid');
@@ -61,7 +61,7 @@ class JuriUsecase extends Usecase
 
         try {
             return DB::transaction(function () use (
-                $idPertandingan, $idBabak, $idPetugas, $athlete, $technique, $scoreValue, $idKategoriNilai
+                $idPertandingan, $idBabak, $juriPosition, $athlete, $technique, $scoreValue, $idKategoriNilai
             ) {
                 // Kunci baris pertandingan supaya status tidak berubah di tengah proses
                 $match = DB::table('pertandingan')->where('id', $idPertandingan)->lockForUpdate()->first();
@@ -80,19 +80,13 @@ class JuriUsecase extends Usecase
                     return Response::buildErrorService('Kategori nilai tidak ditemukan');
                 }
 
-                // Resolusi users.id -> data_petugas.id -> petugas_pertandingan.id
-                $petugas = DB::table('data_petugas')->where('id_user', $idPetugas)->first();
-                if (!$petugas) {
-                    return Response::buildErrorService('Data petugas tidak ditemukan');
-                }
-
                 $petugasPertandingan = DB::table('petugas_pertandingan')
-                    ->where('id_petugas', $petugas->id)
+                    ->where('posisi', $juriPosition)
                     ->where('id_pertandingan', $idPertandingan)
                     ->first();
 
                 if (!$petugasPertandingan) {
-                    return Response::buildErrorService('Penugasan petugas tidak ditemukan untuk pertandingan ini');
+                    return Response::buildErrorService('Penugasan petugas tidak ditemukan untuk posisi ' . strtoupper(str_replace('_', ' ', $juriPosition)));
                 }
 
                 $judgeId     = $petugasPertandingan->id;
@@ -151,10 +145,21 @@ class JuriUsecase extends Usecase
                     'created_at'  => now(),
                 ]);
 
-                $inputCount = DB::table('score_events')->where('award_id', $targetAwardId)->count();
+                $inputsInGroup = DB::table('score_events')->where('award_id', $targetAwardId)->get();
+                $inputCount = $inputsInGroup->count();
 
-                // Kalau 3 juri sudah input semua, langsung selesaikan grup (tidak perlu menunggu delay habis)
-                if ($inputCount >= 3) {
+                $techCounts = [];
+                $hasMajority = false;
+                foreach ($inputsInGroup as $in) {
+                    $techCounts[$in->technique] = ($techCounts[$in->technique] ?? 0) + 1;
+                    if ($techCounts[$in->technique] >= 2) {
+                        $hasMajority = true;
+                        break;
+                    }
+                }
+
+                // Kalau 3 juri sudah input semua ATAU sudah ada kesepakatan 2 juri (mayoritas), langsung selesaikan grup
+                if ($inputCount >= 3 || $hasMajority) {
                     $this->resolveGroup($targetAwardId);
                 }
 
@@ -333,29 +338,24 @@ class JuriUsecase extends Usecase
 
         $idPertandingan = $request->input('id_pertandingan');
         $idBabak        = $request->input('id_babak');
-        $idPetugas      = $request->input('id_petugas_pertandingan');
+        $juriPosition   = $request->input('juri_position');
         $sudut          = $request->input('sudut');
 
-        if (!$idPertandingan || !$idBabak || !$idPetugas || !in_array($sudut, ['merah', 'biru'], true)) {
+        if (!$idPertandingan || !$idBabak || !$juriPosition || !in_array($sudut, ['merah', 'biru'], true)) {
             return Response::buildErrorService('Parameter tidak valid');
         }
 
         $athlete = $sudut === 'merah' ? 'red' : 'blue';
 
         try {
-            return DB::transaction(function () use ($idPertandingan, $idBabak, $idPetugas, $athlete) {
-                $petugas = DB::table('data_petugas')->where('id_user', $idPetugas)->first();
-                if (!$petugas) {
-                    return Response::buildErrorService('Petugas tidak ditemukan');
-                }
-
+            return DB::transaction(function () use ($idPertandingan, $idBabak, $juriPosition, $athlete) {
                 $petugasPertandingan = DB::table('petugas_pertandingan')
-                    ->where('id_petugas', $petugas->id)
+                    ->where('posisi', $juriPosition)
                     ->where('id_pertandingan', $idPertandingan)
                     ->first();
 
                 if (!$petugasPertandingan) {
-                    return Response::buildErrorService('Penugasan tidak ditemukan');
+                    return Response::buildErrorService('Penugasan tidak ditemukan untuk posisi ' . strtoupper(str_replace('_', ' ', $juriPosition)));
                 }
 
                 $lastInput = DB::table('score_events')
@@ -397,21 +397,21 @@ class JuriUsecase extends Usecase
             $this->resolveExpiredEvents();
 
             $idPertandingan = $request->input('id_pertandingan');
-            $idPetugas      = $request->input('id_petugas_pertandingan');
-
-            $petugas = DB::table('data_petugas')->where('id_user', $idPetugas)->first();
-            if (!$petugas) {
-                return Response::buildSuccess([], 200, 'Berhasil mengambil riwayat (petugas tidak ditemukan)');
-            }
+            $juriPosition   = $request->input('juri_position');
 
             $petugasPertandingan = DB::table('petugas_pertandingan')
-                ->where('id_petugas', $petugas->id)
+                ->where('posisi', $juriPosition)
                 ->where('id_pertandingan', $idPertandingan)
                 ->first();
 
             if (!$petugasPertandingan) {
-                return Response::buildSuccess([], 200, 'Berhasil mengambil riwayat (penugasan tidak ditemukan)');
+                return Response::buildSuccess([
+                    'history' => [],
+                    'juri' => ['nama' => 'MENUNGGU PENUGASAN', 'posisi' => strtoupper(str_replace('_', ' ', $juriPosition))]
+                ], 200, 'Berhasil mengambil riwayat (penugasan tidak ditemukan)');
             }
+            
+            $petugas = DB::table('data_petugas')->where('id', $petugasPertandingan->id_petugas)->first();
 
             $events = DB::table('score_events')
                 ->where('match_id', $idPertandingan)
@@ -440,7 +440,15 @@ class JuriUsecase extends Usecase
                 ];
             });
 
-            return Response::buildSuccess($history->toArray(), 200, 'Berhasil mengambil riwayat');
+            $juriData = [
+                'nama' => strtoupper($petugas->nama),
+                'posisi' => $petugasPertandingan->posisi ? strtoupper(str_replace('_', ' ', $petugasPertandingan->posisi)) : 'JURI'
+            ];
+
+            return Response::buildSuccess([
+                'history' => $history->toArray(),
+                'juri' => $juriData
+            ], 200, 'Berhasil mengambil riwayat');
         } catch (Exception $e) {
             Log::error($e->getMessage(), ['func_name' => $funcName]);
             return Response::buildErrorService($e->getMessage());

@@ -195,11 +195,6 @@ class PenilaianAtletUsecase extends Usecase
 
             if ($skorRecord) {
                 $currentTeguran = $skorRecord->{$teguranField};
-                $currentBinaan = $skorRecord->{'binaan_' . $sudut};
-
-                if ($currentBinaan < 2) {
-                    return Response::buildErrorService("Harus menyelesaikan Binaan (2x) terlebih dahulu sebelum memberikan Teguran untuk sudut {$sudut}");
-                }
 
                 if ($currentTeguran >= 2) {
                     return Response::buildErrorService("Teguran maksimal 2 kali untuk sudut {$sudut}");
@@ -215,7 +210,18 @@ class PenilaianAtletUsecase extends Usecase
                         'updated_at' => now(),
                     ]);
             } else {
-                return Response::buildErrorService("Harus menyelesaikan Binaan (2x) terlebih dahulu sebelum memberikan Teguran untuk sudut {$sudut}");
+                DB::table('skor_pertandingan')->insert([
+                    'id_pertandingan' => $id_pertandingan,
+                    'skor_biru' => $sudut === 'biru' ? -1 : 0,
+                    'skor_merah' => $sudut === 'merah' ? -1 : 0,
+                    'binaan_biru' => 0,
+                    'binaan_merah' => 0,
+                    'teguran_biru' => $sudut === 'biru' ? 1 : 0,
+                    'teguran_merah' => $sudut === 'merah' ? 1 : 0,
+                    'jatuhan_biru' => 0,
+                    'jatuhan_merah' => 0,
+                    'updated_at' => now(),
+                ]);
             }
 
             DB::commit();
@@ -250,11 +256,6 @@ class PenilaianAtletUsecase extends Usecase
 
             if ($skorRecord) {
                 $currentPeringatan = $skorRecord->{$peringatanField};
-                $currentTeguran = $skorRecord->{'teguran_' . $sudut};
-
-                if ($currentTeguran < 2) {
-                    return Response::buildErrorService("Harus menyelesaikan Teguran (2x) terlebih dahulu sebelum memberikan Peringatan untuk sudut {$sudut}");
-                }
 
                 if ($currentPeringatan >= 2) {
                     return Response::buildErrorService("Peringatan maksimal 2 kali untuk sudut {$sudut}");
@@ -270,7 +271,20 @@ class PenilaianAtletUsecase extends Usecase
                         'updated_at' => now(),
                     ]);
             } else {
-                return Response::buildErrorService("Harus menyelesaikan Teguran (2x) terlebih dahulu sebelum memberikan Peringatan untuk sudut {$sudut}");
+                DB::table('skor_pertandingan')->insert([
+                    'id_pertandingan' => $id_pertandingan,
+                    'skor_biru' => $sudut === 'biru' ? -5 : 0,
+                    'skor_merah' => $sudut === 'merah' ? -5 : 0,
+                    'binaan_biru' => 0,
+                    'binaan_merah' => 0,
+                    'teguran_biru' => 0,
+                    'teguran_merah' => 0,
+                    'peringatan_biru' => $sudut === 'biru' ? 1 : 0,
+                    'peringatan_merah' => $sudut === 'merah' ? 1 : 0,
+                    'jatuhan_biru' => 0,
+                    'jatuhan_merah' => 0,
+                    'updated_at' => now(),
+                ]);
             }
 
             DB::commit();
@@ -284,9 +298,9 @@ class PenilaianAtletUsecase extends Usecase
         }
     }
 
-    public function delHukuman(int $id_pertandingan, string $sudut): array
+    public function delBinaan(int $id_pertandingan, string $sudut): array
     {
-        $funcName = $this->className . ".delHukuman";
+        $funcName = $this->className . ".delBinaan";
 
         if (!in_array($sudut, ['biru', 'merah'])) {
             return Response::buildErrorService('Sudut tidak valid');
@@ -299,6 +313,50 @@ class PenilaianAtletUsecase extends Usecase
 
             $binaanField = 'binaan_' . $sudut;
             $teguranField = 'teguran_' . $sudut;
+            $skorRecord = DB::table('skor_pertandingan')
+                ->where('id_pertandingan', $id_pertandingan)
+                ->first();
+
+            if ($skorRecord) {
+                if ($skorRecord->{$binaanField} > 0) {
+                    DB::table('skor_pertandingan')
+                        ->where('id_pertandingan', $id_pertandingan)
+                        ->update([
+                            $binaanField => DB::raw($binaanField . ' - 1'),
+                            'updated_at' => now(),
+                        ]);
+                } else {
+                    return Response::buildErrorService("Tidak ada Binaan yang bisa dihapus untuk sudut {$sudut}");
+                }
+            } else {
+                return Response::buildErrorService("Belum ada skor tercatat untuk pertandingan ini");
+            }
+
+            DB::commit();
+            return Response::buildSuccess(
+                message: "Binaan berhasil dihapus"
+            );
+        } catch (Exception $e) {
+            DB::rollback();
+            Log::error($e->getMessage(), ['func_name' => $funcName]);
+            return Response::buildErrorService($e->getMessage());
+        }
+    }
+
+    public function delTeguran(int $id_pertandingan, string $sudut): array
+    {
+        $funcName = $this->className . ".delTeguran";
+
+        if (!in_array($sudut, ['biru', 'merah'])) {
+            return Response::buildErrorService('Sudut tidak valid');
+        }
+
+        DB::beginTransaction();
+
+        try {
+            $this->validateTimerState($id_pertandingan);
+
+            $teguranField = 'teguran_' . $sudut;
             $peringatanField = 'peringatan_' . $sudut;
             $skorField = 'skor_' . $sudut;
             
@@ -307,47 +365,75 @@ class PenilaianAtletUsecase extends Usecase
                 ->first();
 
             if ($skorRecord) {
-                $currentBinaan = $skorRecord->{$binaanField};
                 $currentTeguran = $skorRecord->{$teguranField};
-                $currentPeringatan = $skorRecord->{$peringatanField};
-
-                $refund = 0;
-                $updateData = ['updated_at' => now()];
-
-                if ($currentPeringatan == 2) {
-                    $refund = 10;
-                    $updateData[$peringatanField] = 1;
-                } else if ($currentPeringatan == 1) {
-                    $refund = 5;
-                    $updateData[$peringatanField] = 0;
-                } else if ($currentTeguran == 2) {
-                    $refund = 2;
-                    $updateData[$teguranField] = 1;
-                } else if ($currentTeguran == 1) {
-                    $refund = 1;
-                    $updateData[$teguranField] = 0;
-                } else if ($currentBinaan == 2) {
-                    $refund = 0;
-                    $updateData[$binaanField] = 1;
-                } else if ($currentBinaan == 1) {
-                    $refund = 0;
-                    $updateData[$binaanField] = 0;
+                if ($currentTeguran > 0) {
+                    $refund = ($currentTeguran == 2) ? 2 : 1;
+                    DB::table('skor_pertandingan')
+                        ->where('id_pertandingan', $id_pertandingan)
+                        ->update([
+                            $teguranField => DB::raw($teguranField . ' - 1'),
+                            $skorField => DB::raw($skorField . ' + ' . $refund),
+                            'updated_at' => now(),
+                        ]);
                 } else {
-                    return Response::buildErrorService("Tidak ada hukuman untuk dihapus pada sudut {$sudut}");
+                    return Response::buildErrorService("Tidak ada Teguran yang bisa dihapus untuk sudut {$sudut}");
                 }
-
-                $updateData[$skorField] = DB::raw($skorField . ' + ' . $refund);
-
-                DB::table('skor_pertandingan')
-                    ->where('id_pertandingan', $id_pertandingan)
-                    ->update($updateData);
             } else {
                 return Response::buildErrorService("Belum ada skor tercatat untuk pertandingan ini");
             }
 
             DB::commit();
             return Response::buildSuccess(
-                message: "Hukuman untuk sudut {$sudut} berhasil dihapus"
+                message: "Teguran berhasil dihapus"
+            );
+        } catch (Exception $e) {
+            DB::rollback();
+            Log::error($e->getMessage(), ['func_name' => $funcName]);
+            return Response::buildErrorService($e->getMessage());
+        }
+    }
+
+    public function delPeringatan(int $id_pertandingan, string $sudut): array
+    {
+        $funcName = $this->className . ".delPeringatan";
+
+        if (!in_array($sudut, ['biru', 'merah'])) {
+            return Response::buildErrorService('Sudut tidak valid');
+        }
+
+        DB::beginTransaction();
+
+        try {
+            $this->validateTimerState($id_pertandingan);
+
+            $peringatanField = 'peringatan_' . $sudut;
+            $skorField = 'skor_' . $sudut;
+            
+            $skorRecord = DB::table('skor_pertandingan')
+                ->where('id_pertandingan', $id_pertandingan)
+                ->first();
+
+            if ($skorRecord) {
+                $currentPeringatan = $skorRecord->{$peringatanField};
+                if ($currentPeringatan > 0) {
+                    $refund = ($currentPeringatan == 2) ? 10 : 5;
+                    DB::table('skor_pertandingan')
+                        ->where('id_pertandingan', $id_pertandingan)
+                        ->update([
+                            $peringatanField => DB::raw($peringatanField . ' - 1'),
+                            $skorField => DB::raw($skorField . ' + ' . $refund),
+                            'updated_at' => now(),
+                        ]);
+                } else {
+                    return Response::buildErrorService("Tidak ada Peringatan yang bisa dihapus untuk sudut {$sudut}");
+                }
+            } else {
+                return Response::buildErrorService("Belum ada skor tercatat untuk pertandingan ini");
+            }
+
+            DB::commit();
+            return Response::buildSuccess(
+                message: "Peringatan berhasil dihapus"
             );
         } catch (Exception $e) {
             DB::rollback();
@@ -389,6 +475,18 @@ class PenilaianAtletUsecase extends Usecase
                 'jatuhan_merah' => $score->jatuhan_merah ?? 0,
             ];
 
+            // Ambil data nama dewan (id_role = 3)
+            $dewanName = 'MENUNGGU PENUGASAN';
+            $dewanAssignment = DB::table('petugas_pertandingan')
+                ->join('data_petugas', 'petugas_pertandingan.id_petugas', '=', 'data_petugas.id')
+                ->where('petugas_pertandingan.id_pertandingan', $match->id)
+                ->where('petugas_pertandingan.id_role', 3)
+                ->first(['data_petugas.nama']);
+                
+            if ($dewanAssignment) {
+                $dewanName = strtoupper($dewanAssignment->nama);
+            }
+
             // Hitung logika tampilan teks hukuman secara akumulatif
             $hukumanBiruText = '';
             if ($data['teguran_biru'] >= 1) $hukumanBiruText .= '-1';
@@ -415,6 +513,7 @@ class PenilaianAtletUsecase extends Usecase
 
             $response = [
                 'match' => [
+                    'id' => $match->id,
                     'partai' => $match->partai ?? '-',
                     'sudut_biru' => $match->sudut_biru ?? '-',
                     'kontingen_biru' => $match->kontingen_biru ?? '-',
@@ -428,6 +527,10 @@ class PenilaianAtletUsecase extends Usecase
                     'hukuman_merah_text' => $hukumanMerahText,
                     'jatuhan_biru_text' => $jatuhanBiruText,
                     'jatuhan_merah_text' => $jatuhanMerahText,
+                ],
+                'dewan' => [
+                    'nama' => $dewanName,
+                    'posisi' => 'DEWAN'
                 ]
             ];
 

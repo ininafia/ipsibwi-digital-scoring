@@ -82,9 +82,10 @@
                     <!-- Total Kiri (Grand total, rowspan seluruh ronde) -->
                     @if($index == 0)
                         <td rowspan="{{ count($details) }}" class="w-[40px] align-top p-0 border-r-2 border-black {{ $round < 3 ? 'border-b-[4px]' : '' }}">
-                            <span id="round-total-blue-{{ $round }}"></span>
+                            <span id="round-total-blue-{{ $round }}" class="mt-1 block"></span>
                         </td>
-                        <td rowspan="3" class="w-[40px] align-top p-0 border-r-2 border-black">
+                        <td rowspan="3" class="w-[40px] align-middle p-0 border-r-2 border-black">
+                            <span id="juri-total-blue-{{ $round }}" class="font-bold"></span>
                         </td>
                     @elseif($index >= 3)
                         <td class="w-[40px] align-top p-0 border-r-2 border-black">
@@ -112,10 +113,11 @@
 
                     <!-- Total Kanan -->
                     @if($index == 0)
-                        <td rowspan="3" class="w-[40px] align-top p-0 border-l-2 border-black">
+                        <td rowspan="3" class="w-[40px] align-middle p-0 border-l-2 border-black">
+                            <span id="juri-total-red-{{ $round }}" class="font-bold"></span>
                         </td>
                         <td rowspan="{{ count($details) }}" class="w-[40px] align-top p-0 border-l-2 border-black {{ $round < 3 ? 'border-b-[4px]' : '' }}">
-                            <span id="round-total-red-{{ $round }}"></span>
+                            <span id="round-total-red-{{ $round }}" class="mt-1 block"></span>
                         </td>
                     @elseif($index >= 3)
                         <td class="w-[40px] align-top p-0 border-l-2 border-black">

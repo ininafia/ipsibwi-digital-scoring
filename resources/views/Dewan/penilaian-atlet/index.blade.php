@@ -29,14 +29,33 @@
     </main>
 
     <script>
+        let currentMatchId = '{{ $pertandingan->id ?? 0 }}';
+        let isActionPending = false;
+        let latestDewanFetchId = 0;
+
         function updateDewanUI() {
+            if (isActionPending) return;
+            let currentFetchId = ++latestDewanFetchId;
+
             fetch('/dewan/penilaian-atlet/data')
                 .then(res => res.json())
                 .then(res => {
+                    if (currentFetchId !== latestDewanFetchId) return; // Abaikan respons telat
+                    if (isActionPending) return; // Jangan timpa jika sedang ada aksi
+
                     if (res.success && res.data) {
                         let matchData = res.data.match;
                         let skorData = res.data.data;
                         let displayData = res.data.display;
+                        let dewanData = res.data.dewan;
+
+                        currentMatchId = matchData.id || 0;
+
+                        // Update Nama Dewan di Panel
+                        if (dewanData) {
+                            document.getElementById('dewan-nama-posisi').innerText = dewanData.posisi;
+                            document.getElementById('dewan-nama-petugas').innerText = dewanData.nama;
+                        }
 
                         for (let i = 1; i <= 3; i++) {
                             let cellBiru = document.getElementById('dewan-jatuhan-biru-' + i);
@@ -86,7 +105,7 @@
                             }
                         }
 
-                        // Disable tombol berdasarkan urutan hukuman
+                        // Disable tombol berdasarkan limit maksimalnya saja
                         ['biru', 'merah'].forEach(sudut => {
                             let b = skorData['binaan_' + sudut] || 0;
                             let t = skorData['teguran_' + sudut] || 0;
@@ -97,8 +116,8 @@
                             let btnPeringatan = document.getElementById('btn-peringatan-' + sudut);
 
                             if (btnBinaan) btnBinaan.disabled = (b >= 2);
-                            if (btnTeguran) btnTeguran.disabled = (b < 2 || t >= 2);
-                            if (btnPeringatan) btnPeringatan.disabled = (t < 2 || p >= 2);
+                            if (btnTeguran) btnTeguran.disabled = (t >= 2);
+                            if (btnPeringatan) btnPeringatan.disabled = (p >= 2);
                         });
                     }
                 })

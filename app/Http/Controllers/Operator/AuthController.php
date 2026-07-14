@@ -100,80 +100,29 @@ class AuthController extends Controller
         | REDIRECT BERDASARKAN ROLE
         |--------------------------------------------------------------------------
         */
-        return match ($role) {
-
-            /*
-            |--------------------------------------------------------------------------
-            | OPERATOR
-            |--------------------------------------------------------------------------
-            */
-            1 => redirect()
-                    ->route('dashboard')
-                    ->with('success', 'Selamat datang Operator'),
-
-            /*
-            |--------------------------------------------------------------------------
-            | KETUA PERTANDINGAN
-            |--------------------------------------------------------------------------
-            */
-            2 => redirect()
-                    ->route('ketua.dashboard')
-                    ->with('success', 'Selamat datang Ketua Pertandingan'),
-
-            /*
-            |--------------------------------------------------------------------------
-            | DEWAN
-            |--------------------------------------------------------------------------
-            */
-            3 => redirect()
-                    ->route('dewan.dashboard')
-                    ->with('success', 'Selamat datang Dewan'),
-
-            /*
-            |--------------------------------------------------------------------------
-            | TIMER
-            |--------------------------------------------------------------------------
-            */
-            4 => redirect()
-                    ->route('timer.dashboard')
-                    ->with('success', 'Selamat datang Timer'),
-
-            /*
-            |--------------------------------------------------------------------------
-            | JURI 1
-            |--------------------------------------------------------------------------
-            */
-            5 => redirect()
-                    ->route('juri1')
-                    ->with('success', 'Selamat datang Juri 1'),
-
-            /*
-            |--------------------------------------------------------------------------
-            | JURI 2
-            |--------------------------------------------------------------------------
-            */
-            6 => redirect()
-                    ->route('juri2')
-                    ->with('success', 'Selamat datang Juri 2'),
-
-            /*
-            |--------------------------------------------------------------------------
-            | JURI 3
-            |--------------------------------------------------------------------------
-            */
-            7 => redirect()
-                    ->route('juri3')
-                    ->with('success', 'Selamat datang Juri 3'),
-
-            /*
-            |--------------------------------------------------------------------------
-            | ROLE TIDAK VALID
-            |--------------------------------------------------------------------------
-            */
-            default => redirect()
-                    ->route('login')
-                    ->with('error', 'Role tidak dikenali'),
-        };
+        if ($role === 1) {
+            return redirect()->route('dashboard')->with('success', 'Selamat datang Operator');
+        } elseif ($role === 2) {
+            return redirect()->route('ketua.dashboard')->with('success', 'Selamat datang Ketua Pertandingan');
+        } elseif ($role === 3) {
+            return redirect()->route('dewan.dashboard')->with('success', 'Selamat datang Dewan');
+        } elseif ($role === 4) {
+            return redirect()->route('timer.dashboard')->with('success', 'Selamat datang Timer');
+        } elseif ($role === 5) {
+            $uname = strtolower($user->username);
+            if (str_contains($uname, 'juri2') || str_contains($uname, 'juri_2')) {
+                return redirect()->route('juri2')->with('success', 'Selamat datang Juri 2');
+            } elseif (str_contains($uname, 'juri3') || str_contains($uname, 'juri_3')) {
+                return redirect()->route('juri3')->with('success', 'Selamat datang Juri 3');
+            }
+            return redirect()->route('juri1')->with('success', 'Selamat datang Juri 1');
+        } elseif ($role === 6) {
+            return redirect()->route('login')->with('success', 'Selamat datang Wasit (Dashboard belum tersedia)');
+        } elseif ($role === 7) {
+            return redirect()->route('login')->with('success', 'Selamat datang Delegasi Teknik (Dashboard belum tersedia)');
+        } else {
+            return redirect()->route('login')->with('error', 'Role tidak dikenali');
+        }
     }
 
     /**

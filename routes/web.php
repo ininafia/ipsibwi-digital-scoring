@@ -96,7 +96,9 @@ Route::middleware(['role:3'])->group(function () {
     Route::post('/dewan/penilaian-atlet/binaan', [PenilaianAtletController::class, 'addBinaan'])->name('dewan.penilaian.binaan');
     Route::post('/dewan/penilaian-atlet/teguran', [PenilaianAtletController::class, 'addTeguran'])->name('dewan.penilaian.teguran');
     Route::post('/dewan/penilaian-atlet/peringatan', [PenilaianAtletController::class, 'addPeringatan'])->name('dewan.penilaian.peringatan');
-    Route::post('/dewan/penilaian-atlet/del-hukuman', [PenilaianAtletController::class, 'delHukuman'])->name('dewan.penilaian.delHukuman');
+    Route::post('/dewan/penilaian-atlet/del-binaan', [PenilaianAtletController::class, 'delBinaan'])->name('dewan.penilaian.delBinaan');
+    Route::post('/dewan/penilaian-atlet/del-teguran', [PenilaianAtletController::class, 'delTeguran'])->name('dewan.penilaian.delTeguran');
+    Route::post('/dewan/penilaian-atlet/del-peringatan', [PenilaianAtletController::class, 'delPeringatan'])->name('dewan.penilaian.delPeringatan');
     Route::get('/dewan/petugas', [PetugasPertandinganController::class, 'index'])->name('dewan.petugas');
     Route::get('/dewan/petugas/add', [PetugasPertandinganController::class, 'add'])->name('dewan.petugas.add');
     Route::post('/dewan/petugas/store', [PetugasPertandinganController::class, 'store'])->name('dewan.petugas.store');

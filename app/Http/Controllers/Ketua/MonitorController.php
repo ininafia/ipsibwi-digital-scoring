@@ -227,6 +227,21 @@ class MonitorController extends Controller
                     'value' => $evt->score_value,
                     'sah' => $isSah,
                     'technique' => $evt->technique,
+                    'award_id' => $evt->award_id,
+                ];
+            }
+
+            // ========================================
+            // RIWAYAT SCORE AWARDS (UNTUK BARIS "SCORE")
+            // ========================================
+            $awardHistory = [];
+            for ($r = 1; $r <= 3; $r++) {
+                $awardHistory[$r] = ['blue' => [], 'red' => []];
+            }
+            foreach ($awards as $awd) {
+                $awardHistory[$awd->round][$awd->athlete][] = [
+                    'value' => $awd->score_value,
+                    'award_id' => (string) $awd->id,
                 ];
             }
 
@@ -268,6 +283,7 @@ class MonitorController extends Controller
                 'pemenang' => $pemenang,
                 'akurasi' => $akurasi->toArray(),
                 'event_history' => $eventHistory,
+                'award_history' => $awardHistory,
             ]);
 
         } catch (\Exception $e) {
