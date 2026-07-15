@@ -17,9 +17,11 @@
         </div>
 
         {{-- JUDUL TENGAH --}}
-        <h1 class="text-[22px] font-bold text-gray-900 tracking-wide text-center flex-1">
-            Pertandingan Kategori &nbsp; Tanding Sedang Berlangsung
-        </h1>
+        <div class="flex-1 overflow-hidden" style="visibility: hidden;" id="matchStatusContainer">
+            <marquee scrollamount="6" class="text-[22px] font-bold text-gray-900 tracking-wide text-center pt-2">
+                Pertandingan Kategori Tanding Sedang Berlangsung...
+            </marquee>
+        </div>
 
         {{-- TOMBOL FINALISASI --}}
         <button
@@ -44,9 +46,12 @@
                     {{ $data->jenis_kelamin == 'putra' ? 'PA' : ($data->jenis_kelamin == 'putri' ? 'PI' : $data->jenis_kelamin) }}
                     {{ $data->golongan }}
                 </p>
-                <div class="mt-3">
+                <div class="mt-3 flex justify-center items-center gap-3">
                     <span id="displayRound" class="inline-block px-8 py-2 bg-gray-200 rounded-lg text-[18px] font-bold text-gray-800">
                         ROUND 1
+                    </span>
+                    <span id="displayTimer" class="inline-block px-6 py-2 bg-red-600 text-white rounded-lg text-[18px] font-bold tracking-widest shadow-inner">
+                        02:00
                     </span>
                 </div>
             </div>
@@ -224,7 +229,7 @@
 @section('scripts')
 <script>
     function openFinalisasiModal() {
-        fetch('/operator/monitor-display/data')
+        fetch('/operator/monitor-display/data?_t=' + new Date().getTime())
             .then(res => res.json())
             .then(res => {
                 if (res.success && res.data) {
@@ -273,8 +278,35 @@
             });
     }
 
+    function formatTimer(totalSeconds) {
+        if (!totalSeconds || totalSeconds < 0) return '00:00';
+        const m = Math.floor(totalSeconds / 60).toString().padStart(2, '0');
+        const s = (totalSeconds % 60).toString().padStart(2, '0');
+        return `${m}:${s}`;
+    }
+
+    function showTimerNotification(message) {
+        let toast = document.getElementById('timer-toast');
+        if (!toast) {
+            toast = document.createElement('div');
+            toast.id = 'timer-toast';
+            toast.className = 'fixed top-4 left-1/2 transform -translate-x-1/2 bg-red-600 text-white px-8 py-3 rounded-lg shadow-xl font-bold text-xl transition-opacity duration-300 z-[9999] opacity-0 pointer-events-none';
+            document.body.appendChild(toast);
+        }
+        toast.innerText = message;
+        toast.classList.remove('opacity-0');
+        toast.classList.add('opacity-100');
+        
+        setTimeout(() => {
+            toast.classList.remove('opacity-100');
+            toast.classList.add('opacity-0');
+        }, 3000);
+    }
+
+    let previousTimerStatus = null;
+
     function updateOperatorUI() {
-        fetch('/operator/monitor-display/data')
+        fetch('/operator/monitor-display/data?_t=' + new Date().getTime())
             .then(res => res.json())
             .then(res => {
                 if (res.success && res.data) {
@@ -286,6 +318,23 @@
                     
                     if (res.match && res.match.round) {
                         document.getElementById('displayRound').innerText = 'ROUND ' + res.match.round;
+
+                        // Tampilkan timer
+                        document.getElementById('displayTimer').innerText = formatTimer(Math.round(res.match.time_remaining || 0));
+
+                        // Tampilkan teks berjalan jika pertandingan sedang berlangsung (timer jalan)
+                        let statusContainer = document.getElementById('matchStatusContainer');
+                        if (res.match.timer_status === 'playing') {
+                            statusContainer.style.visibility = 'visible';
+                        } else {
+                            statusContainer.style.visibility = 'hidden';
+                        }
+                        
+                        let currentTimerStatus = res.match.timer_status;
+                        if (previousTimerStatus === 'playing' && (currentTimerStatus === 'stopped' || currentTimerStatus === 'paused')) {
+                            showTimerNotification("Waktu Babak Berhenti!");
+                        }
+                        previousTimerStatus = currentTimerStatus;
                     }
                 }
             })
@@ -294,7 +343,7 @@
             });
     }
 
-    setInterval(updateOperatorUI, 5000);
+    setInterval(updateOperatorUI, 1000);
     updateOperatorUI();
 
     function submitFinalisasi() {

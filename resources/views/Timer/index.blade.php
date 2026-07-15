@@ -96,7 +96,7 @@
             }
 
             function fetchState() {
-                axios.get('/timer/state').then(res => {
+                axios.get('/timer/state?_t=' + new Date().getTime()).then(res => {
                     const data = res.data;
                     currentRound = data.round || 1;
                     timeRemaining = data.time_remaining !== undefined ? data.time_remaining : 120;
@@ -118,8 +118,7 @@
                     if (timeRemaining > 0) {
                         timeRemaining--;
                         updateDisplay();
-                        // Optional: sync every second, or we can just sync on action. Syncing every second keeps it alive for other clients
-                        if (timeRemaining % 5 === 0) syncState(); 
+                        syncState(); 
                     } else {
                         status = 'stopped';
                         clearInterval(timerInterval);

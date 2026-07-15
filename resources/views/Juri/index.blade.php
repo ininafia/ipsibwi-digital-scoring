@@ -33,8 +33,35 @@
 
     <script>
         let currentRound = 1;
-        let currentMatchId = '{{ $match->id ?? '' }}';
-        let currentJuriPosition = '{{ $posisiTarget ?? '' }}';
+        let currentJuriPosition = '{{ $posisiTarget }}';
+        let currentMatchId = '{{ $match ? $match->id : "" }}';
+
+        function formatTimer(totalSeconds) {
+            if (!totalSeconds || totalSeconds < 0) return '00:00';
+            const m = Math.floor(totalSeconds / 60).toString().padStart(2, '0');
+            const s = (totalSeconds % 60).toString().padStart(2, '0');
+            return `${m}:${s}`;
+        }
+
+        function showTimerNotification(message) {
+            let toast = document.getElementById('timer-toast');
+            if (!toast) {
+                toast = document.createElement('div');
+                toast.id = 'timer-toast';
+                toast.className = 'fixed top-4 left-1/2 transform -translate-x-1/2 bg-red-600 text-white px-8 py-3 rounded-lg shadow-xl font-bold text-xl transition-opacity duration-300 z-[9999] opacity-0 pointer-events-none';
+                document.body.appendChild(toast);
+            }
+            toast.innerText = message;
+            toast.classList.remove('opacity-0');
+            toast.classList.add('opacity-100');
+            
+            setTimeout(() => {
+                toast.classList.remove('opacity-100');
+                toast.classList.add('opacity-0');
+            }, 3000);
+        }
+
+        let previousTimerStatus = null;
 
         function addScore(sudut, nilai) {
             if(!currentMatchId) {
@@ -107,7 +134,7 @@
             });
         }
         function updateJuriDisplay() {
-            fetch('{{ route('operator.monitor-display.data') }}')
+            fetch('{{ route('operator.monitor-display.data') }}?_t=' + new Date().getTime())
                 .then(res => res.json())
                 .then(res => {
                     if(res.success && res.match) {
@@ -121,6 +148,17 @@
                         document.getElementById('juri-sekolah-merah').innerText = res.match.kontingen_merah && res.match.kontingen_merah !== '-' ? res.match.kontingen_merah : 'Asal Kontingen';
                         document.getElementById('juri-partai').innerText = res.match.partai || '-';
                         
+                        let timerVal = document.getElementById('timer-value');
+                        if(timerVal) {
+                            timerVal.innerText = formatTimer(Math.round(res.match.time_remaining || 0));
+                        }
+
+                        let currentTimerStatus = res.match.timer_status;
+                        if (previousTimerStatus === 'playing' && (currentTimerStatus === 'stopped' || currentTimerStatus === 'paused')) {
+                            showTimerNotification("Waktu Babak Berhenti!");
+                        }
+                        previousTimerStatus = currentTimerStatus;
+
                         // Update Round
                         currentRound = res.match.round || 1;
                         for (let i = 1; i <= 3; i++) {

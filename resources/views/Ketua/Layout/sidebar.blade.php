@@ -23,8 +23,8 @@
         </a>
 
         <!-- PERSENTASE JURI -->
-        <a href="#"
-            class="flex items-center gap-3 h-[60px] pl-12 pr-5 text-[#4fcfff] text-base font-medium hover:bg-gray-100 transition">
+        <a href="{{ route('ketua.akurasi') }}"
+            class="flex items-center gap-3 h-[60px] pl-12 pr-5 {{ request()->routeIs('ketua.akurasi') ? 'bg-[#dcf8ff] text-[#4fcfff]' : 'text-[#4fcfff] hover:bg-gray-100' }} text-base font-medium transition">
 
             <i class="fa-solid fa-user-group w-5 text-center"></i>
             <span>Persentase Juri</span>

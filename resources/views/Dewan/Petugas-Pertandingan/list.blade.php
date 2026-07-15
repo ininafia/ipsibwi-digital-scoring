@@ -18,6 +18,22 @@
 
     <div class="bg-white rounded-md shadow-sm p-8 max-w-[100%] mb-10 border border-blue-500">
         
+        <!-- FILTER TABS -->
+        <div class="flex items-center gap-4 border-b border-gray-200 mb-6 pb-2">
+            <a href="{{ route('dewan.petugas', ['filter' => 'active']) }}" 
+               class="px-4 py-2 font-semibold text-sm transition-all {{ (!isset($filter) || $filter === 'active') ? 'text-[#62cbf5] border-b-2 border-[#62cbf5]' : 'text-gray-500 hover:text-gray-700' }}">
+                Belum Selesai (Aktif)
+            </a>
+            <a href="{{ route('dewan.petugas', ['filter' => 'finished']) }}" 
+               class="px-4 py-2 font-semibold text-sm transition-all {{ (isset($filter) && $filter === 'finished') ? 'text-[#62cbf5] border-b-2 border-[#62cbf5]' : 'text-gray-500 hover:text-gray-700' }}">
+                Sudah Selesai
+            </a>
+            <a href="{{ route('dewan.petugas', ['filter' => 'all']) }}" 
+               class="px-4 py-2 font-semibold text-sm transition-all {{ (isset($filter) && $filter === 'all') ? 'text-[#62cbf5] border-b-2 border-[#62cbf5]' : 'text-gray-500 hover:text-gray-700' }}">
+                Semua
+            </a>
+        </div>
+
         <div class="flex items-center justify-between mb-6">
             <div class="flex items-center gap-3">
                 <select class="border border-gray-300 rounded px-2 py-1 bg-gray-200 text-sm">
@@ -69,12 +85,21 @@
                             <td class="border border-black py-3 text-black">{{ $item['juri2'] }}</td>
                             <td class="border border-black py-3 text-black">{{ $item['juri3'] }}</td>
                             <td class="border border-black py-3 text-black">
-                                <form action="{{ route('dewan.petugas.run', $item['id']) }}" method="POST">
-                                    @csrf
-                                    <button type="submit" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-1.5 px-3 rounded text-xs shadow flex items-center justify-center mx-auto gap-1">
-                                        <i class="fa-solid fa-play"></i> Mulai
-                                    </button>
-                                </form>
+                                <div class="flex items-center justify-center gap-2">
+                                    <form action="{{ route('dewan.petugas.run', $item['id']) }}" method="POST">
+                                        @csrf
+                                        <button type="submit" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-1.5 px-3 rounded text-xs shadow flex items-center gap-1" title="Mulai">
+                                            <i class="fa-solid fa-play"></i> Mulai
+                                        </button>
+                                    </form>
+                                    <form action="{{ route('dewan.petugas.delete', $item['id']) }}" method="POST" onsubmit="return confirm('Apakah Anda yakin ingin menghapus penugasan ini?');">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" class="bg-red-500 hover:bg-red-600 text-white font-bold py-1.5 px-3 rounded text-xs shadow flex items-center gap-1" title="Hapus">
+                                            <i class="fa-solid fa-trash"></i>
+                                        </button>
+                                    </form>
+                                </div>
                             </td>
                         </tr>
                     @empty

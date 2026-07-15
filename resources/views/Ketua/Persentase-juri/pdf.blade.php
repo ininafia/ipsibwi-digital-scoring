@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <title>Laporan Akurasi Juri</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            font-size: 12px;
+            color: #333;
+        }
+        h2 {
+            text-align: center;
+            margin-bottom: 5px;
+        }
+        p.subtitle {
+            text-align: center;
+            color: #666;
+            margin-top: 0;
+            margin-bottom: 20px;
+        }
+        .match-container {
+            margin-bottom: 30px;
+            border: 1px solid #ccc;
+            page-break-inside: avoid;
+        }
+        .match-header {
+            background-color: #f4f4f4;
+            padding: 10px;
+            border-bottom: 1px solid #ccc;
+            font-weight: bold;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            border: 1px solid #ccc;
+            padding: 8px;
+            text-align: center;
+        }
+        th {
+            background-color: #f9f9f9;
+        }
+        .juri-info {
+            text-align: left;
+        }
+        .text-green { color: #22c55e; }
+        .text-yellow { color: #eab308; }
+        .text-red { color: #ef4444; }
+        .bold { font-weight: bold; }
+        .small { font-size: 10px; color: #666; }
+    </style>
+</head>
+<body>
+
+    <h2>LAPORAN AKURASI JURI PERTANDINGAN</h2>
+    <p class="subtitle">Rekapitulasi Evaluasi Penilaian Juri Berdasarkan Event Pertandingan</p>
+
+    @forelse($akurasiData as $match)
+        <div class="match-container">
+            <div class="match-header">
+                Partai: {{ $match['partai'] }} | Gelanggang: {{ strtoupper($match['gelanggang']) }} | 
+                Kelas: {{ $match['kelas'] }} ({{ ucfirst($match['golongan']) }}) | 
+                Waktu: {{ \Carbon\Carbon::parse($match['tanggal_dihitung'])->format('d M Y, H:i') }}
+            </div>
+            <table>
+                <thead>
+                    <tr>
+                        <th width="20%">Petugas Juri</th>
+                        <th width="20%">Babak 1</th>
+                        <th width="20%">Babak 2</th>
+                        <th width="20%">Babak 3</th>
+                        <th width="20%">Total Akurasi</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach($match['juris'] as $juri)
+                        @php
+                            $totalAcc = $juri['persentase_akurasi'];
+                            $totalAccColor = 'text-red';
+                            if ($totalAcc >= 80) $totalAccColor = 'text-green';
+                            elseif ($totalAcc >= 50) $totalAccColor = 'text-yellow';
+                        @endphp
+                        <tr>
+                            <td class="juri-info">
+                                <div class="bold">{{ $juri['nama_juri'] }}</div>
+                                <div class="small">{{ strtoupper(str_replace('_', ' ', $juri['posisi'])) }}</div>
+                            </td>
+
+                            <!-- BABAK 1 -->
+                            @php 
+                                $b1 = $juri['rounds']['babak_1'];
+                                $b1Color = $b1['akurasi'] >= 80 ? 'text-green' : ($b1['akurasi'] >= 50 ? 'text-yellow' : 'text-red');
+                            @endphp
+                            <td>
+                                <div class="bold {{ $b1Color }}" style="font-size: 16px;">{{ number_format($b1['akurasi'], 1) }}%</div>
+                                <div class="small">Sah: {{ $b1['sah'] }} / Input: {{ $b1['input'] }}</div>
+                            </td>
+
+                            <!-- BABAK 2 -->
+                            @php 
+                                $b2 = $juri['rounds']['babak_2'];
+                                $b2Color = $b2['akurasi'] >= 80 ? 'text-green' : ($b2['akurasi'] >= 50 ? 'text-yellow' : 'text-red');
+                            @endphp
+                            <td>
+                                <div class="bold {{ $b2Color }}" style="font-size: 16px;">{{ number_format($b2['akurasi'], 1) }}%</div>
+                                <div class="small">Sah: {{ $b2['sah'] }} / Input: {{ $b2['input'] }}</div>
+                            </td>
+
+                            <!-- BABAK 3 -->
+                            @php 
+                                $b3 = $juri['rounds']['babak_3'];
+                                $b3Color = $b3['akurasi'] >= 80 ? 'text-green' : ($b3['akurasi'] >= 50 ? 'text-yellow' : 'text-red');
+                            @endphp
+                            <td>
+                                <div class="bold {{ $b3Color }}" style="font-size: 16px;">{{ number_format($b3['akurasi'], 1) }}%</div>
+                                <div class="small">Sah: {{ $b3['sah'] }} / Input: {{ $b3['input'] }}</div>
+                            </td>
+
+                            <!-- TOTAL -->
+                            <td style="background-color: #fafafa;">
+                                <div class="bold {{ $totalAccColor }}" style="font-size: 18px;">{{ number_format($totalAcc, 1) }}%</div>
+                                <div class="small">Sah: {{ $juri['total_nilai_sah'] }} / Input: {{ $juri['total_input'] }}</div>
+                            </td>
+                        </tr>
+                    @endforeach
+                </tbody>
+            </table>
+        </div>
+    @empty
+        <div style="text-align: center; padding: 50px;">
+            <h3>Tidak ada data akurasi juri.</h3>
+        </div>
+    @endforelse
+
+</body>
+</html>

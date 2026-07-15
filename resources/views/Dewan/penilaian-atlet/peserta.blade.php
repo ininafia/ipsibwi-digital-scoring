@@ -20,7 +20,7 @@
     <!-- Tengah (Partai) -->
     <div class="text-center font-bold text-lg w-1/3">
         <div class="text-black">Partai</div>
-        <div class="text-black">{{ $pertandingan ? $pertandingan->partai : '-' }}</div>
+        <div id="peserta-partai" class="text-black">{{ $pertandingan ? $pertandingan->partai : '-' }}</div>
     </div>
 
     <!-- Sudut Kanan -->

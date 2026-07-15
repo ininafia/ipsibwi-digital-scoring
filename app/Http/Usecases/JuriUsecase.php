@@ -407,7 +407,11 @@ class JuriUsecase extends Usecase
             if (!$petugasPertandingan) {
                 return Response::buildSuccess([
                     'history' => [],
-                    'juri' => ['nama' => 'MENUNGGU PENUGASAN', 'posisi' => strtoupper(str_replace('_', ' ', $juriPosition))]
+                    'juri' => ['nama' => 'MENUNGGU PENUGASAN', 'posisi' => strtoupper(str_replace('_', ' ', $juriPosition))],
+                    'timer' => [
+                        'time_remaining' => 0,
+                        'status' => 'stopped'
+                    ]
                 ], 200, 'Berhasil mengambil riwayat (penugasan tidak ditemukan)');
             }
             
@@ -445,9 +449,19 @@ class JuriUsecase extends Usecase
                 'posisi' => $petugasPertandingan->posisi ? strtoupper(str_replace('_', ' ', $petugasPertandingan->posisi)) : 'JURI'
             ];
 
+            $timerState = \Illuminate\Support\Facades\Cache::get('current_timer_state_' . $idPertandingan, [
+                'round' => 1,
+                'time_remaining' => 120,
+                'status' => 'stopped'
+            ]);
+
             return Response::buildSuccess([
                 'history' => $history->toArray(),
-                'juri' => $juriData
+                'juri' => $juriData,
+                'timer' => [
+                    'time_remaining' => $timerState['time_remaining'] ?? 0,
+                    'status' => $timerState['status'] ?? 'stopped'
+                ]
             ], 200, 'Berhasil mengambil riwayat');
         } catch (Exception $e) {
             Log::error($e->getMessage(), ['func_name' => $funcName]);

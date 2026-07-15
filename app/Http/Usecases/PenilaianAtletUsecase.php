@@ -520,6 +520,8 @@ class PenilaianAtletUsecase extends Usecase
                     'sudut_merah' => $match->sudut_merah ?? '-',
                     'kontingen_merah' => $match->kontingen_merah ?? '-',
                     'round' => $timerState['round'] ?? 1,
+                    'timer_status' => $timerState['status'] ?? 'stopped',
+                    'time_remaining' => $timerState['time_remaining'] ?? 0,
                 ],
                 'data' => $data,
                 'display' => [

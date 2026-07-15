@@ -48,8 +48,28 @@
 </div>
 
 <script>
+    function showTimerNotification(message) {
+        let toast = document.getElementById('timer-toast');
+        if (!toast) {
+            toast = document.createElement('div');
+            toast.id = 'timer-toast';
+            toast.className = 'fixed top-4 left-1/2 transform -translate-x-1/2 bg-red-600 text-white px-8 py-3 rounded-lg shadow-xl font-bold text-xl transition-opacity duration-300 z-[9999] opacity-0 pointer-events-none';
+            document.body.appendChild(toast);
+        }
+        toast.innerText = message;
+        toast.classList.remove('opacity-0');
+        toast.classList.add('opacity-100');
+        
+        setTimeout(() => {
+            toast.classList.remove('opacity-100');
+            toast.classList.add('opacity-0');
+        }, 3000);
+    }
+
+    let previousTimerStatus = null;
+
     function updateMonitorDisplay() {
-        fetch('{{ route('operator.monitor-display.data') }}')
+        fetch('{{ route('operator.monitor-display.data') }}?_t=' + new Date().getTime())
             .then(res => res.json())
             .then(res => {
                 if(res.success && res.data && res.match) {
@@ -92,12 +112,42 @@
                     // Update Peringatan
                     updatePeringatan('biru', res.data.peringatan_biru);
                     updatePeringatan('merah', res.data.peringatan_merah);
+                    
+                    // Update Active Votes (Juri Inputs)
+                    if (res.active_votes) {
+                        const corners = ['blue', 'red'];
+                        const techniques = ['punch', 'kick'];
+                        const juris = ['J1', 'J2', 'J3'];
+                        
+                        corners.forEach(corner => {
+                            const bgColor = corner === 'blue' ? 'bg-blue-600 text-white' : 'bg-red-600 text-white';
+                            techniques.forEach(technique => {
+                                juris.forEach(juri => {
+                                    const spanId = `vote-${corner}-${technique}-${juri}`;
+                                    const el = document.getElementById(spanId);
+                                    if (el) {
+                                        if (res.active_votes[corner] && res.active_votes[corner][technique] && res.active_votes[corner][technique].includes(juri)) {
+                                            el.className = `transition-colors duration-150 px-2 py-0.5 rounded font-bold shadow-sm ${bgColor}`;
+                                        } else {
+                                            el.className = 'transition-colors duration-150 px-2 py-0.5 rounded font-bold bg-white text-gray-700';
+                                        }
+                                    }
+                                });
+                            });
+                        });
+                    }
 
                     // Update Jatuhan Count
                     let jBiru = document.getElementById('jatuhan-count-biru');
                     if (jBiru) jBiru.innerText = res.data.jatuhan_biru;
                     let jMerah = document.getElementById('jatuhan-count-merah');
                     if (jMerah) jMerah.innerText = res.data.jatuhan_merah;
+
+                    let currentTimerStatus = res.match.timer_status;
+                    if (previousTimerStatus === 'playing' && (currentTimerStatus === 'stopped' || currentTimerStatus === 'paused')) {
+                        showTimerNotification("Waktu Babak Berhenti!");
+                    }
+                    previousTimerStatus = currentTimerStatus;
                 }
             })
             .catch(console.error);

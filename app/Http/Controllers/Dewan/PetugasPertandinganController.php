@@ -10,7 +10,7 @@ use Illuminate\Http\Response;
 
 class PetugasPertandinganController extends Controller
 {
-    public function index(): View | Response | RedirectResponse
+    public function index(Request $request): View | Response | RedirectResponse
     {
         // HARUS LOGIN
         if (!session('user_id')) {
@@ -22,11 +22,12 @@ class PetugasPertandinganController extends Controller
             abort(403, 'Akses ditolak');
         }
 
+        $filter = $request->query('filter', 'active');
         $petugasUsecase = new \App\Http\Usecases\PetugasUsecase();
-        $result = $petugasUsecase->getAssignedData();
+        $result = $petugasUsecase->getAssignedData($filter);
         $assignedList = $result['data']['list'] ?? [];
 
-        return view('Dewan.Petugas-Pertandingan.list', compact('assignedList'));
+        return view('Dewan.Petugas-Pertandingan.list', compact('assignedList', 'filter'));
     }
 
     public function add(): View | Response | RedirectResponse
@@ -110,5 +111,31 @@ class PetugasPertandinganController extends Controller
         return redirect()
             ->route('dewan.penilaian')
             ->with('success', 'Petugas pertandingan berhasil dijalankan.');
+    }
+
+    public function destroy($id): RedirectResponse
+    {
+        // HARUS LOGIN
+        if (!session('user_id')) {
+            return redirect('/login/dewan');
+        }
+
+        // KHUSUS DEWAN (Role = 3)
+        if (session('role') != 3) {
+            abort(403, 'Akses ditolak');
+        }
+
+        $petugasUsecase = new \App\Http\Usecases\PetugasUsecase();
+        $result = $petugasUsecase->deleteAssignment($id);
+
+        if (empty($result['success']) || $result['success'] !== true) {
+            return redirect()
+                ->route('dewan.petugas')
+                ->with('error', $result['message'] ?? 'Terjadi kesalahan saat menghapus penugasan');
+        }
+
+        return redirect()
+            ->route('dewan.petugas')
+            ->with('success', $result['message'] ?? 'Berhasil menghapus penugasan petugas');
     }
 }

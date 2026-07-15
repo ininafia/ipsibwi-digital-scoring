@@ -305,15 +305,20 @@ class PetugasUsecase extends Usecase
     | GET ASSIGNED DATA (FOR DEWAN)
     |--------------------------------------------------------------------------
     */
-    public function getAssignedData(): array
+    public function getAssignedData(string $filter = 'active'): array
     {
         $funcName = $this->className . ".getAssignedData";
         try {
-            // Get all matches
-            $matches = DB::table('pertandingan')
-                ->whereNull('deleted_at')
-                ->orderBy('partai', 'asc')
-                ->get();
+            // Get matches based on filter
+            $query = DB::table('pertandingan')->whereNull('deleted_at');
+            
+            if ($filter === 'active') {
+                $query->whereIn('status', ['standby', 'playing']);
+            } elseif ($filter === 'finished') {
+                $query->whereIn('status', ['finished', 'final']);
+            }
+
+            $matches = $query->orderBy('partai', 'asc')->get();
             
             // Get all assignments
             $assignments = DB::table('petugas_pertandingan')
@@ -429,6 +434,29 @@ class PetugasUsecase extends Usecase
                 message: 'Berhasil menyimpan penugasan petugas'
             );
 
+        } catch (Exception $e) {
+            DB::rollback();
+            Log::error($e->getMessage(), ['func_name' => $funcName]);
+            return Response::buildErrorService($e->getMessage());
+        }
+    }
+
+    public function deleteAssignment(int $idPertandingan): array
+    {
+        $funcName = $this->className . ".deleteAssignment";
+
+        DB::beginTransaction();
+
+        try {
+            DB::table('petugas_pertandingan')
+                ->where('id_pertandingan', $idPertandingan)
+                ->delete();
+
+            DB::commit();
+
+            return Response::buildSuccess(
+                message: 'Berhasil menghapus penugasan petugas untuk pertandingan ini'
+            );
         } catch (Exception $e) {
             DB::rollback();
             Log::error($e->getMessage(), ['func_name' => $funcName]);

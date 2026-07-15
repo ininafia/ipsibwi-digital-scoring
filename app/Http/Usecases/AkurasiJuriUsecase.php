@@ -151,4 +151,104 @@ class AkurasiJuriUsecase extends Usecase
             return Response::buildErrorService($e->getMessage());
         }
     }
+
+    /**
+     * Ambil seluruh data akurasi juri dari tabel akurasi_juri
+     */
+    public function getAllAkurasi(): array
+    {
+        $funcName = $this->className . ".getAllAkurasi";
+
+        try {
+            $akurasiRecords = DB::table('akurasi_juri')
+                ->join('petugas_pertandingan', 'akurasi_juri.id_petugas_pertandingan', '=', 'petugas_pertandingan.id')
+                ->join('data_petugas', 'petugas_pertandingan.id_petugas', '=', 'data_petugas.id')
+                ->join('pertandingan', 'akurasi_juri.id_pertandingan', '=', 'pertandingan.id')
+                ->select(
+                    'pertandingan.id as match_id',
+                    'pertandingan.partai',
+                    'pertandingan.gelanggang',
+                    'pertandingan.kelas',
+                    'pertandingan.golongan',
+                    'petugas_pertandingan.id as id_petugas_pertandingan',
+                    'data_petugas.nama as nama_juri',
+                    'petugas_pertandingan.posisi',
+                    'akurasi_juri.total_input',
+                    'akurasi_juri.total_nilai_sah',
+                    'akurasi_juri.total_nilai_tidak_sah',
+                    'akurasi_juri.persentase_akurasi',
+                    'akurasi_juri.tanggal_dihitung'
+                )
+                ->orderBy('pertandingan.partai', 'asc')
+                ->get();
+
+            // Group by match_id
+            $groupedByMatch = [];
+
+            foreach ($akurasiRecords as $row) {
+                if (!isset($groupedByMatch[$row->match_id])) {
+                    $groupedByMatch[$row->match_id] = [
+                        'match_id' => $row->match_id,
+                        'partai' => $row->partai,
+                        'gelanggang' => $row->gelanggang,
+                        'kelas' => $row->kelas,
+                        'golongan' => $row->golongan,
+                        'tanggal_dihitung' => $row->tanggal_dihitung,
+                        'juris' => []
+                    ];
+                }
+
+                // Kalkulasi per babak
+                $babakData = [];
+                for ($roundNum = 1; $roundNum <= 3; $roundNum++) {
+                    $total_input_babak = DB::table('score_events')
+                        ->where('match_id', $row->match_id)
+                        ->where('judge_id', $row->id_petugas_pertandingan)
+                        ->where('round', $roundNum)
+                        ->count();
+
+                    $total_sah_babak = DB::table('score_award_votes')
+                        ->where('judge_id', $row->id_petugas_pertandingan)
+                        ->whereExists(function ($query) use ($row, $roundNum) {
+                            $query->select(DB::raw(1))
+                                ->from('score_awards')
+                                ->whereColumn('score_awards.id', 'score_award_votes.award_id')
+                                ->where('score_awards.match_id', $row->match_id)
+                                ->where('score_awards.round', $roundNum);
+                        })
+                        ->count();
+
+                    $total_tidak_sah_babak = max(0, $total_input_babak - $total_sah_babak);
+                    $akurasi_babak = $total_input_babak > 0 ? round(($total_sah_babak / $total_input_babak) * 100, 1) : 0;
+
+                    $babakData["babak_$roundNum"] = [
+                        'input' => $total_input_babak,
+                        'sah' => $total_sah_babak,
+                        'tidak_sah' => $total_tidak_sah_babak,
+                        'akurasi' => $akurasi_babak
+                    ];
+                }
+
+                $groupedByMatch[$row->match_id]['juris'][] = [
+                    'id_petugas' => $row->id_petugas_pertandingan,
+                    'nama_juri' => $row->nama_juri,
+                    'posisi' => $row->posisi,
+                    'total_input' => $row->total_input,
+                    'total_nilai_sah' => $row->total_nilai_sah,
+                    'total_nilai_tidak_sah' => $row->total_nilai_tidak_sah,
+                    'persentase_akurasi' => $row->persentase_akurasi,
+                    'rounds' => $babakData
+                ];
+            }
+
+            return Response::buildSuccess(
+                data: array_values($groupedByMatch),
+                message: "Data seluruh akurasi juri berhasil dimuat"
+            );
+
+        } catch (Exception $e) {
+            Log::error($e->getMessage(), ['func_name' => $funcName]);
+            return Response::buildErrorService($e->getMessage());
+        }
+    }
 }

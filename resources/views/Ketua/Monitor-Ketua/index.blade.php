@@ -49,11 +49,32 @@
             if (el) el.innerText = val ?? '';
         }
 
-        function formatTimer(seconds) {
-            const m = Math.floor(seconds / 60);
-            const s = seconds % 60;
-            return String(m).padStart(2, '0') + ' : ' + String(s).padStart(2, '0');
+        function formatTimer(totalSeconds) {
+            if (!totalSeconds || totalSeconds < 0) return '00:00';
+            const m = Math.floor(totalSeconds / 60).toString().padStart(2, '0');
+            const s = (totalSeconds % 60).toString().padStart(2, '0');
+            return `${m}:${s}`;
         }
+
+        function showTimerNotification(message) {
+            let toast = document.getElementById('timer-toast');
+            if (!toast) {
+                toast = document.createElement('div');
+                toast.id = 'timer-toast';
+                toast.className = 'fixed top-4 left-1/2 transform -translate-x-1/2 bg-red-600 text-white px-8 py-3 rounded-lg shadow-xl font-bold text-xl transition-opacity duration-300 z-[9999] opacity-0 pointer-events-none';
+                document.body.appendChild(toast);
+            }
+            toast.innerText = message;
+            toast.classList.remove('opacity-0');
+            toast.classList.add('opacity-100');
+            
+            setTimeout(() => {
+                toast.classList.remove('opacity-100');
+                toast.classList.add('opacity-0');
+            }, 3000);
+        }
+
+        let previousTimerStatus = null;
 
         const awardColors = [
             'bg-[#ff3b8f] text-white', // pink
@@ -134,7 +155,7 @@
         }
 
         function updateMonitor() {
-            fetch('{{ route("ketua.monitor.data") }}')
+            fetch('{{ route("ketua.monitor.data") }}?_t=' + new Date().getTime())
                 .then(res => {
                     if (!res.ok) throw new Error('HTTP ' + res.status);
                     return res.json();
@@ -209,6 +230,11 @@
                     const timeRemaining = data.timer.time_remaining ?? 0;
                     setText('timer-value', formatTimer(Math.round(timeRemaining)));
 
+                    let currentTimerStatus = data.timer.status;
+                    if (previousTimerStatus === 'playing' && (currentTimerStatus === 'stopped' || currentTimerStatus === 'paused')) {
+                        showTimerNotification("Waktu Babak Berhenti!");
+                    }
+                    previousTimerStatus = currentTimerStatus;
                 })
                 .catch(err => {
                     console.error('Monitor fetch error:', err);

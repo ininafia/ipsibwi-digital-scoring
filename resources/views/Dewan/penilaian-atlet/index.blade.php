@@ -29,15 +29,42 @@
     </main>
 
     <script>
-        let currentMatchId = '{{ $pertandingan->id ?? 0 }}';
+        let currentMatchId = '{{ $pertandingan ? $pertandingan->id : "" }}';
         let isActionPending = false;
         let latestDewanFetchId = 0;
+
+        function formatTimer(totalSeconds) {
+            if (!totalSeconds || totalSeconds < 0) return '00:00';
+            const m = Math.floor(totalSeconds / 60).toString().padStart(2, '0');
+            const s = (totalSeconds % 60).toString().padStart(2, '0');
+            return `${m}:${s}`;
+        }
+
+        function showTimerNotification(message) {
+            let toast = document.getElementById('timer-toast');
+            if (!toast) {
+                toast = document.createElement('div');
+                toast.id = 'timer-toast';
+                toast.className = 'fixed top-4 left-1/2 transform -translate-x-1/2 bg-red-600 text-white px-8 py-3 rounded-lg shadow-xl font-bold text-xl transition-opacity duration-300 z-[9999] opacity-0 pointer-events-none';
+                document.body.appendChild(toast);
+            }
+            toast.innerText = message;
+            toast.classList.remove('opacity-0');
+            toast.classList.add('opacity-100');
+            
+            setTimeout(() => {
+                toast.classList.remove('opacity-100');
+                toast.classList.add('opacity-0');
+            }, 3000);
+        }
+
+        let previousTimerStatus = null;
 
         function updateDewanUI() {
             if (isActionPending) return;
             let currentFetchId = ++latestDewanFetchId;
 
-            fetch('/dewan/penilaian-atlet/data')
+            fetch('/dewan/penilaian-atlet/data?_t=' + new Date().getTime())
                 .then(res => res.json())
                 .then(res => {
                     if (currentFetchId !== latestDewanFetchId) return; // Abaikan respons telat
@@ -55,7 +82,19 @@
                         if (dewanData) {
                             document.getElementById('dewan-nama-posisi').innerText = dewanData.posisi;
                             document.getElementById('dewan-nama-petugas').innerText = dewanData.nama;
+                            document.getElementById('peserta-partai').innerText = matchData.partai || '-';
                         }
+
+                        let timerVal = document.getElementById('timer-value');
+                        if(timerVal) {
+                            timerVal.innerText = formatTimer(Math.round(matchData.time_remaining || 0));
+                        }
+
+                        let currentTimerStatus = matchData.timer_status;
+                        if (previousTimerStatus === 'playing' && (currentTimerStatus === 'stopped' || currentTimerStatus === 'paused')) {
+                            showTimerNotification("Waktu Babak Berhenti!");
+                        }
+                        previousTimerStatus = currentTimerStatus;
 
                         for (let i = 1; i <= 3; i++) {
                             let cellBiru = document.getElementById('dewan-jatuhan-biru-' + i);
