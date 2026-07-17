@@ -86,15 +86,24 @@
                                             <!-- AKSI -->
                                             <td class="py-3 px-4 align-top">
                                                 @php
+                                                    $actionLabel = str_replace('_', ' ', $log->action);
                                                     $actionClass = 'bg-gray-100 text-gray-600 border-gray-200';
-                                                    if ($log->action == 'INPUT_NILAI') {
-                                                        $actionClass = 'bg-blue-50 text-blue-600 border-blue-200';
+                                                    
+                                                    if ($log->technique && $log->athlete) {
+                                                        $actionLabel = strtoupper($log->technique === 'punch' ? 'Pukulan' : 'Tendangan');
+                                                        if ($log->athlete === 'red') {
+                                                            $actionClass = 'bg-red-50 text-red-600 border-red-200';
+                                                        } elseif ($log->athlete === 'blue') {
+                                                            $actionClass = 'bg-blue-50 text-blue-600 border-blue-200';
+                                                        }
+                                                    } elseif ($log->action == 'INPUT_NILAI') {
+                                                        $actionClass = 'bg-gray-100 text-gray-600 border-gray-200';
                                                     } elseif ($log->action == 'HAPUS_NILAI') {
-                                                        $actionClass = 'bg-red-50 text-red-600 border-red-200';
+                                                        $actionClass = 'bg-gray-100 text-gray-600 border-gray-200';
                                                     }
                                                 @endphp
                                                 <span class="inline-block px-2 py-1 text-[10px] font-bold border rounded-md {{ $actionClass }}">
-                                                    {{ str_replace('_', ' ', $log->action) }}
+                                                    {{ $actionLabel }}
                                                 </span>
                                             </td>
 

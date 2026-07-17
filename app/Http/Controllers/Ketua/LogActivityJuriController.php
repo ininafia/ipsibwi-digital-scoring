@@ -35,6 +35,8 @@ class LogActivityJuriController extends Controller
                 'data_petugas.nama as nama_juri',
                 'petugas_pertandingan.posisi',
                 'score_events.status as event_status',
+                'score_events.technique as technique',
+                'score_events.athlete as athlete',
                 'score_award_votes.id as is_sah'
             )
             ->orderBy('log_activity_juri.created_at', 'desc')
