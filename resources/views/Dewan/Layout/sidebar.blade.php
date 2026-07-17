@@ -1,6 +1,11 @@
 <aside x-show="open"
-       x-transition
-       class="w-[240px] bg-white border-r border-gray-200 shadow-sm">
+       x-transition:enter="transition-transform duration-300"
+       x-transition:enter-start="-translate-x-full"
+       x-transition:enter-end="translate-x-0"
+       x-transition:leave="transition-transform duration-300"
+       x-transition:leave-start="translate-x-0"
+       x-transition:leave-end="-translate-x-full"
+       class="w-[240px] bg-white border-r border-gray-200 shadow-sm fixed inset-y-0 left-0 z-50 lg:relative lg:translate-x-0">
 
     <!-- LOGO -->
     <div class="h-[82px] flex items-center px-5">

@@ -5,15 +5,15 @@
         <!-- =========================
              PANEL BIRU
         ========================== -->
-        <div class="flex items-center gap-2">
+        <div class="flex items-center gap-2 w-full">
 
             <!-- TOMBOL -->
-            <div class="grid grid-cols-1 gap-2">
+            <div class="flex-1 grid grid-cols-1 gap-2">
 
                 <!-- PUKULAN -->
                 <button
                     onclick="addScore('biru', 1)"
-                    class="w-36 h-14 bg-blue-700 hover:bg-blue-800
+                    class="w-full h-14 bg-blue-700 hover:bg-blue-800
                            rounded-md text-white font-bold text-[11px]
                            shadow transition flex items-center
                            justify-center gap-2 active:scale-95">
@@ -32,7 +32,7 @@
                 <!-- TENDANGAN -->
                 <button
                     onclick="addScore('biru', 2)"
-                    class="w-36 h-14 bg-blue-700 hover:bg-blue-800
+                    class="w-full h-14 bg-blue-700 hover:bg-blue-800
                            rounded-md text-white font-bold text-[11px]
                            shadow transition flex items-center
                            justify-center gap-2 active:scale-95">
@@ -53,7 +53,7 @@
             <!-- DELETE -->
             <button
                 onclick="deleteScore('biru')"
-                class="w-36 h-14 bg-blue-700 hover:bg-blue-800
+                class="flex-1 h-14 bg-blue-700 hover:bg-blue-800
                        rounded-md text-white font-bold text-[11px]
                        shadow transition flex items-center
                        justify-center active:scale-95">
@@ -87,12 +87,12 @@
         <!-- =========================
              PANEL MERAH
         ========================== -->
-        <div class="flex items-center justify-end gap-2">
+        <div class="flex items-center justify-end gap-2 w-full">
 
             <!-- DELETE -->
             <button
                 onclick="deleteScore('merah')"
-                class="w-36 h-14 bg-red-600 hover:bg-red-700
+                class="flex-1 h-14 bg-red-600 hover:bg-red-700
                        rounded-md text-white font-bold text-[11px]
                        shadow transition flex items-center
                        justify-center active:scale-95">
@@ -102,12 +102,12 @@
             </button>
 
             <!-- TOMBOL -->
-            <div class="grid grid-cols-1 gap-2">
+            <div class="flex-1 grid grid-cols-1 gap-2">
 
                 <!-- PUKULAN -->
                 <button
                     onclick="addScore('merah', 1)"
-                    class="w-36 h-14 bg-red-600 hover:bg-red-700
+                    class="w-full h-14 bg-red-600 hover:bg-red-700
                            rounded-md text-white font-bold text-[11px]
                            shadow transition flex items-center
                            justify-center gap-2 active:scale-95">
@@ -124,7 +124,7 @@
                 <!-- TENDANGAN -->
                 <button
                     onclick="addScore('merah', 2)"
-                    class="w-36 h-14 bg-red-600 hover:bg-red-700
+                    class="w-full h-14 bg-red-600 hover:bg-red-700
                            rounded-md text-white font-bold text-[11px]
                            shadow transition flex items-center
                            justify-center gap-2 active:scale-95">

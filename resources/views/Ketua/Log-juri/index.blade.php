@@ -87,22 +87,18 @@
                                             <td class="py-3 px-4 align-top">
                                                 @php
                                                     $actionLabel = str_replace('_', ' ', $log->action);
-                                                    $actionClass = 'bg-gray-100 text-gray-600 border-gray-200';
+                                                    $actionClass = 'bg-white text-gray-600 border-gray-400';
                                                     
                                                     if ($log->technique && $log->athlete) {
                                                         $actionLabel = strtoupper($log->technique === 'punch' ? 'Pukulan' : 'Tendangan');
                                                         if ($log->athlete === 'red') {
-                                                            $actionClass = 'bg-red-50 text-red-600 border-red-200';
+                                                            $actionClass = 'bg-white text-red-600 border-red-500';
                                                         } elseif ($log->athlete === 'blue') {
-                                                            $actionClass = 'bg-blue-50 text-blue-600 border-blue-200';
+                                                            $actionClass = 'bg-white text-blue-600 border-blue-500';
                                                         }
-                                                    } elseif ($log->action == 'INPUT_NILAI') {
-                                                        $actionClass = 'bg-gray-100 text-gray-600 border-gray-200';
-                                                    } elseif ($log->action == 'HAPUS_NILAI') {
-                                                        $actionClass = 'bg-gray-100 text-gray-600 border-gray-200';
                                                     }
                                                 @endphp
-                                                <span class="inline-block px-2 py-1 text-[10px] font-bold border rounded-md {{ $actionClass }}">
+                                                <span class="inline-block px-3 py-1 text-[10px] font-bold border rounded-md {{ $actionClass }}">
                                                     {{ $actionLabel }}
                                                 </span>
                                             </td>
@@ -112,14 +108,14 @@
                                                 @php
                                                     $statusClass = 'bg-gray-100 text-gray-600 border-gray-200';
                                                     if ($log->status_text == 'Sah') {
-                                                        $statusClass = 'bg-green-50 text-green-600 border-green-200';
+                                                        $statusClass = 'bg-green-50 text-green-600 border-green-400';
                                                     } elseif ($log->status_text == 'Menunggu Validasi') {
-                                                        $statusClass = 'bg-yellow-50 text-yellow-600 border-yellow-200';
+                                                        $statusClass = 'bg-yellow-50 text-yellow-600 border-yellow-400';
                                                     } elseif (str_contains($log->status_text, 'Tidak Sah')) {
-                                                        $statusClass = 'bg-red-50 text-red-600 border-red-200';
+                                                        $statusClass = 'bg-red-50 text-red-600 border-red-400';
                                                     }
                                                 @endphp
-                                                <span class="inline-block px-2 py-1 text-[10px] font-bold border rounded-md {{ $statusClass }}">
+                                                <span class="inline-block px-3 py-1 text-[10px] font-bold border rounded-md {{ $statusClass }}">
                                                     {{ $log->status_text }}
                                                 </span>
                                             </td>

@@ -31,10 +31,19 @@
 </head>
 
 <body
-    x-data="{ open: true }"
+    x-data="{ open: window.innerWidth >= 1024 }"
+    @resize.window="open = window.innerWidth >= 1024"
     class="bg-[#f3f3f3] min-h-screen font-[Poppins] overflow-hidden">
 
-<div class="flex h-screen">
+<div class="flex h-screen relative">
+
+    {{-- OVERLAY (Mobile) --}}
+    <div x-show="open" 
+         @click="open = false" 
+         class="fixed inset-0 bg-black/50 z-40 lg:hidden"
+         x-transition.opacity
+         x-cloak>
+    </div>
 
     {{-- SIDEBAR --}}
     @if(request()->routeIs('operator.tanding.*'))

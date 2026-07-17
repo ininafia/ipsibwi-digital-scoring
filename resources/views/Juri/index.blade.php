@@ -14,9 +14,9 @@
     @include('Juri.header')
 
     {{-- CONTENT --}}
-    <main class="p-2">
+    <main class="p-2 overflow-x-auto">
 
-        <div class="bg-gray-100 border border-gray-300 rounded-xl shadow-md p-3">
+        <div class="bg-gray-100 border border-gray-300 rounded-xl shadow-md p-3 min-w-[768px]">
 
             {{-- PESERTA --}}
             @include('Juri.peserta')
