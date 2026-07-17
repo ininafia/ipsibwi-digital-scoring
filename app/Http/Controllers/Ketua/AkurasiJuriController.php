@@ -26,7 +26,7 @@ class AkurasiJuriController extends Controller
         $akurasiData = $response['success'] ? $response['data']['matches'] : [];
         $eventAccuracy = $response['success'] ? $response['data']['event_accuracy'] : 0;
 
-        return view('Ketua.Persentase-Juri.index', compact('akurasiData', 'eventAccuracy'));
+        return view('Ketua.Persentase-juri.index', compact('akurasiData', 'eventAccuracy'));
     }
 
     public function exportPdfAll()
@@ -46,7 +46,7 @@ class AkurasiJuriController extends Controller
         $akurasiData = $response['success'] ? $response['data']['matches'] : [];
         $eventAccuracy = $response['success'] ? $response['data']['event_accuracy'] : 0;
 
-        $pdf = Pdf::loadView('Ketua.Persentase-Juri.pdf', compact('akurasiData', 'eventAccuracy'));
+        $pdf = Pdf::loadView('Ketua.Persentase-juri.pdf', compact('akurasiData', 'eventAccuracy'));
         $pdf->setPaper('a4', 'landscape');
         
         return $pdf->download('Laporan_Akurasi_Juri_Seluruh_Pertandingan.pdf');
@@ -81,7 +81,7 @@ class AkurasiJuriController extends Controller
         $akurasiData = array_values($akurasiData);
         $partai = $akurasiData[0]['partai'];
 
-        $pdf = Pdf::loadView('Ketua.Persentase-Juri.pdf', compact('akurasiData'));
+        $pdf = Pdf::loadView('Ketua.Persentase-juri.pdf', compact('akurasiData'));
         $pdf->setPaper('a4', 'landscape');
         
         return $pdf->download('Laporan_Akurasi_Juri_Partai_'.$partai.'.pdf');
