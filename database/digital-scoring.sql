@@ -295,6 +295,7 @@ CREATE TABLE log_activity_juri (
     id_pertandingan INT NOT NULL,
     id_juri INT NOT NULL,
     id_babak INT NOT NULL,
+    id_score_event BIGINT NULL,
     action VARCHAR(50) NOT NULL,
     description TEXT NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,

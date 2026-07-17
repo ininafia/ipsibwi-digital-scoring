@@ -57,6 +57,7 @@
                                         <th class="py-3 px-4 font-semibold text-gray-600 text-xs uppercase tracking-wider w-1/5">Petugas Juri</th>
                                         <th class="py-3 px-4 font-semibold text-gray-600 text-xs uppercase tracking-wider text-center w-1/12">Babak</th>
                                         <th class="py-3 px-4 font-semibold text-gray-600 text-xs uppercase tracking-wider w-1/6">Aksi</th>
+                                        <th class="py-3 px-4 font-semibold text-gray-600 text-xs uppercase tracking-wider w-1/6">Status</th>
                                         <th class="py-3 px-4 font-semibold text-gray-600 text-xs uppercase tracking-wider">Keterangan</th>
                                     </tr>
                                 </thead>
@@ -94,6 +95,23 @@
                                                 @endphp
                                                 <span class="inline-block px-2 py-1 text-[10px] font-bold border rounded-md {{ $actionClass }}">
                                                     {{ str_replace('_', ' ', $log->action) }}
+                                                </span>
+                                            </td>
+
+                                            <!-- STATUS -->
+                                            <td class="py-3 px-4 align-top">
+                                                @php
+                                                    $statusClass = 'bg-gray-100 text-gray-600 border-gray-200';
+                                                    if ($log->status_text == 'Sah') {
+                                                        $statusClass = 'bg-green-50 text-green-600 border-green-200';
+                                                    } elseif ($log->status_text == 'Menunggu Validasi') {
+                                                        $statusClass = 'bg-yellow-50 text-yellow-600 border-yellow-200';
+                                                    } elseif (str_contains($log->status_text, 'Tidak Sah')) {
+                                                        $statusClass = 'bg-red-50 text-red-600 border-red-200';
+                                                    }
+                                                @endphp
+                                                <span class="inline-block px-2 py-1 text-[10px] font-bold border rounded-md {{ $statusClass }}">
+                                                    {{ $log->status_text }}
                                                 </span>
                                             </td>
 
