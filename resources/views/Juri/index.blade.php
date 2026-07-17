@@ -43,7 +43,7 @@
             return `${m}:${s}`;
         }
 
-        function showTimerNotification(message) {
+        function showToast(message) {
             let toast = document.getElementById('timer-toast');
             if (!toast) {
                 toast = document.createElement('div');
@@ -67,7 +67,7 @@
         function addScore(sudut, nilai) {
             if(!currentMatchId) {
                 console.warn('addScore aborted: currentMatchId is empty');
-                alert('Gagal: Tidak ada pertandingan aktif yang terpantau.');
+                showToast('Gagal: Tidak ada pertandingan aktif yang terpantau.');
                 return;
             }
 
@@ -89,20 +89,20 @@
             .then(data => {
                 if(!data.success) {
                     console.error('addScore error:', data.message);
-                    alert('Gagal menambah nilai: ' + data.message);
+                    showToast('Gagal menambah nilai: ' + data.message);
                 } else {
                     updateJuriDisplay();
                 }
             })
             .catch(err => {
                 console.error(err);
-                alert('Terjadi kesalahan koneksi.');
+                showToast('Terjadi kesalahan koneksi.');
             });
         }
 
         function deleteScore(sudut) {
             if(!currentMatchId) {
-                alert('Gagal: Tidak ada pertandingan aktif.');
+                showToast('Gagal: Tidak ada pertandingan aktif.');
                 return;
             }
 
@@ -122,14 +122,14 @@
             .then(data => {
                 if(!data.success) {
                     console.error('deleteScore error:', data.message);
-                    alert('Gagal menghapus nilai: ' + data.message);
+                    showToast('Gagal menghapus nilai: ' + data.message);
                 } else {
                     updateJuriDisplay();
                 }
             })
             .catch(err => {
                 console.error(err);
-                alert('Terjadi kesalahan koneksi.');
+                showToast('Terjadi kesalahan koneksi.');
             });
         }
         function updateJuriDisplay() {
@@ -154,16 +154,16 @@
 
                         let currentTimerStatus = res.match.timer_status;
                         if (previousTimerStatus === 'playing' && (currentTimerStatus === 'stopped' || currentTimerStatus === 'paused')) {
-                            showTimerNotification("Waktu Babak Berhenti!");
+                            showToast("Waktu Babak Berhenti!");
                         }
                         previousTimerStatus = currentTimerStatus;
 
                         let currentTimeRemaining = res.match.time_remaining;
                         if (previousTimeRemaining !== null && previousTimeRemaining > 0 && currentTimeRemaining === 0) {
                             if (currentRound < 3) {
-                                showTimerNotification("Waktu Babak " + currentRound + " telah habis!");
+                                showToast("Waktu Babak " + currentRound + " telah habis!");
                             } else {
-                                showTimerNotification("Waktu Pertandingan telah selesai!");
+                                showToast("Waktu Pertandingan telah selesai!");
                             }
                         }
                         previousTimeRemaining = currentTimeRemaining;
@@ -230,7 +230,7 @@
                 .catch(console.error);
         }
 
-        setInterval(updateJuriDisplay, 1000);
+        setInterval(updateJuriDisplay, 1500);
         updateJuriDisplay();
     </script>
 </body>

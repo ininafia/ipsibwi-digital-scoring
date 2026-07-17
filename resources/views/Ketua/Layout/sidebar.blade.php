@@ -33,10 +33,19 @@
 
         <!-- MONITOR PERTANDINGAN -->
         <a href="{{ route('ketua.monitor') }}"
-            class="flex items-center gap-3 h-[60px] pl-12 pr-5 text-[#4fcfff] text-base font-medium hover:bg-gray-100 transition">
+            class="flex items-center gap-3 h-[60px] pl-12 pr-5 {{ request()->routeIs('ketua.monitor') ? 'bg-[#dcf8ff] text-[#4fcfff]' : 'text-[#4fcfff] hover:bg-gray-100' }} text-base font-medium transition">
 
             <i class="fa-solid fa-people-roof w-5 text-center"></i>
             <span>Monitor</span>
+
+        </a>
+
+        <!-- LOG JURI -->
+        <a href="{{ route('ketua.log-juri') }}"
+            class="flex items-center gap-3 h-[60px] pl-12 pr-5 {{ request()->routeIs('ketua.log-juri') ? 'bg-[#dcf8ff] text-[#4fcfff]' : 'text-[#4fcfff] hover:bg-gray-100' }} text-base font-medium transition">
+
+            <i class="fa-solid fa-clipboard-list w-5 text-center"></i>
+            <span>Log Activity Juri</span>
 
         </a>
 

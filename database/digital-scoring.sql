@@ -285,4 +285,22 @@ CREATE TABLE riwayat_hukuman (
     updated_at TIMESTAMP NULL
 ) ENGINE=InnoDB;
 
+-- =========================================
+-- 15. LOG ACTIVITY JURI
+-- =========================================
+DROP TABLE IF EXISTS log_activity_juri;
+
+CREATE TABLE log_activity_juri (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    id_pertandingan INT NOT NULL,
+    id_juri INT NOT NULL,
+    id_babak INT NOT NULL,
+    action VARCHAR(50) NOT NULL,
+    description TEXT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (id_pertandingan) REFERENCES pertandingan(id),
+    FOREIGN KEY (id_juri) REFERENCES petugas_pertandingan(id),
+    FOREIGN KEY (id_babak) REFERENCES babak(id)
+) ENGINE=InnoDB;
+
 SET FOREIGN_KEY_CHECKS = 1;

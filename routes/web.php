@@ -85,6 +85,10 @@ Route::middleware(['role:2'])->prefix('ketua')->name('ketua.')->group(function (
         Route::get('/export-all', 'exportPdfAll')->name('akurasi.export.all');
         Route::get('/export/{id}', 'exportPdfMatch')->name('akurasi.export.match');
     });
+
+    Route::controller(\App\Http\Controllers\Ketua\LogActivityJuriController::class)->prefix('log-juri')->group(function () {
+        Route::get('/', 'index')->name('log-juri');
+    });
 });
 
 
