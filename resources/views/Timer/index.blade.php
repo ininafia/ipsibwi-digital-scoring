@@ -46,6 +46,23 @@
     <!-- Axios for HTTP Requests -->
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     <script>
+        function showTimerNotification(message) {
+            let toast = document.getElementById('timer-toast');
+            if (!toast) {
+                toast = document.createElement('div');
+                toast.id = 'timer-toast';
+                toast.className = 'fixed top-4 left-1/2 transform -translate-x-1/2 bg-red-600 text-white px-8 py-3 rounded-lg shadow-xl font-bold text-xl transition-opacity duration-300 z-[9999] opacity-0 pointer-events-none';
+                document.body.appendChild(toast);
+            }
+            toast.innerText = message;
+            toast.classList.remove('opacity-0');
+            toast.classList.add('opacity-100');
+            setTimeout(() => {
+                toast.classList.remove('opacity-100');
+                toast.classList.add('opacity-0');
+            }, 3000);
+        }
+
         document.addEventListener('DOMContentLoaded', () => {
             let currentRound = 1;
             let timeRemaining = 120; // 2 minutes in seconds
@@ -120,6 +137,13 @@
                         updateDisplay();
                         syncState(); 
                     } else {
+                        if (status === 'playing') {
+                            if (currentRound < 3) {
+                                showTimerNotification("Waktu Babak " + currentRound + " telah habis!");
+                            } else {
+                                showTimerNotification("Waktu Pertandingan telah selesai!");
+                            }
+                        }
                         status = 'stopped';
                         clearInterval(timerInterval);
                         timerInterval = null;

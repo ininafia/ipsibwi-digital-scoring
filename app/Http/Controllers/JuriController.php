@@ -61,6 +61,12 @@ class JuriController extends Controller
         }
         $posisiTarget = 'juri_' . $juriNumber;
 
+        // Verifikasi bahwa user yang login memang ditugaskan di posisi ini
+        $sessionJuriPosition = session('juri_position');
+        if ($sessionJuriPosition && $sessionJuriPosition !== $posisiTarget) {
+            abort(403, 'Anda login sebagai ' . strtoupper(str_replace('_', ' ', $sessionJuriPosition)) . ', bukan ' . strtoupper(str_replace('_', ' ', $posisiTarget)));
+        }
+
         $match = DB::table('pertandingan')
             ->where('status', 'playing')
             ->whereNull('deleted_at')

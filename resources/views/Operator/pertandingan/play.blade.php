@@ -304,6 +304,7 @@
     }
 
     let previousTimerStatus = null;
+    let previousTimeRemaining = null;
 
     function updateOperatorUI() {
         fetch('/operator/monitor-display/data?_t=' + new Date().getTime())
@@ -335,6 +336,16 @@
                             showTimerNotification("Waktu Babak Berhenti!");
                         }
                         previousTimerStatus = currentTimerStatus;
+
+                        let currentTimeRemaining = res.match.time_remaining;
+                        if (previousTimeRemaining !== null && previousTimeRemaining > 0 && currentTimeRemaining === 0) {
+                            if (res.match.round < 3) {
+                                showTimerNotification("Waktu Babak " + res.match.round + " telah habis!");
+                            } else {
+                                showTimerNotification("Waktu Pertandingan telah selesai!");
+                            }
+                        }
+                        previousTimeRemaining = currentTimeRemaining;
                     }
                 }
             })

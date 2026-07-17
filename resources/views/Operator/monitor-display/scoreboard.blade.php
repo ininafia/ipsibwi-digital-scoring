@@ -67,6 +67,7 @@
     }
 
     let previousTimerStatus = null;
+    let previousTimeRemaining = null;
 
     function updateMonitorDisplay() {
         fetch('{{ route('operator.monitor-display.data') }}?_t=' + new Date().getTime())
@@ -96,10 +97,12 @@
                     const minutes = Math.floor(time / 60);
                     const seconds = time % 60;
                     document.getElementById('monitor-timer').innerText = `${String(minutes).padStart(2, '0')} : ${String(seconds).padStart(2, '0')}`;
-
-                    // Note: If you want to update score box you can do it here:
-                    // document.getElementById('skor_biru').innerText = res.data.skor_biru;
-                    // document.getElementById('skor_merah').innerText = res.data.skor_merah;
+                    // Update Score Box
+                    let elBiru = document.getElementById('skor_biru');
+                    if (elBiru) elBiru.innerText = res.data.skor_biru || 0;
+                    
+                    let elMerah = document.getElementById('skor_merah');
+                    if (elMerah) elMerah.innerText = res.data.skor_merah || 0;
                     
                     // Update Binaan
                     updateBinaan('biru', res.data.binaan_biru);
@@ -148,6 +151,16 @@
                         showTimerNotification("Waktu Babak Berhenti!");
                     }
                     previousTimerStatus = currentTimerStatus;
+
+                    let currentTimeRemaining = res.match.time_remaining;
+                    if (previousTimeRemaining !== null && previousTimeRemaining > 0 && currentTimeRemaining === 0) {
+                        if (res.match.round < 3) {
+                            showTimerNotification("Waktu Babak " + res.match.round + " telah habis!");
+                        } else {
+                            showTimerNotification("Waktu Pertandingan telah selesai!");
+                        }
+                    }
+                    previousTimeRemaining = currentTimeRemaining;
                 }
             })
             .catch(console.error);

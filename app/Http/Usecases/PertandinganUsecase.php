@@ -206,27 +206,98 @@ class PertandinganUsecase extends Usecase
     |--------------------------------------------------------------------------
     | FINALIZE MATCH
     | Finalisasi pertandingan beserta hasil kemenangannya.
+    | Semua validasi dilakukan server-side, pemenang dihitung dari database.
     |--------------------------------------------------------------------------
     */
     public function finalizeMatch(int $id, array $resultData): array
     {
         $funcName = $this->className . ".finalizeMatch";
 
+        // Daftar jenis kemenangan yang valid
+        $allowedMethods = ['angka', 'teknik', 'mutlak', 'wmp', 'disk', 'undur_diri'];
+
+        $jenisKemenangan = $resultData['jenis_kemenangan'] ?? null;
+        if (!$jenisKemenangan || !in_array($jenisKemenangan, $allowedMethods, true)) {
+            return Response::buildErrorService(
+                'Jenis kemenangan tidak valid. Pilihan: ' . implode(', ', $allowedMethods)
+            );
+        }
+
         DB::beginTransaction();
 
         try {
-            $scoreRecord = DB::table('skor_pertandingan')->where('id_pertandingan', $id)->first();
-            $skorBiru = $scoreRecord ? $scoreRecord->skor_biru : 0;
-            $skorMerah = $scoreRecord ? $scoreRecord->skor_merah : 0;
+            // 1. Kunci baris pertandingan dan validasi status
+            $match = DB::table('pertandingan')
+                ->where('id', $id)
+                ->whereNull('deleted_at')
+                ->lockForUpdate()
+                ->first();
 
+            if (!$match) {
+                DB::rollback();
+                return Response::buildErrorService('Pertandingan tidak ditemukan');
+            }
+
+            if ($match->status !== 'playing') {
+                DB::rollback();
+                return Response::buildErrorService(
+                    'Pertandingan tidak bisa difinalisasi karena status saat ini: ' . $match->status
+                );
+            }
+
+            // 2. Cek timer harus sudah berhenti
+            $timerState = \Illuminate\Support\Facades\Cache::get('current_timer_state_' . $id, ['status' => 'stopped']);
+            if ($timerState['status'] === 'playing') {
+                DB::rollback();
+                return Response::buildErrorService(
+                    'Timer masih berjalan. Hentikan timer terlebih dahulu sebelum finalisasi.'
+                );
+            }
+
+            // 3. Resolve semua pending score events untuk pertandingan ini
+            $juriUsecase = new \App\Http\Usecases\JuriUsecase();
+            $juriUsecase->resolveExpiredEvents();
+
+            // 4. Cek apakah masih ada score_events pending setelah resolusi
+            $pendingCount = DB::table('score_events')
+                ->where('match_id', $id)
+                ->where('status', 'pending')
+                ->count();
+
+            if ($pendingCount > 0) {
+                DB::rollback();
+                return Response::buildErrorService(
+                    "Masih ada {$pendingCount} input juri yang berstatus pending. Tunggu hingga semua input terproses."
+                );
+            }
+
+            // 5. Ambil skor dari database (BUKAN dari input client)
+            $scoreRecord = DB::table('skor_pertandingan')->where('id_pertandingan', $id)->first();
+            $skorBiru = $scoreRecord ? (int) $scoreRecord->skor_biru : 0;
+            $skorMerah = $scoreRecord ? (int) $scoreRecord->skor_merah : 0;
+
+            // 6. Hitung pemenang dari skor database
+            $sudutPemenang = null;
+            $namaPemenang = null;
+
+            if ($skorBiru > $skorMerah) {
+                $sudutPemenang = 'biru';
+                $namaPemenang = $match->sudut_biru;
+            } elseif ($skorMerah > $skorBiru) {
+                $sudutPemenang = 'merah';
+                $namaPemenang = $match->sudut_merah;
+            }
+            // Jika seri (skor sama), sudut_pemenang dan nama_pemenang tetap null
+
+            // 7. Simpan hasil finalisasi
             $updated = DB::table('pertandingan')
                 ->where('id', $id)
                 ->whereNull('deleted_at')
                 ->update([
                     'status'            => 'finished',
-                    'winner_corner'     => $resultData['sudut_pemenang'] ?? null,
-                    'winner_name'       => $resultData['nama_pemenang'] ?? null,
-                    'winning_method'    => $resultData['jenis_kemenangan'] ?? null,
+                    'winner_corner'     => $sudutPemenang,
+                    'winner_name'       => $namaPemenang,
+                    'winning_method'    => $jenisKemenangan,
                     'final_score_biru'  => $skorBiru,
                     'final_score_merah' => $skorMerah,
                     'finalized_by'      => session('user_id'),

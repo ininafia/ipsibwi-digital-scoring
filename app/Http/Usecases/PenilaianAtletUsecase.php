@@ -25,6 +25,23 @@ class PenilaianAtletUsecase extends Usecase
         }
     }
 
+    private function logRiwayatHukuman(int $id_pertandingan, string $sudut, string $jenis, string $action): void
+    {
+        $timerState = \Illuminate\Support\Facades\Cache::get('current_timer_state_' . $id_pertandingan, ['round' => 1]);
+        $idBabak = $timerState['round'] ?? 1;
+        
+        DB::table('riwayat_hukuman')->insert([
+            'id_pertandingan' => $id_pertandingan,
+            'id_babak'        => $idBabak,
+            'sudut'           => $sudut,
+            'jenis_hukuman'   => $jenis,
+            'action'          => $action,
+            'created_by'      => session('user_id'),
+            'created_at'      => now(),
+            'updated_at'      => now(),
+        ]);
+    }
+
     public function addJatuhan(int $id_pertandingan, string $sudut): array
     {
         $funcName = $this->className . ".addJatuhan";
@@ -65,6 +82,7 @@ class PenilaianAtletUsecase extends Usecase
                 ]);
             }
 
+                        $this->logRiwayatHukuman($id_pertandingan, $sudut, 'jatuhan', 'add');
             DB::commit();
             return Response::buildSuccess(
                 message: "Jatuhan berhasil ditambahkan"
@@ -111,6 +129,7 @@ class PenilaianAtletUsecase extends Usecase
                 return Response::buildErrorService("Belum ada skor tercatat untuk pertandingan ini");
             }
 
+                        $this->logRiwayatHukuman($id_pertandingan, $sudut, 'jatuhan', 'delete');
             DB::commit();
             return Response::buildSuccess(
                 message: "Jatuhan berhasil dihapus"
@@ -163,6 +182,7 @@ class PenilaianAtletUsecase extends Usecase
                 ]);
             }
 
+                        $this->logRiwayatHukuman($id_pertandingan, $sudut, 'binaan', 'add');
             DB::commit();
             return Response::buildSuccess(
                 message: "Binaan berhasil ditambahkan"
@@ -224,6 +244,7 @@ class PenilaianAtletUsecase extends Usecase
                 ]);
             }
 
+                        $this->logRiwayatHukuman($id_pertandingan, $sudut, 'teguran', 'add');
             DB::commit();
             return Response::buildSuccess(
                 message: "Teguran berhasil ditambahkan"
@@ -287,6 +308,7 @@ class PenilaianAtletUsecase extends Usecase
                 ]);
             }
 
+                        $this->logRiwayatHukuman($id_pertandingan, $sudut, 'peringatan', 'add');
             DB::commit();
             return Response::buildSuccess(
                 message: "Peringatan berhasil ditambahkan"
@@ -332,6 +354,7 @@ class PenilaianAtletUsecase extends Usecase
                 return Response::buildErrorService("Belum ada skor tercatat untuk pertandingan ini");
             }
 
+                        $this->logRiwayatHukuman($id_pertandingan, $sudut, 'binaan', 'delete');
             DB::commit();
             return Response::buildSuccess(
                 message: "Binaan berhasil dihapus"
@@ -382,6 +405,7 @@ class PenilaianAtletUsecase extends Usecase
                 return Response::buildErrorService("Belum ada skor tercatat untuk pertandingan ini");
             }
 
+                        $this->logRiwayatHukuman($id_pertandingan, $sudut, 'teguran', 'delete');
             DB::commit();
             return Response::buildSuccess(
                 message: "Teguran berhasil dihapus"
@@ -431,6 +455,7 @@ class PenilaianAtletUsecase extends Usecase
                 return Response::buildErrorService("Belum ada skor tercatat untuk pertandingan ini");
             }
 
+                        $this->logRiwayatHukuman($id_pertandingan, $sudut, 'peringatan', 'delete');
             DB::commit();
             return Response::buildSuccess(
                 message: "Peringatan berhasil dihapus"

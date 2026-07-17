@@ -58,10 +58,32 @@ class AkurasiJuriUsecase extends Usecase
 
                 $total_tidak_sah = max(0, $total_input - $total_sah);
                 
-                $persentase = 0;
-                if ($total_input > 0) {
-                    $persentase = round(($total_sah / $total_input) * 100, 2);
+                // Kalkulasi rata-rata per babak (3 babak)
+                $akurasi_babak_total = 0;
+                for ($roundNum = 1; $roundNum <= 3; $roundNum++) {
+                    $input_babak = DB::table('score_events')
+                        ->where('match_id', $id_pertandingan)
+                        ->where('judge_id', $juri->id)
+                        ->where('round', $roundNum)
+                        ->count();
+
+                    $sah_babak = DB::table('score_award_votes')
+                        ->where('judge_id', $juri->id)
+                        ->whereExists(function ($query) use ($id_pertandingan, $roundNum) {
+                            $query->select(DB::raw(1))
+                                  ->from('score_awards')
+                                  ->whereColumn('score_awards.id', 'score_award_votes.award_id')
+                                  ->where('score_awards.match_id', $id_pertandingan)
+                                  ->where('score_awards.round', $roundNum);
+                        })
+                        ->count();
+
+                    $ak_babak = $input_babak > 0 ? ($sah_babak / $input_babak) * 100 : 0;
+                    $akurasi_babak_total += $ak_babak;
                 }
+
+                // Akurasi per partai = Rata-rata dari 3 babak
+                $persentase = round($akurasi_babak_total / 3, 2);
 
                 // Hapus data lama jika dire-finalisasi
                 DB::table('akurasi_juri')
@@ -184,6 +206,9 @@ class AkurasiJuriUsecase extends Usecase
 
             // Group by match_id
             $groupedByMatch = [];
+            
+            $total_all_akurasi = 0;
+            $count_all_akurasi = 0;
 
             foreach ($akurasiRecords as $row) {
                 if (!isset($groupedByMatch[$row->match_id])) {
@@ -239,10 +264,18 @@ class AkurasiJuriUsecase extends Usecase
                     'persentase_akurasi' => $row->persentase_akurasi,
                     'rounds' => $babakData
                 ];
+                
+                $total_all_akurasi += $row->persentase_akurasi;
+                $count_all_akurasi++;
             }
 
+            $event_accuracy = $count_all_akurasi > 0 ? round($total_all_akurasi / $count_all_akurasi, 2) : 0;
+
             return Response::buildSuccess(
-                data: array_values($groupedByMatch),
+                data: [
+                    'matches' => array_values($groupedByMatch),
+                    'event_accuracy' => $event_accuracy
+                ],
                 message: "Data seluruh akurasi juri berhasil dimuat"
             );
 

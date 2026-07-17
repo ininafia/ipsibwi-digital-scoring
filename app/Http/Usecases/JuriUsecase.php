@@ -45,7 +45,7 @@ class JuriUsecase extends Usecase
 
         $idPertandingan  = $request->input('id_pertandingan');
         $idBabak         = $request->input('id_babak');
-        $juriPosition    = $request->input('juri_position'); // 'juri_1', 'juri_2', dsb. dari frontend
+        $juriPosition    = session('juri_position');
         $sudut           = $request->input('sudut'); // 'merah' atau 'biru'
         $idKategoriNilai = (int) $request->input('id_kategori_nilai');
 
@@ -338,7 +338,7 @@ class JuriUsecase extends Usecase
 
         $idPertandingan = $request->input('id_pertandingan');
         $idBabak        = $request->input('id_babak');
-        $juriPosition   = $request->input('juri_position');
+        $juriPosition   = session('juri_position');
         $sudut          = $request->input('sudut');
 
         if (!$idPertandingan || !$idBabak || !$juriPosition || !in_array($sudut, ['merah', 'biru'], true)) {
@@ -397,7 +397,7 @@ class JuriUsecase extends Usecase
             $this->resolveExpiredEvents();
 
             $idPertandingan = $request->input('id_pertandingan');
-            $juriPosition   = $request->input('juri_position');
+            $juriPosition   = session('juri_position');
 
             $petugasPertandingan = DB::table('petugas_pertandingan')
                 ->where('posisi', $juriPosition)

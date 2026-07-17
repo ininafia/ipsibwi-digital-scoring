@@ -75,6 +75,7 @@
         }
 
         let previousTimerStatus = null;
+        let previousTimeRemaining = null;
 
         const awardColors = [
             'bg-[#ff3b8f] text-white', // pink
@@ -235,6 +236,16 @@
                         showTimerNotification("Waktu Babak Berhenti!");
                     }
                     previousTimerStatus = currentTimerStatus;
+
+                    let currentTimeRemaining = timeRemaining;
+                    if (previousTimeRemaining !== null && previousTimeRemaining > 0 && currentTimeRemaining === 0) {
+                        if (data.match.round < 3) {
+                            showTimerNotification("Waktu Babak " + data.match.round + " telah habis!");
+                        } else {
+                            showTimerNotification("Waktu Pertandingan telah selesai!");
+                        }
+                    }
+                    previousTimeRemaining = currentTimeRemaining;
                 })
                 .catch(err => {
                     console.error('Monitor fetch error:', err);

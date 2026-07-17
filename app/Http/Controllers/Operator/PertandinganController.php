@@ -77,10 +77,8 @@ class PertandinganController extends Controller
     }
     public function finalisasi(\Illuminate\Http\Request $request, int $id): RedirectResponse
     {
-        // Parameter sudut_pemenang dan jenis_kemenangan dikirim dari form
+        // Hanya jenis_kemenangan dari form; pemenang dihitung server-side dari skor DB
         $resultData = [
-            'sudut_pemenang'   => $request->input('sudut_pemenang'),
-            'nama_pemenang'    => $request->input('nama_pemenang'),
             'jenis_kemenangan' => $request->input('jenis_kemenangan'),
         ];
         

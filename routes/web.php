@@ -41,7 +41,7 @@ Route::get('/operator', fn() => redirect('/'));
 Route::controller(AuthController::class)->group(function () {
     Route::get('/login', 'login')->name('login');
     Route::post('/login', 'doLogin')->name('login.process');
-    Route::get('/logout', 'doLogout')->name('logout');
+    Route::post('/logout', 'doLogout')->name('logout');
 
     // Specific Login Views
     Route::prefix('login')->group(function () {

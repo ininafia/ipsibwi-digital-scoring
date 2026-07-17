@@ -24,7 +24,9 @@ class MonitorDisplayController extends Controller
 
     public function getData(Request $request)
     {
-        if (!session('user_id')) {
+        // Hanya role yang butuh data pertandingan real-time yang diizinkan
+        $allowedRoles = [1, 2, 3, 4, 5]; // operator, ketua, dewan, timer, juri
+        if (!session('user_id') || !in_array((int) session('role'), $allowedRoles, true)) {
             return response()->json(['success' => false, 'message' => 'Unauthorized'], 401);
         }
 

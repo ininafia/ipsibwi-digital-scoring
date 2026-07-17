@@ -58,21 +58,21 @@ DROP TABLE IF EXISTS data_petugas;
 CREATE TABLE data_petugas (
   id INT AUTO_INCREMENT PRIMARY KEY,
   nama VARCHAR(100) NOT NULL,
-  id_user INT NOT NULL,
-  FOREIGN KEY (id_user) REFERENCES users(id)
+  tugas VARCHAR(50) NOT NULL,
+  deleted_at TIMESTAMP NULL DEFAULT NULL
 ) ENGINE=InnoDB;
 
 -- default data_petugas (sesuaikan dengan default users id)
 -- Asumsi id users: 1=operator, 2=ketua, 3=dewan, 4=timer, 5=juri1, 6=juri2, 7=juri3, 8=wasit, 9=dt
-INSERT INTO data_petugas (nama, id_user)
+INSERT INTO data_petugas (nama, tugas)
 VALUES
-('Ketua Test', 2),
-('Dewan Test', 3),
-('Juri 1 Test', 5),
-('Juri 2 Test', 6),
-('Juri 3 Test', 7),
-('Wasit Test', 8),
-('DT Test', 9);
+('Ketua Test', 'Ketua Pertandingan'),
+('Dewan Test', 'Dewan'),
+('Juri 1 Test', 'Juri'),
+('Juri 2 Test', 'Juri'),
+('Juri 3 Test', 'Juri'),
+('Wasit Test', 'Wasit'),
+('DT Test', 'Delegasi Teknik');
 
 
 -- =========================================
@@ -266,6 +266,23 @@ CREATE TABLE score_award_votes (
     FOREIGN KEY (score_event_id) REFERENCES score_events(id) ON DELETE CASCADE,
     FOREIGN KEY (judge_id) REFERENCES petugas_pertandingan(id),
     UNIQUE KEY unique_award_judge (award_id, judge_id)
+) ENGINE=InnoDB;
+
+-- =========================================
+-- 14. RIWAYAT HUKUMAN
+-- =========================================
+DROP TABLE IF EXISTS riwayat_hukuman;
+
+CREATE TABLE riwayat_hukuman (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    id_pertandingan BIGINT UNSIGNED NOT NULL,
+    id_babak INT NOT NULL,
+    sudut ENUM('biru', 'merah') NOT NULL,
+    jenis_hukuman VARCHAR(50) NOT NULL,
+    action VARCHAR(20) NOT NULL,
+    created_by BIGINT UNSIGNED NULL,
+    created_at TIMESTAMP NULL,
+    updated_at TIMESTAMP NULL
 ) ENGINE=InnoDB;
 
 SET FOREIGN_KEY_CHECKS = 1;

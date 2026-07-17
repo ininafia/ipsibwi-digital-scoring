@@ -3,7 +3,7 @@
     
     <!-- Skor Biru -->
     <div class="w-[45%] bg-[#0000dd] flex items-center justify-center">
-        <span class="text-white font-bold leading-none text-[6rem] lg:text-[8rem]">0</span>
+        <span id="skor_biru" class="text-white font-bold leading-none text-[6rem] lg:text-[8rem]">0</span>
     </div>
 
     <!-- Ronde di Tengah -->
@@ -20,7 +20,7 @@
 
     <!-- Skor Merah -->
     <div class="w-[45%] bg-[#cc0000] flex items-center justify-center">
-        <span class="text-white font-bold leading-none text-[6rem] lg:text-[8rem]">0</span>
+        <span id="skor_merah" class="text-white font-bold leading-none text-[6rem] lg:text-[8rem]">0</span>
     </div>
 
 </div>

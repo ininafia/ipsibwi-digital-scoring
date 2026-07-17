@@ -23,9 +23,10 @@ class AkurasiJuriController extends Controller
 
         $usecase = new AkurasiJuriUsecase();
         $response = $usecase->getAllAkurasi();
-        $akurasiData = $response['success'] ? $response['data'] : [];
+        $akurasiData = $response['success'] ? $response['data']['matches'] : [];
+        $eventAccuracy = $response['success'] ? $response['data']['event_accuracy'] : 0;
 
-        return view('Ketua.Persentase-Juri.index', compact('akurasiData'));
+        return view('Ketua.Persentase-Juri.index', compact('akurasiData', 'eventAccuracy'));
     }
 
     public function exportPdfAll()
@@ -42,9 +43,10 @@ class AkurasiJuriController extends Controller
 
         $usecase = new AkurasiJuriUsecase();
         $response = $usecase->getAllAkurasi();
-        $akurasiData = $response['success'] ? $response['data'] : [];
+        $akurasiData = $response['success'] ? $response['data']['matches'] : [];
+        $eventAccuracy = $response['success'] ? $response['data']['event_accuracy'] : 0;
 
-        $pdf = Pdf::loadView('Ketua.Persentase-Juri.pdf', compact('akurasiData'));
+        $pdf = Pdf::loadView('Ketua.Persentase-Juri.pdf', compact('akurasiData', 'eventAccuracy'));
         $pdf->setPaper('a4', 'landscape');
         
         return $pdf->download('Laporan_Akurasi_Juri_Seluruh_Pertandingan.pdf');
@@ -64,7 +66,7 @@ class AkurasiJuriController extends Controller
 
         $usecase = new AkurasiJuriUsecase();
         $response = $usecase->getAllAkurasi();
-        $allData = $response['success'] ? $response['data'] : [];
+        $allData = $response['success'] ? $response['data']['matches'] : [];
         
         // Filter array for the specific match_id
         $akurasiData = array_filter($allData, function($match) use ($id) {

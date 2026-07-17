@@ -8,13 +8,16 @@
     <!-- USER -->
     <div class="flex items-center gap-4">
 
-        <a href="{{ url('/logout') }}"
-           class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg text-sm font-semibold transition flex items-center gap-2">
+        <form method="POST" action="{{ url('/logout') }}">
+            @csrf
+            <button type="submit"
+               class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg text-sm font-semibold transition flex items-center gap-2">
 
-            <i class="fa-solid fa-right-from-bracket"></i>
-            Logout
+                <i class="fa-solid fa-right-from-bracket"></i>
+                Logout
 
-        </a>
+            </button>
+        </form>
 
     </div>
 

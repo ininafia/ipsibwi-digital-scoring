@@ -88,12 +88,25 @@ class AuthController extends Controller
         | SIMPAN SESSION
         |--------------------------------------------------------------------------
         */
-        session([
+        $sessionData = [
             'user_id'   => $user->id,
             'username'  => $user->username,
             'role'      => $role,
             'login_at'  => now(),
-        ]);
+        ];
+
+        // Jika login sebagai juri, simpan posisinya di session
+        if ($role === 5) {
+            $juriNum = preg_replace('/[^0-9]/', '', $user->username); // juri1 -> 1
+            if (in_array($juriNum, ['1', '2', '3'])) {
+                $sessionData['juri_position'] = 'juri_' . $juriNum;
+            }
+        }
+
+        session($sessionData);
+
+        // Regenerate session ID untuk mencegah session fixation
+        $request->session()->regenerate();
 
         /*
         |--------------------------------------------------------------------------
@@ -130,14 +143,15 @@ class AuthController extends Controller
      * LOGOUT
      * --------------------------------------------------------------------------
      */
-    public function doLogout(): RedirectResponse
+    public function doLogout(Request $request): RedirectResponse
     {
         /*
         |--------------------------------------------------------------------------
-        | HAPUS SESSION
+        | INVALIDATE SESSION & REGENERATE TOKEN
         |--------------------------------------------------------------------------
         */
-        session()->flush();
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
 
         /*
         |--------------------------------------------------------------------------

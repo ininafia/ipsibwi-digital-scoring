@@ -24,6 +24,22 @@
         </div>
     </div>
 
+    <!-- GRAND TOTAL EVENT ACCURACY -->
+    @if(count($akurasiData) > 0)
+    <div class="mb-6 p-6 rounded-xl border border-[#4fcfff]/30 bg-[#4fcfff]/5 flex items-center justify-between">
+        <div>
+            <h3 class="text-lg font-bold text-gray-800">Akurasi Event Pertandingan</h3>
+            <p class="text-sm text-gray-500 mt-1">Rata-rata akurasi juri dari seluruh partai yang ada.</p>
+        </div>
+        <div class="text-right">
+            @php
+                $evtColor = $eventAccuracy >= 80 ? 'text-green-500' : ($eventAccuracy >= 50 ? 'text-yellow-500' : 'text-red-500');
+            @endphp
+            <div class="text-4xl font-black {{ $evtColor }} drop-shadow-sm">{{ number_format($eventAccuracy, 1) }}%</div>
+        </div>
+    </div>
+    @endif
+
     <div class="space-y-4" id="akurasiContainer">
         @forelse($akurasiData as $match)
             <div class="border border-gray-200 rounded-lg overflow-hidden bg-white match-item" id="match-{{ $match['match_id'] }}" x-data="{ expanded: false }">

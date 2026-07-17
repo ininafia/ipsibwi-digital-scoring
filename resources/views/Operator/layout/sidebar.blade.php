@@ -55,14 +55,17 @@
         </div>
 
         {{-- LOGOUT --}}
-        <a href="{{ route('logout') }}"
-            class="flex items-center gap-3 h-[45px] px-7 text-[#57d2ff] text-[18px] font-medium hover:bg-gray-50 transition duration-200">
+        <form method="POST" action="{{ route('logout') }}">
+            @csrf
+            <button type="submit"
+                class="flex items-center gap-3 h-[45px] px-7 text-[#57d2ff] text-[18px] font-medium hover:bg-gray-50 transition duration-200 w-full text-left bg-transparent border-0 cursor-pointer">
 
-            <i class="fa-solid fa-right-from-bracket text-[18px]"></i>
+                <i class="fa-solid fa-right-from-bracket text-[18px]"></i>
 
-            <span>Logout</span>
+                <span>Logout</span>
 
-        </a>
+            </button>
+        </form>
 
     </nav>
 

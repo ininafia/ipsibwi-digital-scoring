@@ -59,6 +59,7 @@
         }
 
         let previousTimerStatus = null;
+        let previousTimeRemaining = null;
 
         function updateDewanUI() {
             if (isActionPending) return;
@@ -95,6 +96,16 @@
                             showTimerNotification("Waktu Babak Berhenti!");
                         }
                         previousTimerStatus = currentTimerStatus;
+
+                        let currentTimeRemaining = matchData.time_remaining;
+                        if (previousTimeRemaining !== null && previousTimeRemaining > 0 && currentTimeRemaining === 0) {
+                            if (matchData.round < 3) {
+                                showTimerNotification("Waktu Babak " + matchData.round + " telah habis!");
+                            } else {
+                                showTimerNotification("Waktu Pertandingan telah selesai!");
+                            }
+                        }
+                        previousTimeRemaining = currentTimeRemaining;
 
                         for (let i = 1; i <= 3; i++) {
                             let cellBiru = document.getElementById('dewan-jatuhan-biru-' + i);

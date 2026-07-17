@@ -31,21 +31,12 @@ class PetugasUsecase extends Usecase
         try {
 
             $data = DB::table('data_petugas')
-                ->join('users', 'data_petugas.id_user', '=', 'users.id')
-                ->whereNull('users.deleted_at')
-                ->orderBy('data_petugas.id', 'desc')
+                ->whereNull('deleted_at')
+                ->orderBy('id', 'desc')
                 ->get([
-                    'data_petugas.id',
-                    'data_petugas.nama',
-                    DB::raw("CASE users.access_type 
-                        WHEN 2 THEN 'Ketua Pertandingan' 
-                        WHEN 3 THEN 'Dewan' 
-                        WHEN 5 THEN 'Juri' 
-                        WHEN 6 THEN 'Wasit' 
-                        WHEN 7 THEN 'Delegasi Teknik' 
-                        ELSE 'Petugas' END AS tugas"),
-                    'users.created_at',
-                    'users.updated_at',
+                    'id',
+                    'nama',
+                    'tugas'
                 ]);
 
             return Response::buildSuccess(
@@ -141,30 +132,9 @@ class PetugasUsecase extends Usecase
 
         try {
 
-            $roleMap = [
-                'Ketua Pertandingan' => 2,
-                'Dewan'              => 3,
-                'Juri'               => 5,
-                'Wasit'              => 6,
-                'Delegasi Teknik'    => 7,
-            ];
-            $tugasStr = trim($data['tugas']);
-            $roleId = $roleMap[$tugasStr] ?? 5;
-
-            $username = strtolower(str_replace(' ', '_', $data['nama'])) . '_' . rand(1000, 9999);
-
-            $userId = DB::table('users')->insertGetId([
-                'username'    => $username,
-                'password'    => bcrypt('123456'),
-                'access_type' => $roleId,
-                'is_active'   => 1,
-                'created_at'  => now(),
-                'updated_at'  => now(),
-            ]);
-
             DB::table('data_petugas')->insert([
-                'nama'    => $data['nama'],
-                'id_user' => $userId,
+                'nama'  => trim($data['nama']),
+                'tugas' => trim($data['tugas']),
             ]);
 
             DB::commit();
@@ -222,29 +192,14 @@ class PetugasUsecase extends Usecase
                 throw new Exception("Petugas tidak ditemukan");
             }
 
-            $roleMap = [
-                'Ketua Pertandingan' => 2,
-                'Dewan'              => 3,
-                'Juri'               => 5,
-                'Wasit'              => 6,
-                'Delegasi Teknik'    => 7,
-            ];
-            $tugasStr = trim($data['tugas']);
-            $roleId = $roleMap[$tugasStr] ?? 5;
-
             $updatedPetugas = DB::table('data_petugas')
                 ->where('id', $id)
-                ->update(['nama' => $data['nama']]);
-
-            $updatedUser = DB::table('users')
-                ->where('id', $petugas->id_user)
                 ->update([
-                    'access_type' => $roleId,
-                    'updated_at'  => now(),
+                    'nama'  => trim($data['nama']),
+                    'tugas' => trim($data['tugas'])
                 ]);
 
-            // Accept if either was updated, or if data was same
-            if ($updatedPetugas === false || $updatedUser === false) {
+            if ($updatedPetugas === false) {
                 DB::rollback();
                 throw new Exception("FAILED UPDATE DATA");
             }
@@ -284,10 +239,10 @@ class PetugasUsecase extends Usecase
                 ->orderBy('partai', 'asc')
                 ->get(['id', 'partai', 'gelanggang']);
 
-            // Fetch data_petugas with their roles
+            // Fetch data_petugas
             $petugas = DB::table('data_petugas')
-                ->join('users', 'data_petugas.id_user', '=', 'users.id')
-                ->get(['data_petugas.id', 'data_petugas.nama', 'users.access_type']);
+                ->whereNull('deleted_at')
+                ->get(['id', 'nama', 'tugas']);
 
             return Response::buildSuccess([
                 'pertandingan' => collect($pertandingan)->toArray(),
@@ -313,7 +268,7 @@ class PetugasUsecase extends Usecase
             $query = DB::table('pertandingan')->whereNull('deleted_at');
             
             if ($filter === 'active') {
-                $query->whereIn('status', ['standby', 'playing']);
+                $query->whereIn('status', ['waiting', 'playing']);
             } elseif ($filter === 'finished') {
                 $query->whereIn('status', ['finished', 'final']);
             }
@@ -485,11 +440,10 @@ class PetugasUsecase extends Usecase
                 );
             }
 
-            $deleted = DB::table('users')
-                ->where('id', $petugas->id_user)
+            $deleted = DB::table('data_petugas')
+                ->where('id', $id)
                 ->update([
-                    'deleted_at' => now(),
-                    'deleted_by' => session('user_id'),
+                    'deleted_at' => now()
                 ]);
 
             if (!$deleted) {

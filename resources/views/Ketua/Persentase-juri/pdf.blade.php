@@ -56,6 +56,15 @@
 
     <h2>LAPORAN AKURASI JURI PERTANDINGAN</h2>
     <p class="subtitle">Rekapitulasi Evaluasi Penilaian Juri Berdasarkan Event Pertandingan</p>
+    
+    @if(count($akurasiData) > 0)
+    <div style="background-color: #f4f4f4; padding: 15px; border: 1px solid #ccc; text-align: center; margin-bottom: 25px;">
+        <div style="font-size: 14px; color: #666; margin-bottom: 5px;">AKURASI EVENT PERTANDINGAN (Rata-rata Keseluruhan)</div>
+        <div style="font-size: 24px; font-weight: bold; color: {{ $eventAccuracy >= 80 ? '#22c55e' : ($eventAccuracy >= 50 ? '#eab308' : '#ef4444') }};">
+            {{ number_format($eventAccuracy, 1) }}%
+        </div>
+    </div>
+    @endif
 
     @forelse($akurasiData as $match)
         <div class="match-container">

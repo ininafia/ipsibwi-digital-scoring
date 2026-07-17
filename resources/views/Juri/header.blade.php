@@ -11,10 +11,13 @@
     <!-- USER & LOGOUT -->
     <div class="flex items-center gap-4">
 
-        <a href="{{ url('/logout') }}"
-           class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg text-xs font-semibold transition">
-            Logout
-        </a>
+        <form method="POST" action="{{ url('/logout') }}">
+            @csrf
+            <button type="submit"
+               class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg text-xs font-semibold transition">
+                Logout
+            </button>
+        </form>
 
     </div>
 

@@ -62,6 +62,7 @@
         }
 
         let previousTimerStatus = null;
+        let previousTimeRemaining = null;
 
         function addScore(sudut, nilai) {
             if(!currentMatchId) {
@@ -81,8 +82,7 @@
                     id_babak: currentRound,
                     sudut: sudut,
                     id_kategori_nilai: nilai,
-                    nilai: nilai,
-                    juri_position: currentJuriPosition
+                    nilai: nilai
                 })
             })
             .then(res => res.json())
@@ -115,8 +115,7 @@
                 body: JSON.stringify({
                     id_pertandingan: currentMatchId,
                     id_babak: currentRound,
-                    sudut: sudut,
-                    juri_position: currentJuriPosition
+                    sudut: sudut
                 })
             })
             .then(res => res.json())
@@ -159,6 +158,16 @@
                         }
                         previousTimerStatus = currentTimerStatus;
 
+                        let currentTimeRemaining = res.match.time_remaining;
+                        if (previousTimeRemaining !== null && previousTimeRemaining > 0 && currentTimeRemaining === 0) {
+                            if (currentRound < 3) {
+                                showTimerNotification("Waktu Babak " + currentRound + " telah habis!");
+                            } else {
+                                showTimerNotification("Waktu Pertandingan telah selesai!");
+                            }
+                        }
+                        previousTimeRemaining = currentTimeRemaining;
+
                         // Update Round
                         currentRound = res.match.round || 1;
                         for (let i = 1; i <= 3; i++) {
@@ -173,7 +182,7 @@
                         }
 
                         // Fetch history using the updated match ID
-                        fetch('{{ route('juri.history') }}?id_pertandingan=' + currentMatchId + '&id_babak=' + currentRound + '&juri_position=' + currentJuriPosition)
+                        fetch('{{ route('juri.history') }}?id_pertandingan=' + currentMatchId + '&id_babak=' + currentRound)
                             .then(res => res.json())
                             .then(res => {
                                 if(res.success && res.data) {
