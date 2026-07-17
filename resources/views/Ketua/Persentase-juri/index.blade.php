@@ -24,21 +24,7 @@
         </div>
     </div>
 
-    <!-- GRAND TOTAL EVENT ACCURACY -->
-    @if(count($akurasiData) > 0)
-    <div class="mb-6 p-6 rounded-xl border border-[#4fcfff]/30 bg-[#4fcfff]/5 flex items-center justify-between">
-        <div>
-            <h3 class="text-lg font-bold text-gray-800">Akurasi Event Pertandingan</h3>
-            <p class="text-sm text-gray-500 mt-1">Rata-rata akurasi juri dari seluruh partai yang ada.</p>
-        </div>
-        <div class="text-right">
-            @php
-                $evtColor = $eventAccuracy >= 80 ? 'text-green-500' : ($eventAccuracy >= 50 ? 'text-yellow-500' : 'text-red-500');
-            @endphp
-            <div class="text-4xl font-black {{ $evtColor }} drop-shadow-sm">{{ number_format($eventAccuracy, 1) }}%</div>
-        </div>
-    </div>
-    @endif
+
 
     <div class="space-y-4" id="akurasiContainer">
         @forelse($akurasiData as $match)
@@ -74,12 +60,13 @@
                         <div class="overflow-x-auto">
                             <table class="w-full text-left border-collapse">
                                 <thead>
-                                    <tr class="border-b border-gray-200">
-                                        <th class="py-3 px-4 font-semibold text-gray-500 text-xs uppercase tracking-wider w-1/4">Petugas Juri</th>
-                                        <th class="py-3 px-4 font-semibold text-gray-500 text-xs uppercase tracking-wider text-center">Babak 1</th>
-                                        <th class="py-3 px-4 font-semibold text-gray-500 text-xs uppercase tracking-wider text-center">Babak 2</th>
-                                        <th class="py-3 px-4 font-semibold text-gray-500 text-xs uppercase tracking-wider text-center">Babak 3</th>
-                                        <th class="py-3 px-4 font-semibold text-gray-500 text-xs uppercase tracking-wider text-center border-l border-gray-100">Total Akurasi</th>
+                                    <tr class="border-b border-gray-200 bg-gray-50/50">
+                                        <th class="py-3 px-4 font-semibold text-gray-600 text-xs uppercase tracking-wider w-1/4">Petugas Juri</th>
+                                        <th class="py-3 px-4 font-semibold text-gray-600 text-xs uppercase tracking-wider text-center">Babak 1</th>
+                                        <th class="py-3 px-4 font-semibold text-gray-600 text-xs uppercase tracking-wider text-center">Babak 2</th>
+                                        <th class="py-3 px-4 font-semibold text-gray-600 text-xs uppercase tracking-wider text-center">Babak 3</th>
+                                        <th class="py-3 px-4 font-semibold text-[#4fcfff] text-xs uppercase tracking-wider text-center border-l border-gray-200">Akurasi Partai</th>
+                                        <th class="py-3 px-4 font-semibold text-[#4fcfff] text-xs uppercase tracking-wider text-center border-l border-gray-200">Akurasi Event</th>
                                     </tr>
                                 </thead>
                                 <tbody class="divide-y divide-gray-100">
@@ -138,12 +125,26 @@
                                                 </div>
                                             </td>
 
-                                            <!-- TOTAL -->
-                                            <td class="py-4 px-4 text-center align-top border-l border-gray-100 bg-gray-50/30">
+                                            <!-- TOTAL PARTAI -->
+                                            <td class="py-4 px-4 text-center align-top border-l border-gray-200 bg-[#4fcfff]/5">
                                                 <div class="font-black text-xl {{ $totalAccColor }}">{{ number_format($totalAcc, 1) }}%</div>
                                                 <div class="text-[11px] text-gray-500 mt-1 font-medium">
                                                     Total: <b>{{ $juri['total_input'] }}</b> <br>
                                                     Sah: <b class="text-green-600">{{ $juri['total_nilai_sah'] }}</b>
+                                                </div>
+                                            </td>
+
+                                            <!-- TOTAL EVENT -->
+                                            @php
+                                                $evtAcc = $juri['event_akurasi'] ?? 0;
+                                                $evtAccColor = 'text-red-500';
+                                                if ($evtAcc >= 80) $evtAccColor = 'text-green-500';
+                                                elseif ($evtAcc >= 50) $evtAccColor = 'text-yellow-500';
+                                            @endphp
+                                            <td class="py-4 px-4 text-center align-top border-l border-gray-200 bg-[#4fcfff]/10">
+                                                <div class="font-black text-xl {{ $evtAccColor }}">{{ number_format($evtAcc, 1) }}%</div>
+                                                <div class="text-[10px] text-gray-600 mt-1.5 font-bold uppercase tracking-widest opacity-70">
+                                                    Keseluruhan
                                                 </div>
                                             </td>
                                         </tr>

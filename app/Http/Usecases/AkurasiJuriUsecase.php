@@ -82,8 +82,8 @@ class AkurasiJuriUsecase extends Usecase
                     $akurasi_babak_total += $ak_babak;
                 }
 
-                // Akurasi per partai = Rata-rata dari 3 babak
-                $persentase = round($akurasi_babak_total / 3, 2);
+                // Akurasi per partai = (Total Sah / Total Input) * 100
+                $persentase = $total_input > 0 ? round(($total_sah / $total_input) * 100, 1) : 0;
 
                 // Hapus data lama jika dire-finalisasi
                 DB::table('akurasi_juri')
@@ -193,6 +193,7 @@ class AkurasiJuriUsecase extends Usecase
                     'pertandingan.kelas',
                     'pertandingan.golongan',
                     'petugas_pertandingan.id as id_petugas_pertandingan',
+                    'petugas_pertandingan.id_petugas as id_petugas_global',
                     'data_petugas.nama as nama_juri',
                     'petugas_pertandingan.posisi',
                     'akurasi_juri.total_input',
@@ -209,6 +210,26 @@ class AkurasiJuriUsecase extends Usecase
             
             $total_all_akurasi = 0;
             $count_all_akurasi = 0;
+
+            // Calculate Juri's Event Accuracy
+            $juriEventStats = [];
+            foreach ($akurasiRecords as $row) {
+                if (!isset($juriEventStats[$row->id_petugas_global])) {
+                    $juriEventStats[$row->id_petugas_global] = [
+                        'total_input' => 0,
+                        'total_sah' => 0,
+                    ];
+                }
+                $juriEventStats[$row->id_petugas_global]['total_input'] += $row->total_input;
+                $juriEventStats[$row->id_petugas_global]['total_sah'] += $row->total_nilai_sah;
+            }
+
+            $juriEventAccuracies = [];
+            foreach ($juriEventStats as $id => $stats) {
+                $juriEventAccuracies[$id] = $stats['total_input'] > 0 
+                    ? round(($stats['total_sah'] / $stats['total_input']) * 100, 1) 
+                    : 0;
+            }
 
             foreach ($akurasiRecords as $row) {
                 if (!isset($groupedByMatch[$row->match_id])) {
@@ -261,7 +282,8 @@ class AkurasiJuriUsecase extends Usecase
                     'total_input' => $row->total_input,
                     'total_nilai_sah' => $row->total_nilai_sah,
                     'total_nilai_tidak_sah' => $row->total_nilai_tidak_sah,
-                    'persentase_akurasi' => $row->persentase_akurasi,
+                    'persentase_akurasi' => $row->total_input > 0 ? round(($row->total_nilai_sah / $row->total_input) * 100, 1) : 0,
+                    'event_akurasi' => $juriEventAccuracies[$row->id_petugas_global] ?? 0,
                     'rounds' => $babakData
                 ];
                 

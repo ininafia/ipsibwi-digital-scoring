@@ -57,14 +57,7 @@
     <h2>LAPORAN AKURASI JURI PERTANDINGAN</h2>
     <p class="subtitle">Rekapitulasi Evaluasi Penilaian Juri Berdasarkan Event Pertandingan</p>
     
-    @if(count($akurasiData) > 0)
-    <div style="background-color: #f4f4f4; padding: 15px; border: 1px solid #ccc; text-align: center; margin-bottom: 25px;">
-        <div style="font-size: 14px; color: #666; margin-bottom: 5px;">AKURASI EVENT PERTANDINGAN (Rata-rata Keseluruhan)</div>
-        <div style="font-size: 24px; font-weight: bold; color: {{ $eventAccuracy >= 80 ? '#22c55e' : ($eventAccuracy >= 50 ? '#eab308' : '#ef4444') }};">
-            {{ number_format($eventAccuracy, 1) }}%
-        </div>
-    </div>
-    @endif
+
 
     @forelse($akurasiData as $match)
         <div class="match-container">
@@ -76,11 +69,12 @@
             <table>
                 <thead>
                     <tr>
-                        <th width="20%">Petugas Juri</th>
-                        <th width="20%">Babak 1</th>
-                        <th width="20%">Babak 2</th>
-                        <th width="20%">Babak 3</th>
-                        <th width="20%">Total Akurasi</th>
+                        <th width="16%">Petugas Juri</th>
+                        <th width="14%">Babak 1</th>
+                        <th width="14%">Babak 2</th>
+                        <th width="14%">Babak 3</th>
+                        <th width="21%">Akurasi Partai</th>
+                        <th width="21%">Akurasi Event</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -127,10 +121,22 @@
                                 <div class="small">Sah: {{ $b3['sah'] }} / Input: {{ $b3['input'] }}</div>
                             </td>
 
-                            <!-- TOTAL -->
+                            <!-- TOTAL PARTAI -->
                             <td style="background-color: #fafafa;">
                                 <div class="bold {{ $totalAccColor }}" style="font-size: 18px;">{{ number_format($totalAcc, 1) }}%</div>
                                 <div class="small">Sah: {{ $juri['total_nilai_sah'] }} / Input: {{ $juri['total_input'] }}</div>
+                            </td>
+
+                            <!-- TOTAL EVENT -->
+                            @php
+                                $evtAcc = $juri['event_akurasi'] ?? 0;
+                                $evtAccColor = 'text-red';
+                                if ($evtAcc >= 80) $evtAccColor = 'text-green';
+                                elseif ($evtAcc >= 50) $evtAccColor = 'text-yellow';
+                            @endphp
+                            <td style="background-color: #f0fbff;">
+                                <div class="bold {{ $evtAccColor }}" style="font-size: 18px;">{{ number_format($evtAcc, 1) }}%</div>
+                                <div class="small" style="text-transform: uppercase;">Keseluruhan</div>
                             </td>
                         </tr>
                     @endforeach
