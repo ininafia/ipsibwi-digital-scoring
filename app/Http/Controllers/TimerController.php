@@ -51,7 +51,13 @@ class TimerController extends Controller
         }
 
         $data = $request->only(['round', 'time_remaining', 'status']);
-        return response()->json($this->usecase->syncState($matchId, $data));
+        $result = $this->usecase->syncState($matchId, $data);
+        
+        if (isset($result['success']) && !$result['success']) {
+            return response()->json($result, $result['code'] ?? 400);
+        }
+        
+        return response()->json($result);
     }
 
     public function getState(\Illuminate\Http\Request $request)

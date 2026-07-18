@@ -6,37 +6,35 @@
 
 <div class="overflow-x-auto w-full">
 
-    {{-- BORDER BIRU SEPERTI DI GAMBAR --}}
-    <div class="border-[3px] border-gray-300 rounded-sm p-[1px]">
-        
-        <table class="w-full text-sm text-center border-collapse bg-white">
+    <div class="overflow-x-auto">
+        <table class="w-full text-sm text-center border-collapse border border-gray-300 bg-white">
 
             <thead>
-                <tr class="border-b border-gray-300">
-                    <th class="border-r border-gray-300 py-3 font-extrabold text-black w-24 uppercase">Partai</th>
-                    <th class="border-r border-gray-300 py-3 font-extrabold text-black w-28 uppercase">Kelas</th>
-                    <th class="border-r border-gray-300 py-3 font-extrabold text-white bg-blue-700 uppercase w-64">Biru</th>
-                    <th class="border-r border-gray-300 py-3 font-extrabold text-white bg-red-600 uppercase w-64">Merah</th>
-                    <th class="border-r border-gray-300 py-3 font-extrabold text-black uppercase">Poin</th>
-                    <th class="border-r border-gray-300 py-3 font-extrabold text-black uppercase">Sudut</th>
-                    <th class="border-r border-gray-300 py-3 font-extrabold text-black uppercase">Ket</th>
-                    <th class="py-3 font-extrabold text-black uppercase">Detail</th>
+                <tr>
+                    <th class="border border-gray-300 px-3 py-2 bg-gray-100 font-bold w-16 text-center">Partai</th>
+                    <th class="border border-gray-300 px-3 py-2 bg-gray-100 font-bold w-24 text-center">Kelas</th>
+                    <th class="border border-gray-300 px-3 py-2 bg-blue-600 text-white font-bold w-64 text-center">Biru</th>
+                    <th class="border border-gray-300 px-3 py-2 bg-red-600 text-white font-bold w-64 text-center">Merah</th>
+                    <th class="border border-gray-300 px-3 py-2 bg-gray-100 font-bold text-center">Poin</th>
+                    <th class="border border-gray-300 px-3 py-2 bg-gray-100 font-bold text-center">Sudut</th>
+                    <th class="border border-gray-300 px-3 py-2 bg-gray-100 font-bold text-center">Ket</th>
+                    <th class="border border-gray-300 px-3 py-2 bg-gray-100 font-bold text-center w-24">Detail</th>
                 </tr>
             </thead>
 
             <tbody>
 
                 @forelse($finishedList as $item)
-                    <tr class="border-b border-gray-300 last:border-b-0 hover:bg-gray-50">
+                    <tr class="table-row border-b border-gray-200 hover:bg-gray-50">
                         
                         {{-- PARTAI --}}
-                        <td class="border-r border-gray-300 py-3 text-black font-semibold">
+                        <td class="border border-gray-300 px-3 py-2.5 text-center font-medium">
                             {{ str_pad($item->partai ?? 0, 3, '0', STR_PAD_LEFT) }}
                         </td>
 
                         {{-- KELAS --}}
-                        <td class="border-r border-gray-300 py-3 text-black">
-                            <div class="font-semibold text-gray-800">
+                        <td class="border border-gray-300 px-3 py-2.5 text-center">
+                            <div class="font-bold text-gray-800">
                                 {{ strtoupper($item->gelanggang ?? '-') }} | {{ strtoupper($item->kelas ?? '-') }}
                             </div>
                             <span class="inline-block mt-1 bg-yellow-400 text-white text-[10px] font-bold px-2 py-0.5 rounded">
@@ -45,23 +43,23 @@
                         </td>
 
                         {{-- BIRU --}}
-                        <td class="border-r border-gray-300 py-3">
-                            <div class="text-blue-700 font-bold text-[13px]">{{ $item->sudut_biru ?? '-' }}</div>
-                            <div class="text-black font-bold text-[11px]">{{ $item->kontingen_biru ?? '-' }}</div>
+                        <td class="border border-gray-300 px-3 py-2.5 text-center">
+                            <div class="text-blue-600 font-bold text-[13px]">{{ $item->sudut_biru ?? '-' }}</div>
+                            <div class="text-gray-600 text-xs mt-0.5">{{ $item->kontingen_biru ?? '-' }}</div>
                         </td>
 
                         {{-- MERAH --}}
-                        <td class="border-r border-gray-300 py-3">
+                        <td class="border border-gray-300 px-3 py-2.5 text-center">
                             <div class="text-red-600 font-bold text-[13px]">{{ $item->sudut_merah ?? '-' }}</div>
-                            <div class="text-black font-bold text-[11px]">{{ $item->kontingen_merah ?? '-' }}</div>
+                            <div class="text-gray-600 text-xs mt-0.5">{{ $item->kontingen_merah ?? '-' }}</div>
                         </td>
 
                         {{-- POIN --}}
-                        <td class="border-r border-gray-300 py-3">
+                        <td class="border border-gray-300 px-3 py-2.5 text-center">
                             <div class="flex items-center justify-center gap-2 font-bold">
-                                <div class="bg-[#00008b] text-white rounded-[4px] w-7 h-7 flex items-center justify-center text-sm">{{ $item->skor_biru ?? 0 }}</div>
-                                <span class="text-sm font-semibold text-black">vs</span>
-                                <div class="bg-[#cc0000] text-white rounded-[4px] w-7 h-7 flex items-center justify-center text-sm">{{ $item->skor_merah ?? 0 }}</div>
+                                <div class="bg-blue-600 text-white rounded-[4px] w-6 h-6 flex items-center justify-center text-xs">{{ $item->skor_biru ?? 0 }}</div>
+                                <span class="text-xs font-semibold text-gray-500">vs</span>
+                                <div class="bg-red-600 text-white rounded-[4px] w-6 h-6 flex items-center justify-center text-xs">{{ $item->skor_merah ?? 0 }}</div>
                             </div>
                         </td>
 
@@ -72,29 +70,29 @@
                             
                             if (($item->skor_biru ?? 0) > ($item->skor_merah ?? 0)) {
                                 $pemenang_sudut = 'BIRU';
-                                $pemenang_warna = 'bg-[#00008b]';
+                                $pemenang_warna = 'bg-blue-600';
                             } elseif (($item->skor_merah ?? 0) > ($item->skor_biru ?? 0)) {
                                 $pemenang_sudut = 'MERAH';
-                                $pemenang_warna = 'bg-[#cc0000]';
+                                $pemenang_warna = 'bg-red-600';
                             } else {
                                 $pemenang_sudut = 'SERI';
-                                $pemenang_warna = 'bg-gray-700';
+                                $pemenang_warna = 'bg-gray-500';
                             }
                         @endphp
-                        <td class="border-r border-gray-300 py-3">
-                            <div class="{{ $pemenang_warna }} text-white rounded-[4px] px-3 py-1.5 font-bold text-xs uppercase inline-block tracking-wider">
+                        <td class="border border-gray-300 px-3 py-2.5 text-center">
+                            <div class="{{ $pemenang_warna }} text-white rounded-[4px] px-2 py-1 font-bold text-[10px] uppercase inline-block tracking-wider">
                                 {{ $pemenang_sudut }}
                             </div>
                         </td>
 
                         {{-- KET --}}
-                        <td class="border-r border-gray-300 py-3 font-semibold text-black text-xs uppercase">
+                        <td class="border border-gray-300 px-3 py-2.5 text-center font-semibold text-gray-700 text-[10px] uppercase">
                             ANGKA
                         </td>
 
                         {{-- DETAIL --}}
-                        <td class="py-3">
-                            <a href="{{ route('operator.tanding.finished.detail', $item->id) }}" class="bg-[#ffca28] hover:bg-[#ffb300] text-white rounded-[4px] px-4 py-1.5 font-bold text-xs uppercase shadow-sm transition tracking-wider inline-block">
+                        <td class="border border-gray-300 px-3 py-2.5 text-center">
+                            <a href="{{ route('operator.tanding.finished.detail', $item->id) }}" class="bg-yellow-400 hover:bg-yellow-500 text-white rounded-[4px] px-3 py-1 font-bold text-[10px] uppercase shadow-sm transition tracking-wider inline-block">
                                 DETAIL
                             </a>
                         </td>
@@ -104,114 +102,114 @@
                     {{-- DUMMY DATA AGAR SAMA PERSIS DENGAN GAMBAR JIKA DATA KOSONG --}}
                     
                     {{-- ROW 1 --}}
-                    <tr class="border-b border-gray-300 hover:bg-gray-50">
-                        <td class="border-r border-gray-300 py-4 text-black font-semibold text-sm">A | 50</td>
-                        <td class="border-r border-gray-300 py-3 text-black text-[13px] leading-snug">D PA<br>Dewasa</td>
-                        <td class="border-r border-gray-300 py-3">
-                            <div class="text-blue-700 font-bold text-[13px]">Salsabila Ds</div>
-                            <div class="text-black font-bold text-[11px]">SMP Darus Sholah</div>
+                    <tr class="table-row border-b border-gray-200 hover:bg-gray-50">
+                        <td class="border border-gray-300 px-3 py-2.5 text-center font-medium">A | 50</td>
+                        <td class="border border-gray-300 px-3 py-2.5 text-center">D PA<br>Dewasa</td>
+                        <td class="border border-gray-300 px-3 py-2.5 text-center">
+                            <div class="text-blue-600 font-bold text-[13px]">Salsabila Ds</div>
+                            <div class="text-gray-600 font-bold text-[11px]">SMP Darus Sholah</div>
                         </td>
-                        <td class="border-r border-gray-300 py-3">
+                        <td class="border border-gray-300 px-3 py-2.5 text-center">
                             <div class="text-red-600 font-bold text-[13px]">Nabila Ayu</div>
-                            <div class="text-black font-bold text-[11px]">SMP Ahmad Yani</div>
+                            <div class="text-gray-600 font-bold text-[11px]">SMP Ahmad Yani</div>
                         </td>
-                        <td class="border-r border-gray-300 py-3">
+                        <td class="border border-gray-300 px-3 py-2.5 text-center">
                             <div class="flex items-center justify-center gap-2 font-bold">
-                                <div class="bg-[#00008b] text-white rounded-[4px] w-7 h-7 flex items-center justify-center text-sm">26</div>
-                                <span class="text-sm font-semibold text-black">vs</span>
-                                <div class="bg-[#cc0000] text-white rounded-[4px] w-7 h-7 flex items-center justify-center text-sm">17</div>
+                                <div class="bg-blue-600 text-white rounded-[4px] w-6 h-6 flex items-center justify-center text-xs">26</div>
+                                <span class="text-xs font-semibold text-gray-500">vs</span>
+                                <div class="bg-red-600 text-white rounded-[4px] w-6 h-6 flex items-center justify-center text-xs">17</div>
                             </div>
                         </td>
-                        <td class="border-r border-gray-300 py-3">
-                            <div class="bg-[#00008b] text-white rounded-[4px] px-4 py-1.5 font-bold text-xs uppercase inline-block tracking-wider">BIRU</div>
+                        <td class="border border-gray-300 px-3 py-2.5 text-center">
+                            <div class="bg-blue-600 text-white rounded-[4px] px-2 py-1 font-bold text-[10px] uppercase inline-block tracking-wider">BIRU</div>
                         </td>
-                        <td class="border-r border-gray-300 py-3 font-semibold text-black text-xs uppercase">ANGKA</td>
-                        <td class="py-3">
-                            <a href="{{ route('operator.tanding.finished.detail', $item->id) }}" class="bg-[#ffca28] hover:bg-[#ffb300] text-white rounded-[4px] px-4 py-1.5 font-bold text-xs uppercase shadow-sm transition tracking-wider inline-block">DETAIL</a>
+                        <td class="border border-gray-300 px-3 py-2.5 text-center font-semibold text-gray-700 text-[10px] uppercase">ANGKA</td>
+                        <td class="border border-gray-300 px-3 py-2.5 text-center">
+                            <a href="#" class="bg-yellow-400 hover:bg-yellow-500 text-white rounded-[4px] px-3 py-1 font-bold text-[10px] uppercase shadow-sm transition tracking-wider inline-block">DETAIL</a>
                         </td>
                     </tr>
 
                     {{-- ROW 2 --}}
-                    <tr class="border-b border-gray-300 hover:bg-gray-50">
-                        <td class="border-r border-gray-300 py-4 text-black font-semibold text-sm">B | 50</td>
-                        <td class="border-r border-gray-300 py-3 text-black text-[13px] leading-snug">D PA<br>Dewasa</td>
-                        <td class="border-r border-gray-300 py-3">
-                            <div class="text-blue-700 font-bold text-[13px]">Salsabila Ds</div>
-                            <div class="text-black font-bold text-[11px]">SMP Darus Sholah</div>
+                    <tr class="table-row border-b border-gray-200 hover:bg-gray-50">
+                        <td class="border border-gray-300 px-3 py-2.5 text-center font-medium">B | 50</td>
+                        <td class="border border-gray-300 px-3 py-2.5 text-center">D PA<br>Dewasa</td>
+                        <td class="border border-gray-300 px-3 py-2.5 text-center">
+                            <div class="text-blue-600 font-bold text-[13px]">Salsabila Ds</div>
+                            <div class="text-gray-600 font-bold text-[11px]">SMP Darus Sholah</div>
                         </td>
-                        <td class="border-r border-gray-300 py-3">
+                        <td class="border border-gray-300 px-3 py-2.5 text-center">
                             <div class="text-red-600 font-bold text-[13px]">Nabila Ayu</div>
-                            <div class="text-black font-bold text-[11px]">SMP Ahmad Yani</div>
+                            <div class="text-gray-600 font-bold text-[11px]">SMP Ahmad Yani</div>
                         </td>
-                        <td class="border-r border-gray-300 py-3">
+                        <td class="border border-gray-300 px-3 py-2.5 text-center">
                             <div class="flex items-center justify-center gap-2 font-bold">
-                                <div class="bg-[#00008b] text-white rounded-[4px] w-7 h-7 flex items-center justify-center text-sm">17</div>
-                                <span class="text-sm font-semibold text-black">vs</span>
-                                <div class="bg-[#cc0000] text-white rounded-[4px] w-7 h-7 flex items-center justify-center text-sm">26</div>
+                                <div class="bg-blue-600 text-white rounded-[4px] w-6 h-6 flex items-center justify-center text-xs">26</div>
+                                <span class="text-xs font-semibold text-gray-500">vs</span>
+                                <div class="bg-red-600 text-white rounded-[4px] w-6 h-6 flex items-center justify-center text-xs">26</div>
                             </div>
                         </td>
-                        <td class="border-r border-gray-300 py-3">
-                            <div class="bg-[#cc0000] text-white rounded-[4px] px-3 py-1.5 font-bold text-xs capitalize inline-block tracking-wider">Merah</div>
+                        <td class="border border-gray-300 px-3 py-2.5 text-center">
+                            <div class="bg-gray-500 text-white rounded-[4px] px-2 py-1 font-bold text-[10px] uppercase inline-block tracking-wider">SERI</div>
                         </td>
-                        <td class="border-r border-gray-300 py-3 font-semibold text-black text-xs uppercase">TEKNIK</td>
-                        <td class="py-3">
-                            <a href="{{ route('operator.tanding.finished.detail', $item->id ?? 1) }}" class="bg-[#ffca28] hover:bg-[#ffb300] text-white rounded-[4px] px-4 py-1.5 font-bold text-xs uppercase shadow-sm transition tracking-wider inline-block">DETAIL</a>
+                        <td class="border border-gray-300 px-3 py-2.5 text-center font-semibold text-gray-700 text-[10px] uppercase">ANGKA</td>
+                        <td class="border border-gray-300 px-3 py-2.5 text-center">
+                            <a href="#" class="bg-yellow-400 hover:bg-yellow-500 text-white rounded-[4px] px-3 py-1 font-bold text-[10px] uppercase shadow-sm transition tracking-wider inline-block">DETAIL</a>
                         </td>
                     </tr>
 
                     {{-- ROW 3 --}}
-                    <tr class="border-b border-gray-300 hover:bg-gray-50">
-                        <td class="border-r border-gray-300 py-4 text-black font-semibold text-sm">C | 50</td>
-                        <td class="border-r border-gray-300 py-3 text-black text-[13px] leading-snug">D PA<br>Dewasa</td>
-                        <td class="border-r border-gray-300 py-3">
-                            <div class="text-blue-700 font-bold text-[13px]">Salsabila Ds</div>
-                            <div class="text-black font-bold text-[11px]">SMP Darus Sholah</div>
+                    <tr class="table-row border-b border-gray-200 hover:bg-gray-50">
+                        <td class="border border-gray-300 px-3 py-2.5 text-center font-medium">C | 50</td>
+                        <td class="border border-gray-300 px-3 py-2.5 text-center">D PA<br>Dewasa</td>
+                        <td class="border border-gray-300 px-3 py-2.5 text-center">
+                            <div class="text-blue-600 font-bold text-[13px]">Salsabila Ds</div>
+                            <div class="text-gray-600 font-bold text-[11px]">SMP Darus Sholah</div>
                         </td>
-                        <td class="border-r border-gray-300 py-3">
+                        <td class="border border-gray-300 px-3 py-2.5 text-center">
                             <div class="text-red-600 font-bold text-[13px]">Nabila Ayu</div>
-                            <div class="text-black font-bold text-[11px]">SMP Ahmad Yani</div>
+                            <div class="text-gray-600 font-bold text-[11px]">SMP Ahmad Yani</div>
                         </td>
-                        <td class="border-r border-gray-300 py-3">
+                        <td class="border border-gray-300 px-3 py-2.5 text-center">
                             <div class="flex items-center justify-center gap-2 font-bold">
-                                <div class="bg-[#00008b] text-white rounded-[4px] w-7 h-7 flex items-center justify-center text-sm">26</div>
-                                <span class="text-sm font-semibold text-black">vs</span>
-                                <div class="bg-[#cc0000] text-white rounded-[4px] w-7 h-7 flex items-center justify-center text-sm">17</div>
+                                <div class="bg-blue-600 text-white rounded-[4px] w-6 h-6 flex items-center justify-center text-xs">26</div>
+                                <span class="text-xs font-semibold text-gray-500">vs</span>
+                                <div class="bg-red-600 text-white rounded-[4px] w-6 h-6 flex items-center justify-center text-xs">17</div>
                             </div>
                         </td>
-                        <td class="border-r border-gray-300 py-3">
-                            <div class="bg-[#00008b] text-white rounded-[4px] px-4 py-1.5 font-bold text-xs uppercase inline-block tracking-wider">BIRU</div>
+                        <td class="border border-gray-300 px-3 py-2.5 text-center">
+                            <div class="bg-blue-600 text-white rounded-[4px] px-2 py-1 font-bold text-[10px] uppercase inline-block tracking-wider">BIRU</div>
                         </td>
-                        <td class="border-r border-gray-300 py-3 font-semibold text-black text-xs uppercase">MUTLAK</td>
-                        <td class="py-3">
-                            <a href="{{ route('operator.tanding.finished.detail', $item->id ?? 2) }}" class="bg-[#ffca28] hover:bg-[#ffb300] text-white rounded-[4px] px-4 py-1.5 font-bold text-xs uppercase shadow-sm transition tracking-wider inline-block">DETAIL</a>
+                        <td class="border border-gray-300 px-3 py-2.5 text-center font-semibold text-gray-700 text-[10px] uppercase">MUTLAK</td>
+                        <td class="border border-gray-300 px-3 py-2.5 text-center">
+                            <a href="#" class="bg-yellow-400 hover:bg-yellow-500 text-white rounded-[4px] px-3 py-1 font-bold text-[10px] uppercase shadow-sm transition tracking-wider inline-block">DETAIL</a>
                         </td>
                     </tr>
 
                     {{-- ROW 4 --}}
-                    <tr class="hover:bg-gray-50">
-                        <td class="border-r border-gray-300 py-4 text-black font-semibold text-sm">D | 50</td>
-                        <td class="border-r border-gray-300 py-3 text-black text-[13px] leading-snug">D PA<br>Dewasa</td>
-                        <td class="border-r border-gray-300 py-3">
-                            <div class="text-blue-700 font-bold text-[13px]">Salsabila Ds</div>
-                            <div class="text-black font-bold text-[11px]">SMP Darus Sholah</div>
+                    <tr class="table-row hover:bg-gray-50">
+                        <td class="border border-gray-300 px-3 py-2.5 text-center font-medium">D | 50</td>
+                        <td class="border border-gray-300 px-3 py-2.5 text-center">D PA<br>Dewasa</td>
+                        <td class="border border-gray-300 px-3 py-2.5 text-center">
+                            <div class="text-blue-600 font-bold text-[13px]">Salsabila Ds</div>
+                            <div class="text-gray-600 font-bold text-[11px]">SMP Darus Sholah</div>
                         </td>
-                        <td class="border-r border-gray-300 py-3">
+                        <td class="border border-gray-300 px-3 py-2.5 text-center">
                             <div class="text-red-600 font-bold text-[13px]">Nabila Ayu</div>
-                            <div class="text-black font-bold text-[11px]">SMP Ahmad Yani</div>
+                            <div class="text-gray-600 font-bold text-[11px]">SMP Ahmad Yani</div>
                         </td>
-                        <td class="border-r border-gray-300 py-3">
+                        <td class="border border-gray-300 px-3 py-2.5 text-center">
                             <div class="flex items-center justify-center gap-2 font-bold">
-                                <div class="bg-[#00008b] text-white rounded-[4px] w-7 h-7 flex items-center justify-center text-sm">17</div>
-                                <span class="text-sm font-semibold text-black">vs</span>
-                                <div class="bg-[#cc0000] text-white rounded-[4px] w-7 h-7 flex items-center justify-center text-sm">26</div>
+                                <div class="bg-blue-600 text-white rounded-[4px] w-6 h-6 flex items-center justify-center text-xs">17</div>
+                                <span class="text-xs font-semibold text-gray-500">vs</span>
+                                <div class="bg-red-600 text-white rounded-[4px] w-6 h-6 flex items-center justify-center text-xs">26</div>
                             </div>
                         </td>
-                        <td class="border-r border-gray-300 py-3">
-                            <div class="bg-[#cc0000] text-white rounded-[4px] px-3 py-1.5 font-bold text-xs capitalize inline-block tracking-wider">Merah</div>
+                        <td class="border border-gray-300 px-3 py-2.5 text-center">
+                            <div class="bg-red-600 text-white rounded-[4px] px-2 py-1 font-bold text-[10px] uppercase inline-block tracking-wider">MERAH</div>
                         </td>
-                        <td class="border-r border-gray-300 py-3 font-semibold text-black text-xs uppercase">UNDUR<br>DIRI</td>
-                        <td class="py-3">
-                            <a href="{{ route('operator.tanding.finished.detail', $item->id ?? 3) }}" class="bg-[#ffca28] hover:bg-[#ffb300] text-white rounded-[4px] px-4 py-1.5 font-bold text-xs uppercase shadow-sm transition tracking-wider inline-block">DETAIL</a>
+                        <td class="border border-gray-300 px-3 py-2.5 text-center font-semibold text-gray-700 text-[10px] uppercase">UNDUR<br>DIRI</td>
+                        <td class="border border-gray-300 px-3 py-2.5 text-center">
+                            <a href="#" class="bg-yellow-400 hover:bg-yellow-500 text-white rounded-[4px] px-3 py-1 font-bold text-[10px] uppercase shadow-sm transition tracking-wider inline-block">DETAIL</a>
                         </td>
                     </tr>
                 @endforelse

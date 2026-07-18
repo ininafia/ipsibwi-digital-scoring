@@ -5,10 +5,10 @@
         <!-- =========================
              PANEL BIRU
         ========================== -->
-        <div class="flex items-center gap-2 w-full">
+        <div class="flex items-center justify-between w-full px-2 lg:px-6">
 
             <!-- TOMBOL -->
-            <div class="flex-1 grid grid-cols-1 gap-2">
+            <div class="w-[160px] grid grid-cols-1 gap-3">
 
                 <!-- PUKULAN -->
                 <button
@@ -53,10 +53,10 @@
             <!-- DELETE -->
             <button
                 onclick="deleteScore('biru')"
-                class="flex-1 h-14 bg-blue-700 hover:bg-blue-800
+                class="w-[120px] h-14 bg-blue-700 hover:bg-blue-800
                        rounded-md text-white font-bold text-[11px]
                        shadow transition flex items-center
-                       justify-center active:scale-95">
+                       justify-center active:scale-95 ml-6">
 
                 <span>DELETE SCORE</span>
 
@@ -87,22 +87,22 @@
         <!-- =========================
              PANEL MERAH
         ========================== -->
-        <div class="flex items-center justify-end gap-2 w-full">
+        <div class="flex items-center justify-between w-full px-2 lg:px-6">
 
             <!-- DELETE -->
             <button
                 onclick="deleteScore('merah')"
-                class="flex-1 h-14 bg-red-600 hover:bg-red-700
+                class="w-[120px] h-14 bg-red-600 hover:bg-red-700
                        rounded-md text-white font-bold text-[11px]
                        shadow transition flex items-center
-                       justify-center active:scale-95">
+                       justify-center active:scale-95 mr-6">
 
                 <span>DELETE SCORE</span>
 
             </button>
 
             <!-- TOMBOL -->
-            <div class="flex-1 grid grid-cols-1 gap-2">
+            <div class="w-[160px] grid grid-cols-1 gap-3">
 
                 <!-- PUKULAN -->
                 <button

@@ -2,16 +2,16 @@
 
 @section('content')
 
-<div class="bg-white shadow-md border border-gray-200 p-6 rounded-xl">
+<div class="bg-white shadow-md border border-gray-200 p-6 rounded-xl flex-1 flex flex-col">
 
     @if(session('error'))
-        <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4" role="alert">
+        <div x-data="{ show: true }" x-show="show" x-init="setTimeout(() => show = false, 3000)" x-transition.duration.500ms  class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4" role="alert">
             <span class="block sm:inline">{{ session('error') }}</span>
         </div>
     @endif
 
     @if(session('success'))
-        <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative mb-4" role="alert">
+        <div x-data="{ show: true }" x-show="show" x-init="setTimeout(() => show = false, 3000)" x-transition.duration.500ms  class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative mb-4" role="alert">
             <span class="block sm:inline">{{ session('success') }}</span>
         </div>
     @endif
@@ -112,27 +112,27 @@
 
                     <tr>
 
-                        <th class="border border-gray-300 px-4 py-3 bg-gray-100 text-center font-bold w-16">
+                        <th class="border border-gray-300 px-3 py-2 bg-gray-100 text-center font-bold w-16">
                             No
                         </th>
 
-                        <th class="border border-gray-300 px-4 py-3 bg-gray-100 text-center font-bold w-24">
+                        <th class="border border-gray-300 px-3 py-2 bg-gray-100 text-center font-bold w-24">
                             Partai
                         </th>
 
-                        <th class="border border-gray-300 px-4 py-3 bg-gray-100 text-center font-bold">
+                        <th class="border border-gray-300 px-3 py-2 bg-gray-100 text-center font-bold">
                             Kelas
                         </th>
 
-                        <th class="border border-gray-300 px-4 py-3 bg-blue-600 text-white text-center font-bold">
+                        <th class="border border-gray-300 px-3 py-2 bg-blue-600 text-white text-center font-bold">
                             Biru
                         </th>
 
-                        <th class="border border-gray-300 px-4 py-3 bg-red-600 text-white text-center font-bold">
+                        <th class="border border-gray-300 px-3 py-2 bg-red-600 text-white text-center font-bold">
                             Merah
                         </th>
 
-                        <th class="border border-gray-300 px-4 py-3 bg-gray-100 text-center font-bold w-40">
+                        <th class="border border-gray-300 px-3 py-2 bg-gray-100 text-center font-bold w-32">
                             Action
                         </th>
 
@@ -147,12 +147,12 @@
                     <tr class="table-row border-b border-gray-200 hover:bg-gray-50">
 
                         {{-- NO --}}
-                        <td class="border border-gray-300 px-4 py-4 text-center font-medium">
+                        <td class="border border-gray-300 px-3 py-2.5 text-center font-medium">
                             {{ $loop->iteration }}
                         </td>
 
                         {{-- PARTAI --}}
-                        <td class="border border-gray-300 px-4 py-4 text-center font-medium relative">
+                        <td class="border border-gray-300 px-3 py-2.5 text-center font-medium relative">
                             {{ str_pad($item->partai, 3, '0', STR_PAD_LEFT) }}
                             @if(isset($item->status) && $item->status === 'playing')
                                 <div class="absolute -top-2 -right-2 bg-orange-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow-sm animate-pulse">
@@ -162,7 +162,7 @@
                         </td>
 
                         {{-- KELAS --}}
-                        <td class="border border-gray-300 px-4 py-4 text-center">
+                        <td class="border border-gray-300 px-3 py-2.5 text-center">
 
                             <div class="font-semibold text-gray-800">
                                 {{ strtoupper($item->gelanggang ?? '-') }}
@@ -177,7 +177,7 @@
                         </td>
 
                         {{-- BIRU --}}
-                        <td class="border border-gray-300 px-4 py-4 text-center">
+                        <td class="border border-gray-300 px-3 py-2.5 text-center">
 
                             @if(!empty($item->sudut_biru))
 
@@ -200,7 +200,7 @@
                         </td>
 
                         {{-- MERAH --}}
-                        <td class="border border-gray-300 px-4 py-4 text-center">
+                        <td class="border border-gray-300 px-3 py-2.5 text-center">
 
                             @if(!empty($item->sudut_merah))
 
@@ -223,7 +223,7 @@
                         </td>
 
                         {{-- ACTION --}}
-                        <td class="border border-gray-300 px-4 py-4">
+                        <td class="border border-gray-300 px-3 py-2.5">
 
                             <div class="flex items-center justify-center gap-2">
 

@@ -25,6 +25,8 @@ class TimerUsecase extends Usecase
             $round = (int) $data['round'];
             if ($round >= 1 && $round <= 3) {
                 $state['round'] = $round;
+            } else {
+                return ['success' => false, 'error' => 'Invalid round', 'code' => 422];
             }
         }
         
@@ -32,6 +34,8 @@ class TimerUsecase extends Usecase
             $time = (int) $data['time_remaining'];
             if ($time >= 0) {
                 $state['time_remaining'] = $time;
+            } else {
+                return ['success' => false, 'error' => 'Invalid time_remaining', 'code' => 422];
             }
         }
         
@@ -39,12 +43,14 @@ class TimerUsecase extends Usecase
             $status = $data['status'];
             if (in_array($status, ['playing', 'paused', 'stopped'])) {
                 $state['status'] = $status;
+            } else {
+                return ['success' => false, 'error' => 'Invalid status', 'code' => 422];
             }
         }
 
         Cache::put($cacheKey, $state);
 
-        return ['success' => true, 'state' => $state];
+        return ['success' => true, 'state' => $state, 'code' => 200];
     }
 
     public function getState(int $id_pertandingan)

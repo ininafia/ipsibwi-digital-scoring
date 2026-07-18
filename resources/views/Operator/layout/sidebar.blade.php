@@ -6,7 +6,7 @@
     x-transition:leave="transition-transform duration-300"
     x-transition:leave-start="translate-x-0"
     x-transition:leave-end="-translate-x-full"
-    class="w-[238px] bg-white border-r border-gray-200 flex flex-col shrink-0 fixed inset-y-0 left-0 z-50 lg:relative lg:translate-x-0">
+    class="w-[238px] bg-white border-r border-gray-200 flex flex-col shrink-0 h-screen sticky top-0 overflow-y-auto overflow-x-hidden">
 
     {{-- LOGO --}}
     <div class="h-[78px] flex items-center px-5 border-b border-gray-100">

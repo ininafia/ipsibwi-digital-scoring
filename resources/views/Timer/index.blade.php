@@ -81,6 +81,11 @@
                 const seconds = timeRemaining % 60;
                 timerDisplay.innerText = `${String(minutes).padStart(2, '0')} : ${String(seconds).padStart(2, '0')}`;
                 
+                const roundDisplay = document.getElementById('round-display');
+                if (roundDisplay) {
+                    roundDisplay.innerText = currentRound;
+                }
+
                 // Update Round buttons
                 roundBtns.forEach(btn => {
                     const roundNum = parseInt(btn.innerText);
@@ -140,13 +145,17 @@
                         if (status === 'playing') {
                             if (currentRound < 3) {
                                 showTimerNotification("Waktu Babak " + currentRound + " telah habis!");
+                                currentRound++;
+                                timeRemaining = 120;
                             } else {
                                 showTimerNotification("Waktu Pertandingan telah selesai!");
+                                timeRemaining = 0;
                             }
                         }
                         status = 'stopped';
                         clearInterval(timerInterval);
                         timerInterval = null;
+                        updateDisplay();
                         syncState();
                     }
                 }, 1000);

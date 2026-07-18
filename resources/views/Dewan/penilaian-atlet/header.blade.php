@@ -9,7 +9,7 @@
 
     <!-- KEMBALI -->
     <div class="flex items-center gap-4">
-        <a href="javascript:history.back()"
+        <a href="{{ route('dewan.petugas') }}"
            class="bg-gray-200 hover:bg-gray-300 text-gray-700 px-3 py-1.5 rounded-md text-sm font-medium flex items-center gap-2 transition duration-200">
             <i class="fa-solid fa-arrow-left"></i>
             Kembali

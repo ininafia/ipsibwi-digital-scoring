@@ -72,9 +72,7 @@ class PetugasUsecase extends Usecase
                 ->first([
                     'id',
                     'nama',
-                    'tugas',
-                    'created_at',
-                    'updated_at',
+                    'tugas'
                 ]);
 
             if (!$data) {
@@ -349,24 +347,74 @@ class PetugasUsecase extends Usecase
                 5 => [$request->input('juri1'), $request->input('juri2'), $request->input('juri3')] // juri (role 5)
             ];
 
+            // Kumpulkan semua id_petugas yang diinput (kecuali null)
+            $allPetugasIds = [];
+            foreach ($assignments as $roleId => $petugasId) {
+                if (is_array($petugasId)) {
+                    foreach ($petugasId as $jId) {
+                        if ($jId) $allPetugasIds[] = $jId;
+                    }
+                } else if ($petugasId) {
+                    $allPetugasIds[] = $petugasId;
+                }
+            }
+
+            // Validasi duplikasi
+            if (count($allPetugasIds) !== count(array_unique($allPetugasIds))) {
+                DB::rollback();
+                return Response::buildErrorService('Terdapat duplikasi petugas. Satu orang tidak boleh merangkap jabatan di pertandingan yang sama.');
+            }
+
+            // Validasi tugas sesuai tabel data_petugas
+            if (!empty($allPetugasIds)) {
+                $masterPetugas = DB::table('data_petugas')->whereIn('id', $allPetugasIds)->get()->keyBy('id');
+                
+                $expectedRoleTasks = [
+                    2 => 'Ketua Pertandingan',
+                    7 => 'Delegasi Teknik',
+                    3 => 'Dewan',
+                    6 => 'Wasit',
+                    5 => 'Juri'
+                ];
+
+                foreach ($assignments as $roleId => $petugasId) {
+                    $expectedTask = $expectedRoleTasks[$roleId] ?? null;
+                    if (!$expectedTask) continue;
+                    
+                    if (is_array($petugasId)) {
+                        foreach ($petugasId as $jId) {
+                            if ($jId && isset($masterPetugas[$jId]) && $masterPetugas[$jId]->tugas !== $expectedTask) {
+                                DB::rollback();
+                                return Response::buildErrorService("Petugas '{$masterPetugas[$jId]->nama}' tidak memiliki tugas sebagai {$expectedTask}.");
+                            }
+                        }
+                    } else if ($petugasId) {
+                        if (isset($masterPetugas[$petugasId]) && $masterPetugas[$petugasId]->tugas !== $expectedTask) {
+                            DB::rollback();
+                            return Response::buildErrorService("Petugas '{$masterPetugas[$petugasId]->nama}' tidak memiliki tugas sebagai {$expectedTask}.");
+                        }
+                    }
+                }
+            }
+
             // Optional: delete existing assignments for this pertandingan
             DB::table('petugas_pertandingan')
                 ->where('id_pertandingan', $idPertandingan)
                 ->delete();
 
             $inserts = [];
-            $juriNumber = 1;
             foreach ($assignments as $roleId => $petugasId) {
                 if (is_array($petugasId)) {
-                    foreach ($petugasId as $juriId) {
+                    // $petugasId adalah array [juri1, juri2, juri3]
+                    foreach ($petugasId as $index => $juriId) {
                         if ($juriId) {
+                            $juriNumber = $index + 1; // Selalu statis sesuai index form (0 -> juri_1, 1 -> juri_2, 2 -> juri_3)
                             $inserts[] = [
                                 'id_pertandingan' => $idPertandingan,
                                 'id_petugas'      => $juriId,
                                 'id_role'         => $roleId,
                                 'posisi'          => 'juri_' . $juriNumber,
                             ];
-                            $juriNumber++;
                         }
                     }
                 } else if ($petugasId) {

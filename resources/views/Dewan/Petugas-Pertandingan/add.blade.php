@@ -16,14 +16,14 @@
     
     {{-- ERROR MESSAGE --}}
     @if(session('error'))
-    <div class="mb-5 bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-md text-sm">
+    <div x-data="{ show: true }" x-show="show" x-init="setTimeout(() => show = false, 3000)" x-transition.duration.500ms  class="mb-5 bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-md text-sm">
         {{ session('error') }}
     </div>
     @endif
 
     {{-- VALIDATION ERROR --}}
     @if($errors->any())
-    <div class="mb-5 bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-md text-sm">
+    <div x-data="{ show: true }" x-show="show" x-init="setTimeout(() => show = false, 5000)" x-transition.duration.500ms  class="mb-5 bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-md text-sm">
         <ul class="list-disc pl-5 space-y-1">
             @foreach($errors->all() as $error)
             <li>{{ $error }}</li>
@@ -34,7 +34,7 @@
 
     {{-- SUCCESS --}}
     @if(session('success'))
-    <div class="mb-5 bg-green-50 border border-green-200 text-green-600 px-4 py-3 rounded-md text-sm">
+    <div x-data="{ show: true }" x-show="show" x-init="setTimeout(() => show = false, 3000)" x-transition.duration.500ms  class="mb-5 bg-green-50 border border-green-200 text-green-600 px-4 py-3 rounded-md text-sm">
         {{ session('success') }}
     </div>
     @endif

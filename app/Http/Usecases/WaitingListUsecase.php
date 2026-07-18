@@ -233,7 +233,7 @@ class WaitingListUsecase extends Usecase
 
                     'status'          => 'waiting',
 
-                    'created_by'      => Auth::id(),
+                    'created_by'      => session('user_id'),
                     'created_at'      => now(),
                 ]);
 
@@ -307,7 +307,7 @@ class WaitingListUsecase extends Usecase
                     'sudut_merah'     => $data->sudut_merah,
                     'kontingen_merah' => $data->kontingen_merah,
 
-                    'updated_by'      => Auth::id(),
+                    'updated_by'      => session('user_id'),
                     'updated_at'      => now(),
                 ]);
 
@@ -397,7 +397,7 @@ class WaitingListUsecase extends Usecase
 
                     'status'     => $status,
 
-                    'updated_by' => Auth::id(),
+                    'updated_by' => session('user_id'),
 
                     'updated_at' => now(),
                 ]);
@@ -452,7 +452,7 @@ class WaitingListUsecase extends Usecase
                 ->where('id', $id)
                 ->update([
 
-                    'deleted_by' => Auth::id(),
+                    'deleted_by' => session('user_id'),
 
                     'deleted_at' => now(),
                 ]);

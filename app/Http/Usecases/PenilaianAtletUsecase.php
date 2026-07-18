@@ -512,28 +512,71 @@ class PenilaianAtletUsecase extends Usecase
                 $dewanName = strtoupper($dewanAssignment->nama);
             }
 
-            // Hitung logika tampilan teks hukuman secara akumulatif
-            $hukumanBiruText = '';
-            if ($data['teguran_biru'] >= 1) $hukumanBiruText .= '-1';
-            if ($data['teguran_biru'] >= 2) $hukumanBiruText .= '-2';
-            if ($data['peringatan_biru'] >= 1) $hukumanBiruText .= '-5';
-            if ($data['peringatan_biru'] >= 2) $hukumanBiruText .= '-10';
-
-            $hukumanMerahText = '';
-            if ($data['teguran_merah'] >= 1) $hukumanMerahText .= '-1';
-            if ($data['teguran_merah'] >= 2) $hukumanMerahText .= '-2';
-            if ($data['peringatan_merah'] >= 1) $hukumanMerahText .= '-5';
-            if ($data['peringatan_merah'] >= 2) $hukumanMerahText .= '-10';
-
-            // Hitung logika tampilan teks jatuhan (contoh: 3+3+3)
-            $jatuhanBiruText = '';
-            if ($data['jatuhan_biru'] > 0) {
-                $jatuhanBiruText = implode('+', array_fill(0, $data['jatuhan_biru'], '3'));
+            // Ambil riwayat hukuman untuk menampilkan per ronde
+            $riwayatHukuman = DB::table('riwayat_hukuman')
+                ->where('id_pertandingan', $match->id)
+                ->get();
+            
+            $penaltiesPerRound = [];
+            for ($r = 1; $r <= 3; $r++) {
+                $penaltiesPerRound[$r] = [
+                    'jatuhan_biru' => 0,
+                    'jatuhan_merah' => 0,
+                    'binaan_biru' => 0,
+                    'binaan_merah' => 0,
+                    'teguran_biru' => 0,
+                    'teguran_merah' => 0,
+                    'peringatan_biru' => 0,
+                    'peringatan_merah' => 0,
+                ];
             }
 
-            $jatuhanMerahText = '';
-            if ($data['jatuhan_merah'] > 0) {
-                $jatuhanMerahText = implode('+', array_fill(0, $data['jatuhan_merah'], '3'));
+            foreach ($riwayatHukuman as $rh) {
+                $r = $rh->id_babak;
+                if ($r >= 1 && $r <= 3) {
+                    $field = $rh->jenis_hukuman . '_' . $rh->sudut;
+                    if (isset($penaltiesPerRound[$r][$field])) {
+                        $val = ($rh->action === 'add') ? 1 : -1;
+                        $penaltiesPerRound[$r][$field] += $val;
+                    }
+                }
+            }
+
+            // Format text untuk UI Dewan (seperti di Monitor Ketua):
+            $penaltiesFormatted = [];
+            for ($r = 1; $r <= 3; $r++) {
+                $p = $penaltiesPerRound[$r];
+                
+                $hukumanBiru = '';
+                if ($p['teguran_biru'] >= 1) $hukumanBiru .= '-1';
+                if ($p['teguran_biru'] >= 2) $hukumanBiru .= '-2';
+                if ($p['peringatan_biru'] >= 1) $hukumanBiru .= '-5';
+                if ($p['peringatan_biru'] >= 2) $hukumanBiru .= '-10';
+
+                $hukumanMerah = '';
+                if ($p['teguran_merah'] >= 1) $hukumanMerah .= '-1';
+                if ($p['teguran_merah'] >= 2) $hukumanMerah .= '-2';
+                if ($p['peringatan_merah'] >= 1) $hukumanMerah .= '-5';
+                if ($p['peringatan_merah'] >= 2) $hukumanMerah .= '-10';
+
+                $jatuhanBiru = '';
+                if ($p['jatuhan_biru'] > 0) {
+                    $jatuhanBiru = implode('+', array_fill(0, $p['jatuhan_biru'], '3'));
+                }
+                
+                $jatuhanMerah = '';
+                if ($p['jatuhan_merah'] > 0) {
+                    $jatuhanMerah = implode('+', array_fill(0, $p['jatuhan_merah'], '3'));
+                }
+
+                $penaltiesFormatted[$r] = [
+                    'jatuhan_biru' => $jatuhanBiru,
+                    'jatuhan_merah' => $jatuhanMerah,
+                    'binaan_biru' => $p['binaan_biru'] > 0 ? $p['binaan_biru'] : '',
+                    'binaan_merah' => $p['binaan_merah'] > 0 ? $p['binaan_merah'] : '',
+                    'hukuman_biru' => $hukumanBiru,
+                    'hukuman_merah' => $hukumanMerah,
+                ];
             }
 
             $response = [
@@ -549,12 +592,7 @@ class PenilaianAtletUsecase extends Usecase
                     'time_remaining' => $timerState['time_remaining'] ?? 0,
                 ],
                 'data' => $data,
-                'display' => [
-                    'hukuman_biru_text' => $hukumanBiruText,
-                    'hukuman_merah_text' => $hukumanMerahText,
-                    'jatuhan_biru_text' => $jatuhanBiruText,
-                    'jatuhan_merah_text' => $jatuhanMerahText,
-                ],
+                'penalties_formatted' => $penaltiesFormatted,
                 'dewan' => [
                     'nama' => $dewanName,
                     'posisi' => 'DEWAN'

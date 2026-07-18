@@ -25,11 +25,12 @@ class AkurasiJuriController extends Controller
         $response = $usecase->getAllAkurasi();
         $akurasiData = $response['success'] ? $response['data']['matches'] : [];
         $eventAccuracy = $response['success'] ? $response['data']['event_accuracy'] : 0;
+        $eventJuries = $response['success'] ? $response['data']['event_juries'] : [];
 
-        return view('Ketua.Persentase-juri.index', compact('akurasiData', 'eventAccuracy'));
+        return view('Ketua.Persentase-juri.index', compact('akurasiData', 'eventAccuracy', 'eventJuries'));
     }
 
-    public function exportPdfAll()
+    public function exportPdfAll(Request $request)
     {
         // HARUS LOGIN
         if (!session('user_id')) {
@@ -41,15 +42,18 @@ class AkurasiJuriController extends Controller
             abort(403, 'Akses ditolak');
         }
 
+        $type = $request->query('type', 'babak'); // babak, partai, event
+
         $usecase = new AkurasiJuriUsecase();
         $response = $usecase->getAllAkurasi();
         $akurasiData = $response['success'] ? $response['data']['matches'] : [];
         $eventAccuracy = $response['success'] ? $response['data']['event_accuracy'] : 0;
+        $eventJuries = $response['success'] ? $response['data']['event_juries'] : [];
 
-        $pdf = Pdf::loadView('Ketua.Persentase-juri.pdf', compact('akurasiData', 'eventAccuracy'));
+        $pdf = Pdf::loadView('Ketua.Persentase-juri.pdf', compact('akurasiData', 'eventAccuracy', 'eventJuries', 'type'));
         $pdf->setPaper('a4', 'landscape');
         
-        return $pdf->download('Laporan_Akurasi_Juri_Seluruh_Pertandingan.pdf');
+        return $pdf->download('Laporan_Akurasi_Juri_Seluruh_Pertandingan_' . $type . '.pdf');
     }
 
     public function exportPdfMatch($id)
@@ -81,7 +85,7 @@ class AkurasiJuriController extends Controller
         $akurasiData = array_values($akurasiData);
         $partai = $akurasiData[0]['partai'];
 
-        $pdf = Pdf::loadView('Ketua.Persentase-juri.pdf', compact('akurasiData'));
+        $pdf = Pdf::loadView('Ketua.Persentase-juri.pdf', compact('akurasiData', 'partai'));
         $pdf->setPaper('a4', 'landscape');
         
         return $pdf->download('Laporan_Akurasi_Juri_Partai_'.$partai.'.pdf');

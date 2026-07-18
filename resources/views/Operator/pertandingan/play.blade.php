@@ -32,6 +32,18 @@
 
     </div>
 
+    {{-- ALERT MESSAGES --}}
+    @if(session('error'))
+    <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mx-6 mt-4 shadow-sm" role="alert">
+        <span class="block sm:inline font-semibold">{{ session('error') }}</span>
+    </div>
+    @endif
+    @if(session('success'))
+    <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative mx-6 mt-4 shadow-sm" role="alert">
+        <span class="block sm:inline font-semibold">{{ session('success') }}</span>
+    </div>
+    @endif
+
     {{-- KONTEN UTAMA --}}
     <div class="p-6">
         <div class="bg-white shadow-md border border-gray-200 rounded-lg p-8">
@@ -305,6 +317,7 @@
 
     let previousTimerStatus = null;
     let previousTimeRemaining = null;
+    let previousRound = null;
 
     function updateOperatorUI() {
         fetch('/operator/monitor-display/data?_t=' + new Date().getTime())
@@ -338,13 +351,15 @@
                         previousTimerStatus = currentTimerStatus;
 
                         let currentTimeRemaining = res.match.time_remaining;
-                        if (previousTimeRemaining !== null && previousTimeRemaining > 0 && currentTimeRemaining === 0) {
-                            if (res.match.round < 3) {
-                                showTimerNotification("Waktu Babak " + res.match.round + " telah habis!");
-                            } else {
-                                showTimerNotification("Waktu Pertandingan telah selesai!");
-                            }
+                        let currentRound = res.match.round || 1;
+
+                        if (previousRound !== null && currentRound > previousRound) {
+                            showTimerNotification("Waktu Babak " + previousRound + " telah habis!");
+                        } else if (previousRound !== null && currentRound === 3 && previousTimeRemaining > 0 && currentTimeRemaining === 0) {
+                            showTimerNotification("Waktu Pertandingan telah selesai!");
                         }
+
+                        previousRound = currentRound;
                         previousTimeRemaining = currentTimeRemaining;
                     }
                 }

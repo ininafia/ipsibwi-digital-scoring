@@ -40,10 +40,11 @@ class JuriUsecase extends Usecase
     {
         $funcName = $this->className . '.inputScore';
 
-        // Bersihkan window kadaluarsa DI LUAR transaksi utama (hindari nested transaction).
-        $this->resolveExpiredEvents();
-
         $idPertandingan  = (int) $request->input('id_pertandingan');
+        
+        // Bersihkan window kadaluarsa DI LUAR transaksi utama (hindari nested transaction).
+        $this->resolveExpiredEvents($idPertandingan);
+
         $idBabak         = (int) $request->input('id_babak');
         $juriPosition    = session('juri_position'); // Menggunakan session
         $sudut           = $request->input('sudut');         // 'merah' atau 'biru'
@@ -63,8 +64,8 @@ class JuriUsecase extends Usecase
             return DB::transaction(function () use (
                 $idPertandingan, $idBabak, $juriPosition, $athlete, $technique, $scoreValue, $idKategoriNilai
             ) {
-                // Kunci baris pertandingan supaya status tidak berubah di tengah proses
-                $match = DB::table('pertandingan')->where('id', $idPertandingan)->lockForUpdate()->first();
+                // Jangan me-lock table pertandingan karena akan memblokir query juri lain yang masuk bersamaan
+                $match = DB::table('pertandingan')->where('id', $idPertandingan)->first();
                 if (!$match || $match->status !== 'playing') {
                     return Response::buildErrorService('Pertandingan tidak sedang berlangsung');
                 }
@@ -98,7 +99,6 @@ class JuriUsecase extends Usecase
                     ->where('match_id', $idPertandingan)
                     ->where('round', $idBabak)
                     ->where('athlete', $athlete)
-                    ->where('technique', $technique)
                     ->where('status', 'pending')
                     ->orderBy('server_time', 'asc')
                     ->lockForUpdate()
@@ -143,7 +143,10 @@ class JuriUsecase extends Usecase
                     'created_at'  => now(),
                 ]);
 
-                $inputsInGroup = DB::table('score_events')->where('award_id', $targetAwardId)->get();
+                $inputsInGroup = DB::table('score_events')
+                    ->where('award_id', $targetAwardId)
+                    ->lockForUpdate()
+                    ->get();
                 $inputCount = $inputsInGroup->count();
 
                 $techCounts = [];
@@ -156,8 +159,9 @@ class JuriUsecase extends Usecase
                     }
                 }
 
-                // Kalau 3 juri sudah input semua ATAU sudah ada kesepakatan 2 juri (mayoritas), langsung selesaikan grup
-                if ($inputCount >= 3 || $hasMajority) {
+                // Hanya selesaikan grup lebih awal jika semua 3 juri sudah menginput.
+                // Jika baru 2 juri, tunggu sampai juri ke-3 menginput, ATAU waktu 3 detik habis (ditangani otomatis oleh resolveExpiredEvents).
+                if ($inputCount >= 3) {
                     $this->resolveGroup($targetAwardId);
                 }
 
@@ -212,8 +216,15 @@ class JuriUsecase extends Usecase
 
                 // Hitung dukungan tiap teknik
                 $techCounts = [];
+                $seenJudges = [];
                 foreach ($inputs as $input) {
-                    $techCounts[$input->technique] = ($techCounts[$input->technique] ?? 0) + 1;
+                    if (!isset($seenJudges[$input->technique])) {
+                        $seenJudges[$input->technique] = [];
+                    }
+                    if (!in_array($input->judge_id, $seenJudges[$input->technique])) {
+                        $seenJudges[$input->technique][] = $input->judge_id;
+                        $techCounts[$input->technique] = ($techCounts[$input->technique] ?? 0) + 1;
+                    }
                 }
 
                 // Cari teknik dengan dukungan >= 2 juri (minimal 2 dari 3 sepakat)
@@ -242,25 +253,31 @@ class JuriUsecase extends Usecase
                     ]);
 
                     // Catat vote untuk juri yang sepakat (teknik sama) -> dipakai utk tandai "sah"
+                    $votedJudges = [];
                     foreach ($inputs as $input) {
                         if ($input->technique === $winningTechnique) {
-                            DB::table('score_award_votes')->insert([
-                                'award_id'       => $awardIdDb,
-                                'score_event_id' => $input->id,
-                                'judge_id'       => $input->judge_id,
-                                'created_at'     => now(),
-                            ]);
+                            if (!in_array($input->judge_id, $votedJudges)) {
+                                $votedJudges[] = $input->judge_id;
+                                DB::table('score_award_votes')->insert([
+                                    'award_id'       => $awardIdDb,
+                                    'judge_id'       => $input->judge_id,
+                                    'score_event_id' => $input->id,
+                                    'created_at'     => now(),
+                                ]);
+                            }
+                            
+                            DB::table('score_events')
+                                ->where('id', $input->id)
+                                ->update([
+                                    'status'   => 'consumed',
+                                    'award_id' => $awardIdDb
+                                ]);
+                        } else {
+                            DB::table('score_events')
+                                ->where('id', $input->id)
+                                ->update(['status' => 'expired']);
                         }
                     }
-
-                    // Semua input dalam grup (termasuk yang minoritas/tidak sah) tetap ditandai consumed
-                    // supaya tetap muncul di score table, hanya saja tidak dapat vote -> dicoret di UI.
-                    DB::table('score_events')
-                        ->where('award_id', $groupId)
-                        ->update([
-                            'status'   => 'consumed',
-                            'award_id' => (string) $awardIdDb,
-                        ]);
 
                     // Tambahkan poin ke skor_pertandingan
                     $skorField = $winningInput->athlete === 'red' ? 'skor_merah' : 'skor_biru';
@@ -305,20 +322,24 @@ class JuriUsecase extends Usecase
     /**
      * Memeriksa dan memutuskan event yang sudah melewati batas waktu (expired).
      */
-    public function resolveExpiredEvents(): void
+    public function resolveExpiredEvents($matchId = null): void
     {
         $funcName = $this->className . '.resolveExpiredEvents';
 
         try {
             $currentTime = microtime(true);
 
-            $pendingGroups = DB::table('score_events')
+            $query = DB::table('score_events')
                 ->select('award_id')
                 ->selectRaw('MIN(server_time) as start_time')
                 ->where('status', 'pending')
-                ->whereNotNull('award_id')
-                ->groupBy('award_id')
-                ->get();
+                ->whereNotNull('award_id');
+                
+            if ($matchId) {
+                $query->where('match_id', $matchId);
+            }
+
+            $pendingGroups = $query->groupBy('award_id')->get();
 
             foreach ($pendingGroups as $group) {
                 $firstInput = DB::table('score_events')
@@ -332,7 +353,19 @@ class JuriUsecase extends Usecase
                     $delayMax   = $kategori ? (float) $kategori->delay_max : self::DEFAULT_DELAY;
 
                     if (($currentTime - $group->start_time) > $delayMax) {
-                        $this->resolveGroup($group->award_id);
+                        $lockName = "resolve_group_" . $group->award_id;
+                        $lock = \Illuminate\Support\Facades\Cache::lock($lockName, 5); // 5 detik lock
+
+                        if ($lock->get()) {
+                            try {
+                                $this->resolveGroup($group->award_id);
+                            } finally {
+                                // Biarkan lock expire sendiri setelah 5 detik 
+                                // untuk mencegah thundering herd dari request bersamaan
+                                // atau bisa release jika mau. Kita release agar bersih.
+                                $lock->release();
+                            }
+                        }
                     }
                 }
             }
@@ -378,7 +411,15 @@ class JuriUsecase extends Usecase
                     ->first();
 
                 if ($lastInput) {
-                    DB::table('score_events')->where('id', $lastInput->id)->delete();
+                    DB::table('score_events')
+                        ->where('id', $lastInput->id)
+                        ->update([
+                            'status' => 'deleted',
+                            'deleted_by' => $petugasPertandingan->id,
+                            'deleted_at' => now(),
+                            'deleted_reason' => 'Dihapus manual oleh juri'
+                        ]);
+
                     $juriName = match ($petugasPertandingan->posisi) {
                         'juri_1' => 'JURI 1',
                         'juri_2' => 'JURI 2',
@@ -391,7 +432,7 @@ class JuriUsecase extends Usecase
                         'id_pertandingan' => $idPertandingan,
                         'id_juri' => $petugasPertandingan->id,
                         'id_babak' => $idBabak,
-                        'id_score_event' => $eventToDelete->id,
+                        'id_score_event' => $lastInput->id,
                         'action' => 'HAPUS_NILAI',
                         'description' => "$juriName menghapus nilai pending untuk sudut $sudutName",
                         'created_at' => now(),
@@ -414,9 +455,9 @@ class JuriUsecase extends Usecase
         $funcName = $this->className . '.getHistory';
 
         try {
-            $this->resolveExpiredEvents();
-
             $idPertandingan = $request->input('id_pertandingan');
+            $this->resolveExpiredEvents($idPertandingan);
+
             $juriPosition   = session('juri_position');
 
             $petugasPertandingan = DB::table('petugas_pertandingan')
@@ -460,7 +501,7 @@ class JuriUsecase extends Usecase
                     'nilai'                    => $item->score_value,
                     'waktu_input'              => $item->server_time,
                     'status'                   => $item->status,
-                    'is_sah'                   => isset($votedEventIds[$item->id]),
+                    'is_sah'                   => $votedEventIds->has($item->id),
                 ];
             });
 

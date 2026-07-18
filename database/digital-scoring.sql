@@ -133,7 +133,9 @@ CREATE TABLE petugas_pertandingan (
   posisi VARCHAR(255) NULL,
   FOREIGN KEY (id_petugas) REFERENCES data_petugas(id),
   FOREIGN KEY (id_pertandingan) REFERENCES pertandingan(id),
-  FOREIGN KEY (id_role) REFERENCES roles(id)
+  FOREIGN KEY (id_role) REFERENCES roles(id),
+  UNIQUE KEY unique_petugas_pertandingan_posisi (id_pertandingan, posisi),
+  UNIQUE KEY unique_petugas_pertandingan_id_petugas (id_pertandingan, id_petugas)
 ) ENGINE=InnoDB;
 
 
@@ -186,7 +188,8 @@ CREATE TABLE skor_pertandingan (
     jatuhan_biru INT DEFAULT 0,
     jatuhan_merah INT DEFAULT 0,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    FOREIGN KEY (id_pertandingan) REFERENCES pertandingan(id)
+    FOREIGN KEY (id_pertandingan) REFERENCES pertandingan(id),
+    UNIQUE KEY unique_skor_pertandingan (id_pertandingan)
 ) ENGINE=InnoDB;
 
 
@@ -222,12 +225,18 @@ CREATE TABLE score_events (
     technique ENUM('punch', 'kick') NOT NULL,
     score_value INT NOT NULL,
     server_time DECIMAL(16,3) NOT NULL,
-    status ENUM('pending', 'consumed', 'expired') DEFAULT 'pending',
+    status ENUM('pending', 'consumed', 'expired', 'deleted') DEFAULT 'pending',
     award_id VARCHAR(20) NULL DEFAULT NULL,
+    deleted_by INT NULL,
+    deleted_at TIMESTAMP NULL,
+    deleted_reason VARCHAR(255) NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (match_id) REFERENCES pertandingan(id),
     FOREIGN KEY (round) REFERENCES babak(id),
-    FOREIGN KEY (judge_id) REFERENCES petugas_pertandingan(id)
+    FOREIGN KEY (judge_id) REFERENCES petugas_pertandingan(id),
+    INDEX idx_score_events_status (status),
+    INDEX idx_score_events_award_id (award_id),
+    INDEX idx_score_events_lock (match_id, round, athlete, status)
 ) ENGINE=InnoDB;
 
 

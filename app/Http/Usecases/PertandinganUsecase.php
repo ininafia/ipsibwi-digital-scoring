@@ -246,11 +246,21 @@ class PertandinganUsecase extends Usecase
             }
 
             // 2. Cek timer harus sudah berhenti
-            $timerState = \Illuminate\Support\Facades\Cache::get('current_timer_state_' . $id, ['status' => 'stopped']);
+            $timerState = \Illuminate\Support\Facades\Cache::get('current_timer_state_' . $id, ['status' => 'stopped', 'round' => 1]);
             if ($timerState['status'] === 'playing') {
                 DB::rollback();
                 return Response::buildErrorService(
                     'Timer masih berjalan. Hentikan timer terlebih dahulu sebelum finalisasi.'
+                );
+            }
+
+            if ($jenisKemenangan === 'angka' && $timerState['round'] < 3) {
+                // Untuk kemenangan angka, sebaiknya pertandingan selesaikan semua ronde.
+                // Atau jika timer dihentikan di ronde 3, pastikan timer stopped.
+                // Jika masih ronde 1 atau 2 dan timer dihentikan lalu finalisasi kemenangan angka, kita tolak kecuali ada kebijakan khusus.
+                DB::rollback();
+                return Response::buildErrorService(
+                    'Kemenangan angka hanya bisa dilakukan setelah ronde 3 selesai.'
                 );
             }
 
@@ -276,18 +286,35 @@ class PertandinganUsecase extends Usecase
             $skorBiru = $scoreRecord ? (int) $scoreRecord->skor_biru : 0;
             $skorMerah = $scoreRecord ? (int) $scoreRecord->skor_merah : 0;
 
-            // 6. Hitung pemenang dari skor database
+            // 6. Hitung pemenang
             $sudutPemenang = null;
             $namaPemenang = null;
 
-            if ($skorBiru > $skorMerah) {
-                $sudutPemenang = 'biru';
-                $namaPemenang = $match->sudut_biru;
-            } elseif ($skorMerah > $skorBiru) {
-                $sudutPemenang = 'merah';
-                $namaPemenang = $match->sudut_merah;
+            if ($jenisKemenangan === 'angka') {
+                // Untuk kemenangan angka mutlak hitung dari skor
+                if ($skorBiru > $skorMerah) {
+                    $sudutPemenang = 'biru';
+                    $namaPemenang = $match->sudut_biru;
+                } elseif ($skorMerah > $skorBiru) {
+                    $sudutPemenang = 'merah';
+                    $namaPemenang = $match->sudut_merah;
+                } else {
+                    DB::rollback();
+                    return Response::buildErrorService(
+                        'Skor seri! Pertandingan seri memerlukan keputusan lanjutan, tidak bisa difinalisasi secara otomatis.'
+                    );
+                }
+            } else {
+                // Untuk kemenangan jenis lain (diskualifikasi, WMP, dll) pemenang ditentukan oleh operator dari form
+                $sudutPemenang = $resultData['sudut_pemenang'] ?? null;
+                if (!in_array($sudutPemenang, ['merah', 'biru'], true)) {
+                    DB::rollback();
+                    return Response::buildErrorService(
+                        'Untuk kemenangan selain angka, sudut pemenang harus ditentukan secara manual dari sistem.'
+                    );
+                }
+                $namaPemenang = $sudutPemenang === 'merah' ? $match->sudut_merah : $match->sudut_biru;
             }
-            // Jika seri (skor sama), sudut_pemenang dan nama_pemenang tetap null
 
             // 7. Simpan hasil finalisasi
             $updated = DB::table('pertandingan')

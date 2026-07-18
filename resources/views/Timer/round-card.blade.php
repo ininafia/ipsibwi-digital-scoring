@@ -7,7 +7,7 @@
             ROUND
         </h2>
 
-        <div class="text-5xl mt-3 font-light">
+        <div id="round-display" class="text-5xl mt-3 font-light">
             1
         </div>
 

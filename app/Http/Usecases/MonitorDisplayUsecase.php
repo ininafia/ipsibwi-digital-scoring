@@ -66,6 +66,7 @@ class MonitorDisplayUsecase extends Usecase
                 'binaan_merah' => $score->binaan_merah ?? 0,
                 'teguran_biru' => $score->teguran_biru ?? 0,
                 'teguran_merah' => $score->teguran_merah ?? 0,
+                'peringatan_biru' => $score->peringatan_biru ?? 0,
                 'peringatan_merah' => $score->peringatan_merah ?? 0,
                 'jatuhan_biru' => $score->jatuhan_biru ?? 0,
                 'jatuhan_merah' => $score->jatuhan_merah ?? 0,

@@ -106,6 +106,7 @@
                         name="sudut_biru"
                         id="modal_sudut_biru"
                         placeholder="Nama Sudut Biru"
+                        oninput="this.value = this.value.replace(/\b\w/g, l => l.toUpperCase())"
                         class="w-full bg-[#0000e6] text-white rounded-md px-4 py-2.5 text-[13px] font-medium mb-1.5 outline-none placeholder-blue-200">
 
                     <input
@@ -113,6 +114,7 @@
                         name="sudut_merah"
                         id="modal_sudut_merah"
                         placeholder="Nama Sudut Merah"
+                        oninput="this.value = this.value.replace(/\b\w/g, l => l.toUpperCase())"
                         class="w-full bg-[#cc0000] text-white rounded-md px-4 py-2.5 text-[13px] font-medium outline-none placeholder-red-200">
 
                 </div>
@@ -125,6 +127,7 @@
                         name="kontingen_biru"
                         id="modal_kontingen_biru"
                         placeholder="Kontingen Biru"
+                        oninput="this.value = this.value.replace(/\b\w/g, l => l.toUpperCase())"
                         class="w-full bg-[#0000e6] text-white rounded-md px-4 py-2.5 text-[13px] font-medium mb-1.5 outline-none placeholder-blue-200">
 
                     <input
@@ -132,6 +135,7 @@
                         name="kontingen_merah"
                         id="modal_kontingen_merah"
                         placeholder="Kontingen Merah"
+                        oninput="this.value = this.value.replace(/\b\w/g, l => l.toUpperCase())"
                         class="w-full bg-[#cc0000] text-white rounded-md px-4 py-2.5 text-[13px] font-medium outline-none placeholder-red-200">
 
                 </div>

@@ -23,15 +23,9 @@
       @resize.window="open = window.innerWidth >= 1024"
       class="bg-[#f4f4f4] min-h-screen font-[Poppins]">
 
-<div class="flex min-h-screen relative overflow-hidden">
+<div class="flex min-h-screen">
 
-    <!-- OVERLAY (Mobile) -->
-    <div x-show="open" 
-         @click="open = false" 
-         class="fixed inset-0 bg-black/50 z-40 lg:hidden"
-         x-transition.opacity
-         x-cloak>
-    </div>
+
 
     <!-- SIDEBAR -->
     @yield('sidebar')

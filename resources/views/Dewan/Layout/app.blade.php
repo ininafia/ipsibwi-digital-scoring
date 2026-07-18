@@ -13,15 +13,9 @@
 
 <body x-data="{ open: window.innerWidth >= 1024 }" @resize.window="open = window.innerWidth >= 1024" class="bg-[#f4f4f4] min-h-screen font-[Poppins]">
 
-<div class="flex min-h-screen relative overflow-hidden">
+<div class="flex min-h-screen">
 
-    <!-- OVERLAY (Mobile) -->
-    <div x-show="open" 
-         @click="open = false" 
-         class="fixed inset-0 bg-black/50 z-40 lg:hidden"
-         x-transition.opacity
-         x-cloak>
-    </div>
+
 
     <!-- SIDEBAR -->
     @yield('sidebar')
@@ -40,6 +34,19 @@
     </main>
 
 </div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const alerts = document.querySelectorAll('.mb-5.bg-green-50, .mb-5.bg-red-50');
+        alerts.forEach(alert => {
+            setTimeout(() => {
+                alert.style.transition = 'opacity 0.5s ease';
+                alert.style.opacity = '0';
+                setTimeout(() => alert.remove(), 500);
+            }, 3000);
+        });
+    });
+</script>
 
 </body>
 </html>

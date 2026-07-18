@@ -10,7 +10,7 @@
         </div>
 
         <!-- ICON -->
-        <div class="w-16 h-16 rounded-full border-4 border-red-600 bg-white flex items-center justify-center overflow-hidden">
+        <div class="w-16 h-16 rounded-full border-4 border-blue-600 bg-white flex items-center justify-center overflow-hidden">
             <img src="{{ asset('images/icons/man.png') }}"
                  alt="Fighter"
                  class="w-12 h-12 object-contain">
@@ -28,7 +28,7 @@
     <div class="flex items-center gap-4">
 
         <!-- ICON -->
-        <div class="w-16 h-16 rounded-full border-4 border-blue-600 bg-white flex items-center justify-center overflow-hidden">
+        <div class="w-16 h-16 rounded-full border-4 border-red-600 bg-white flex items-center justify-center overflow-hidden">
             <img src="{{ asset('images/icons/man.png') }}"
                  alt="Fighter"
                  class="w-12 h-12 object-contain">

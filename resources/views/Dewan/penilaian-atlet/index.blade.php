@@ -15,17 +15,17 @@
     @include('Dewan.penilaian-atlet.header')
 
     {{-- CONTENT --}}
-    <main class="p-4">
+    <main class="p-4 overflow-x-auto">
+        <div class="min-w-[800px]">
+            {{-- PESERTA --}}
+            @include('Dewan.penilaian-atlet.peserta')
 
-        {{-- PESERTA --}}
-        @include('Dewan.penilaian-atlet.peserta')
+            {{-- SCORE --}}
+            @include('Dewan.penilaian-atlet.score-table')
 
-        {{-- SCORE --}}
-        @include('Dewan.penilaian-atlet.score-table')
-
-        {{-- PANEL DEWAN --}}
-        @include('Dewan.penilaian-atlet.panel-dewan')
-
+            {{-- PANEL DEWAN --}}
+            @include('Dewan.penilaian-atlet.panel-dewan')
+        </div>
     </main>
 
     <script>
@@ -60,6 +60,7 @@
 
         let previousTimerStatus = null;
         let previousTimeRemaining = null;
+        let previousRound = null;
 
         function updateDewanUI() {
             if (isActionPending) return;
@@ -98,13 +99,15 @@
                         previousTimerStatus = currentTimerStatus;
 
                         let currentTimeRemaining = matchData.time_remaining;
-                        if (previousTimeRemaining !== null && previousTimeRemaining > 0 && currentTimeRemaining === 0) {
-                            if (matchData.round < 3) {
-                                showTimerNotification("Waktu Babak " + matchData.round + " telah habis!");
-                            } else {
-                                showTimerNotification("Waktu Pertandingan telah selesai!");
-                            }
+                        let currentRound = matchData.round || 1;
+
+                        if (previousRound !== null && currentRound > previousRound) {
+                            showTimerNotification("Waktu Babak " + previousRound + " telah habis!");
+                        } else if (previousRound !== null && currentRound === 3 && previousTimeRemaining > 0 && currentTimeRemaining === 0) {
+                            showTimerNotification("Waktu Pertandingan telah selesai!");
                         }
+                        
+                        previousRound = currentRound;
                         previousTimeRemaining = currentTimeRemaining;
 
                         for (let i = 1; i <= 3; i++) {
@@ -112,15 +115,8 @@
                             let cellMerah = document.getElementById('dewan-jatuhan-merah-' + i);
                             let cellBinaanBiru = document.getElementById('dewan-binaan-biru-' + i);
                             let cellBinaanMerah = document.getElementById('dewan-binaan-merah-' + i);
-                            
-                            if (cellBiru) {
-                                cellBiru.innerText = '';
-                            }
-                            if (cellMerah) {
-                                cellMerah.innerText = '';
-                            }
-
-                            let currentRound = matchData.round || 1;
+                            let cellHukumanBiru = document.getElementById('dewan-hukuman-biru-' + i);
+                            let cellHukumanMerah = document.getElementById('dewan-hukuman-merah-' + i);
 
                             let roundIndicator = document.getElementById('dewan-round-indicator-' + i);
                             if (roundIndicator) {
@@ -131,27 +127,21 @@
                                 }
                             }
 
-                            // Untuk Binaan, Hukuman, dan Jatuhan, kita tampilkan teks akumulatifnya di ronde yang sedang aktif
-                            if (i == currentRound) {
-                                if (cellBinaanBiru) cellBinaanBiru.innerText = skorData.binaan_biru > 0 ? skorData.binaan_biru : '';
-                                if (cellBinaanMerah) cellBinaanMerah.innerText = skorData.binaan_merah > 0 ? skorData.binaan_merah : '';
-                                
-                                let cellHukumanBiru = document.getElementById('dewan-hukuman-biru-' + i);
-                                let cellHukumanMerah = document.getElementById('dewan-hukuman-merah-' + i);
-                                
-                                if (cellHukumanBiru) cellHukumanBiru.innerText = displayData.hukuman_biru_text;
-                                if (cellHukumanMerah) cellHukumanMerah.innerText = displayData.hukuman_merah_text;
-
-                                if (cellBiru) cellBiru.innerText = displayData.jatuhan_biru_text;
-                                if (cellMerah) cellMerah.innerText = displayData.jatuhan_merah_text;
+                            const pf = res.data.penalties_formatted[i];
+                            if (pf) {
+                                if (cellBinaanBiru) cellBinaanBiru.innerText = pf.binaan_biru;
+                                if (cellBinaanMerah) cellBinaanMerah.innerText = pf.binaan_merah;
+                                if (cellHukumanBiru) cellHukumanBiru.innerText = pf.hukuman_biru;
+                                if (cellHukumanMerah) cellHukumanMerah.innerText = pf.hukuman_merah;
+                                if (cellBiru) cellBiru.innerText = pf.jatuhan_biru;
+                                if (cellMerah) cellMerah.innerText = pf.jatuhan_merah;
                             } else {
                                 if (cellBinaanBiru) cellBinaanBiru.innerText = '';
                                 if (cellBinaanMerah) cellBinaanMerah.innerText = '';
-                                
-                                let cellHukumanBiru = document.getElementById('dewan-hukuman-biru-' + i);
-                                let cellHukumanMerah = document.getElementById('dewan-hukuman-merah-' + i);
                                 if (cellHukumanBiru) cellHukumanBiru.innerText = '';
                                 if (cellHukumanMerah) cellHukumanMerah.innerText = '';
+                                if (cellBiru) cellBiru.innerText = '';
+                                if (cellMerah) cellMerah.innerText = '';
                             }
                         }
 
@@ -169,6 +159,14 @@
                             if (btnTeguran) btnTeguran.disabled = (t >= 2);
                             if (btnPeringatan) btnPeringatan.disabled = (p >= 2);
                         });
+                    } else if (res.message === 'Tidak ada pertandingan aktif') {
+                        if (currentMatchId !== '0' && currentMatchId !== '') {
+                            showTimerNotification("Pertandingan Selesai! Mengalihkan ke halaman Petugas...");
+                            currentMatchId = ''; 
+                            setTimeout(() => {
+                                window.location.href = '{{ route("dewan.petugas") }}';
+                            }, 3000);
+                        }
                     }
                 })
                 .catch(console.error);

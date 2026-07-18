@@ -312,6 +312,17 @@ class TandingUsecase extends Usecase
                     'deleted_by' => session('user_id'),
                 ]);
 
+            if ($deleted) {
+                // Hapus data log, skor, juri, petugas terkait agar bersih (Cascade Delete)
+                $scoreEventIds = DB::table('score_events')->where('match_id', $id)->pluck('id');
+                DB::table('score_award_votes')->whereIn('score_event_id', $scoreEventIds)->delete();
+                DB::table('score_events')->where('match_id', $id)->delete();
+                DB::table('score_awards')->where('match_id', $id)->delete();
+                DB::table('log_activity_juri')->where('id_pertandingan', $id)->delete();
+                DB::table('skor_pertandingan')->where('id_pertandingan', $id)->delete();
+                DB::table('petugas_pertandingan')->where('id_pertandingan', $id)->delete();
+            }
+
             if (!$deleted) {
                 DB::rollback();
                 throw new Exception("FAILED DELETE DATA");

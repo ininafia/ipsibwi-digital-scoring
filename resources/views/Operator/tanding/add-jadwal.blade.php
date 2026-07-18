@@ -12,7 +12,7 @@
     {{-- ERROR MESSAGE --}}
     @if(session('error'))
 
-    <div class="mb-5 bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-lg text-sm">
+    <div x-data="{ show: true }" x-show="show" x-init="setTimeout(() => show = false, 3000)" x-transition.duration.500ms  class="mb-5 bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-lg text-sm">
         {{ session('error') }}
     </div>
 
@@ -21,7 +21,7 @@
     {{-- VALIDATION ERROR --}}
     @if($errors->any())
 
-    <div class="mb-5 bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-lg text-sm">
+    <div x-data="{ show: true }" x-show="show" x-init="setTimeout(() => show = false, 5000)" x-transition.duration.500ms  class="mb-5 bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-lg text-sm">
 
         <ul class="list-disc pl-5 space-y-1">
 
@@ -40,7 +40,7 @@
     {{-- SUCCESS --}}
     @if(session('success'))
 
-    <div class="mb-5 bg-green-50 border border-green-200 text-green-600 px-4 py-3 rounded-lg text-sm">
+    <div x-data="{ show: true }" x-show="show" x-init="setTimeout(() => show = false, 3000)" x-transition.duration.500ms  class="mb-5 bg-green-50 border border-green-200 text-green-600 px-4 py-3 rounded-lg text-sm">
         {{ session('success') }}
     </div>
 
@@ -251,6 +251,7 @@
                         name="sudut_biru"
                         value="{{ old('sudut_biru') }}"
                         placeholder="Masukkan nama atlet biru"
+                        oninput="this.value = this.value.replace(/\b\w/g, l => l.toUpperCase())"
                         class="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-sky-300 outline-none">
 
                 </div>
@@ -267,6 +268,7 @@
                         name="kontingen_biru"
                         value="{{ old('kontingen_biru') }}"
                         placeholder="Masukkan kontingen biru"
+                        oninput="this.value = this.value.replace(/\b\w/g, l => l.toUpperCase())"
                         class="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-sky-300 outline-none">
 
                 </div>
@@ -283,6 +285,7 @@
                         name="sudut_merah"
                         value="{{ old('sudut_merah') }}"
                         placeholder="Masukkan nama atlet merah"
+                        oninput="this.value = this.value.replace(/\b\w/g, l => l.toUpperCase())"
                         class="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-sky-300 outline-none">
 
                 </div>
@@ -299,6 +302,7 @@
                         name="kontingen_merah"
                         value="{{ old('kontingen_merah') }}"
                         placeholder="Masukkan kontingen merah"
+                        oninput="this.value = this.value.replace(/\b\w/g, l => l.toUpperCase())"
                         class="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-sky-300 outline-none">
 
                 </div>

@@ -43,6 +43,7 @@ class AkurasiJuriUsecase extends Usecase
                 $total_input = DB::table('score_events')
                     ->where('match_id', $id_pertandingan)
                     ->where('judge_id', $juri->id)
+                    ->where('status', '!=', 'deleted')
                     ->count();
 
                 // Total sah = jumlah vote (dukungan konsensus) dari juri ini
@@ -65,6 +66,7 @@ class AkurasiJuriUsecase extends Usecase
                         ->where('match_id', $id_pertandingan)
                         ->where('judge_id', $juri->id)
                         ->where('round', $roundNum)
+                        ->where('status', '!=', 'deleted')
                         ->count();
 
                     $sah_babak = DB::table('score_award_votes')
@@ -216,6 +218,8 @@ class AkurasiJuriUsecase extends Usecase
             foreach ($akurasiRecords as $row) {
                 if (!isset($juriEventStats[$row->id_petugas_global])) {
                     $juriEventStats[$row->id_petugas_global] = [
+                        'id_petugas' => $row->id_petugas_global,
+                        'nama_juri' => $row->nama_juri,
                         'total_input' => 0,
                         'total_sah' => 0,
                     ];
@@ -225,11 +229,28 @@ class AkurasiJuriUsecase extends Usecase
             }
 
             $juriEventAccuracies = [];
+            $event_juries_list = [];
             foreach ($juriEventStats as $id => $stats) {
-                $juriEventAccuracies[$id] = $stats['total_input'] > 0 
+                $acc = $stats['total_input'] > 0 
                     ? round(($stats['total_sah'] / $stats['total_input']) * 100, 1) 
                     : 0;
+                $juriEventAccuracies[$id] = $acc;
+                $event_juries_list[] = [
+                    'id_petugas' => $stats['id_petugas'],
+                    'nama_juri' => $stats['nama_juri'],
+                    'total_input' => $stats['total_input'],
+                    'total_sah' => $stats['total_sah'],
+                    'event_akurasi' => $acc
+                ];
             }
+            
+            // Sort by accuracy DESC, then name ASC
+            usort($event_juries_list, function($a, $b) {
+                if ($a['event_akurasi'] == $b['event_akurasi']) {
+                    return strcmp($a['nama_juri'], $b['nama_juri']);
+                }
+                return $b['event_akurasi'] <=> $a['event_akurasi'];
+            });
 
             foreach ($akurasiRecords as $row) {
                 if (!isset($groupedByMatch[$row->match_id])) {
@@ -296,7 +317,8 @@ class AkurasiJuriUsecase extends Usecase
             return Response::buildSuccess(
                 data: [
                     'matches' => array_values($groupedByMatch),
-                    'event_accuracy' => $event_accuracy
+                    'event_accuracy' => $event_accuracy,
+                    'event_juries' => $event_juries_list
                 ],
                 message: "Data seluruh akurasi juri berhasil dimuat"
             );

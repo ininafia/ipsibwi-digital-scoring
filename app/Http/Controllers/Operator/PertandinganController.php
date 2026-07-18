@@ -77,9 +77,10 @@ class PertandinganController extends Controller
     }
     public function finalisasi(\Illuminate\Http\Request $request, int $id): RedirectResponse
     {
-        // Hanya jenis_kemenangan dari form; pemenang dihitung server-side dari skor DB
+        // Hanya jenis_kemenangan dari form; pemenang dihitung server-side dari skor DB (Kecuali Disk/WMP dsb)
         $resultData = [
             'jenis_kemenangan' => $request->input('jenis_kemenangan'),
+            'sudut_pemenang'   => $request->input('sudut_pemenang'),
         ];
         
         $result = $this->usecase->finalizeMatch($id, $resultData);

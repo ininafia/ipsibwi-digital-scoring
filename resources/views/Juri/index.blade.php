@@ -8,15 +8,15 @@
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
 
-<body class="bg-gray-200 min-h-screen font-sans overflow-hidden">
+<body class="bg-gray-200 h-screen flex flex-col font-sans overflow-hidden">
 
     {{-- HEADER --}}
     @include('Juri.header')
 
     {{-- CONTENT --}}
-    <main class="p-2 overflow-x-auto">
+    <main class="p-2 flex-1 flex flex-col overflow-x-auto">
 
-        <div class="bg-gray-100 border border-gray-300 rounded-xl shadow-md p-3 min-w-[768px]">
+        <div class="bg-gray-100 border border-gray-300 rounded-xl shadow-md p-3 min-w-[768px] flex-1 flex flex-col justify-between">
 
             {{-- PESERTA --}}
             @include('Juri.peserta')
@@ -63,6 +63,7 @@
 
         let previousTimerStatus = null;
         let previousTimeRemaining = null;
+        let previousRound = null;
 
         function addScore(sudut, nilai) {
             if(!currentMatchId) {
@@ -159,13 +160,14 @@
                         previousTimerStatus = currentTimerStatus;
 
                         let currentTimeRemaining = res.match.time_remaining;
-                        if (previousTimeRemaining !== null && previousTimeRemaining > 0 && currentTimeRemaining === 0) {
-                            if (currentRound < 3) {
-                                showToast("Waktu Babak " + currentRound + " telah habis!");
-                            } else {
-                                showToast("Waktu Pertandingan telah selesai!");
-                            }
+                        currentRound = res.match.round || 1;
+
+                        if (previousRound !== null && currentRound > previousRound) {
+                            showToast("Waktu Babak " + previousRound + " telah habis!");
+                        } else if (previousRound !== null && currentRound === 3 && previousTimeRemaining > 0 && currentTimeRemaining === 0) {
+                            showToast("Waktu Pertandingan telah selesai!");
                         }
+                        previousRound = currentRound;
                         previousTimeRemaining = currentTimeRemaining;
 
                         // Update Round
@@ -197,16 +199,24 @@
                                         const box = document.getElementById(`score-${sudut}-${roundId}`);
                                         if(!box) return;
                                         box.innerHTML = ''; // clear
+                                        
                                         arr.forEach((s, idx) => {
+                                            console.log('Processing score:', s);
+                                            if (s.status !== 'pending' && s.is_sah !== true) {
+                                                console.log('Skipping score due to status/sah condition');
+                                                return;
+                                            }
+
                                             let displayValue = s.nilai == 1 ? '1' : '2';
                                             if(idx > 0) displayValue = '+' + displayValue;
                                             const span = document.createElement('span');
-                                            span.className = sudut === 'biru' ? 'text-blue-800' : 'text-red-700';
+                                            
                                             if (s.status === 'pending') {
-                                                span.className += ' animate-pulse opacity-60';
-                                            } else if (s.is_sah === false) {
-                                                span.className += ' line-through opacity-50';
+                                                span.className = 'text-gray-600 font-bold opacity-80 animate-pulse'; // Pending indicator
+                                            } else {
+                                                span.className = sudut === 'biru' ? 'text-blue-800' : 'text-red-700';
                                             }
+                                            
                                             span.innerText = displayValue;
                                             box.appendChild(span);
                                         });
@@ -223,8 +233,23 @@
                             })
                             .catch(console.error);
                     } else {
-                        // Clear match ID if no active match
+                        // Clear match ID and UI if no active match
                         currentMatchId = '';
+                        document.getElementById('juri-nama-biru').innerText = 'Nama Atlet';
+                        document.getElementById('juri-sekolah-biru').innerText = 'Asal Kontingen';
+                        document.getElementById('juri-nama-merah').innerText = 'Nama Atlet';
+                        document.getElementById('juri-sekolah-merah').innerText = 'Asal Kontingen';
+                        document.getElementById('juri-partai').innerText = '-';
+                        
+                        let timerVal = document.getElementById('timer-value');
+                        if (timerVal) timerVal.innerText = '00:00';
+
+                        for (let r = 1; r <= 3; r++) {
+                            let boxB = document.getElementById(`score-biru-${r}`);
+                            if (boxB) boxB.innerHTML = '';
+                            let boxM = document.getElementById(`score-merah-${r}`);
+                            if (boxM) boxM.innerHTML = '';
+                        }
                     }
                 })
                 .catch(console.error);

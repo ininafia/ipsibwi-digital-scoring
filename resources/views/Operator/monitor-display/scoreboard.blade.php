@@ -68,6 +68,7 @@
 
     let previousTimerStatus = null;
     let previousTimeRemaining = null;
+    let previousRound = null;
 
     function updateMonitorDisplay() {
         fetch('{{ route('operator.monitor-display.data') }}?_t=' + new Date().getTime())
@@ -153,16 +154,46 @@
                     previousTimerStatus = currentTimerStatus;
 
                     let currentTimeRemaining = res.match.time_remaining;
-                    if (previousTimeRemaining !== null && previousTimeRemaining > 0 && currentTimeRemaining === 0) {
-                        if (res.match.round < 3) {
-                            showTimerNotification("Waktu Babak " + res.match.round + " telah habis!");
-                        } else {
-                            showTimerNotification("Waktu Pertandingan telah selesai!");
-                        }
+                    
+                    if (previousRound !== null && activeRound > previousRound) {
+                        showTimerNotification("Waktu Babak " + previousRound + " telah habis!");
+                    } else if (previousRound !== null && activeRound === 3 && previousTimeRemaining > 0 && currentTimeRemaining === 0) {
+                        showTimerNotification("Waktu Pertandingan telah selesai!");
                     }
+                    
+                    previousRound = activeRound;
                     previousTimeRemaining = currentTimeRemaining;
-                }
-            })
+
+                } else {
+                    // No active match, clear UI
+                    document.getElementById('monitor-nama-biru').innerText = 'Nama Atlet';
+                    document.getElementById('monitor-sekolah-biru').innerText = 'Asal Kontingen';
+                    document.getElementById('monitor-nama-merah').innerText = 'Nama Atlet';
+                    document.getElementById('monitor-sekolah-merah').innerText = 'Asal Kontingen';
+                    document.getElementById('monitor-timer').innerText = '00 : 00';
+                    
+                    let elBiru = document.getElementById('skor_biru');
+                    if (elBiru) elBiru.innerText = 0;
+                    let elMerah = document.getElementById('skor_merah');
+                    if (elMerah) elMerah.innerText = 0;
+                    
+                    updateBinaan('biru', 0);
+                    updateBinaan('merah', 0);
+                    updateTeguran('biru', 0);
+                    updateTeguran('merah', 0);
+                    updatePeringatan('biru', 0);
+                    updatePeringatan('merah', 0);
+                    
+                    let jBiru = document.getElementById('jatuhan-count-biru');
+                    if (jBiru) jBiru.innerText = 0;
+                    let jMerah = document.getElementById('jatuhan-count-merah');
+                    if (jMerah) jMerah.innerText = 0;
+
+                    for (let i = 1; i <= 3; i++) {
+                        const box = document.getElementById('box-round-' + i);
+                        if (box) box.className = 'flex-[1] border-b-[2px] border-black flex items-center justify-center text-xl lg:text-2xl font-bold bg-white text-black';
+                    }
+                }            })
             .catch(console.error);
     }
 

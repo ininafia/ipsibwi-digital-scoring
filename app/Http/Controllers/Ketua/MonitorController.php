@@ -150,6 +150,79 @@ class MonitorController extends Controller
                 'peringatan_merah' => $skor->peringatan_merah ?? 0,
             ];
 
+            // Ambil riwayat hukuman untuk menampilkan per ronde
+            $riwayatHukuman = DB::table('riwayat_hukuman')
+                ->where('id_pertandingan', $match->id)
+                ->get();
+            
+            $penaltiesPerRound = [];
+            for ($r = 1; $r <= 3; $r++) {
+                $penaltiesPerRound[$r] = [
+                    'jatuhan_biru' => 0,
+                    'jatuhan_merah' => 0,
+                    'binaan_biru' => 0,
+                    'binaan_merah' => 0,
+                    'teguran_biru' => 0,
+                    'teguran_merah' => 0,
+                    'peringatan_biru' => 0,
+                    'peringatan_merah' => 0,
+                ];
+            }
+
+            foreach ($riwayatHukuman as $rh) {
+                $r = $rh->id_babak;
+                if ($r >= 1 && $r <= 3) {
+                    $field = $rh->jenis_hukuman . '_' . $rh->sudut;
+                    if (isset($penaltiesPerRound[$r][$field])) {
+                        $val = ($rh->action === 'add') ? 1 : -1;
+                        $penaltiesPerRound[$r][$field] += $val;
+                    }
+                }
+            }
+
+            // Format text untuk UI Ketua:
+            $penaltiesFormatted = [];
+            for ($r = 1; $r <= 3; $r++) {
+                $p = $penaltiesPerRound[$r];
+                
+                $hukumanBiru = '';
+                $hukumanBiruPoints = 0;
+                if ($p['teguran_biru'] >= 1) { $hukumanBiru .= '-1'; $hukumanBiruPoints += 1; }
+                if ($p['teguran_biru'] >= 2) { $hukumanBiru .= '-2'; $hukumanBiruPoints += 2; }
+                if ($p['peringatan_biru'] >= 1) { $hukumanBiru .= '-5'; $hukumanBiruPoints += 5; }
+                if ($p['peringatan_biru'] >= 2) { $hukumanBiru .= '-10'; $hukumanBiruPoints += 10; }
+
+                $hukumanMerah = '';
+                $hukumanMerahPoints = 0;
+                if ($p['teguran_merah'] >= 1) { $hukumanMerah .= '-1'; $hukumanMerahPoints += 1; }
+                if ($p['teguran_merah'] >= 2) { $hukumanMerah .= '-2'; $hukumanMerahPoints += 2; }
+                if ($p['peringatan_merah'] >= 1) { $hukumanMerah .= '-5'; $hukumanMerahPoints += 5; }
+                if ($p['peringatan_merah'] >= 2) { $hukumanMerah .= '-10'; $hukumanMerahPoints += 10; }
+
+                $jatuhanBiru = '';
+                if ($p['jatuhan_biru'] > 0) {
+                    $jatuhanBiru = implode('+', array_fill(0, $p['jatuhan_biru'], '3'));
+                }
+                
+                $jatuhanMerah = '';
+                if ($p['jatuhan_merah'] > 0) {
+                    $jatuhanMerah = implode('+', array_fill(0, $p['jatuhan_merah'], '3'));
+                }
+
+                $penaltiesFormatted[$r] = [
+                    'jatuhan_biru' => $jatuhanBiru,
+                    'jatuhan_merah' => $jatuhanMerah,
+                    'jatuhan_biru_points' => $p['jatuhan_biru'] * 3,
+                    'jatuhan_merah_points' => $p['jatuhan_merah'] * 3,
+                    'binaan_biru' => $p['binaan_biru'] > 0 ? $p['binaan_biru'] : '',
+                    'binaan_merah' => $p['binaan_merah'] > 0 ? $p['binaan_merah'] : '',
+                    'hukuman_biru' => $hukumanBiru,
+                    'hukuman_merah' => $hukumanMerah,
+                    'hukuman_biru_points' => $hukumanBiruPoints,
+                    'hukuman_merah_points' => $hukumanMerahPoints,
+                ];
+            }
+
             // Grand total (semua ronde)
             $grandTotalBlue = $skor->skor_biru ?? 0;
             $grandTotalRed = $skor->skor_merah ?? 0;
@@ -255,7 +328,11 @@ class MonitorController extends Controller
                 } else {
                     $pemenang = 'DRAW';
                 }
+            } else {
+                $currentRound = $timerState['round'] ?? 1;
+                $pemenang = 'Babak ' . $currentRound;
             }
+
 
             return response()->json([
                 'success' => true,
@@ -276,6 +353,7 @@ class MonitorController extends Controller
                 'juri_scores' => $juriScoresFormatted,
                 'round_totals' => $roundTotals,
                 'penalties' => $penalties,
+                'penalties_formatted' => $penaltiesFormatted,
                 'grand_total' => [
                     'blue' => $grandTotalBlue,
                     'red' => $grandTotalRed,

@@ -37,13 +37,7 @@
 
 <div class="flex h-screen relative">
 
-    {{-- OVERLAY (Mobile) --}}
-    <div x-show="open" 
-         @click="open = false" 
-         class="fixed inset-0 bg-black/50 z-40 lg:hidden"
-         x-transition.opacity
-         x-cloak>
-    </div>
+
 
     {{-- SIDEBAR --}}
     @if(request()->routeIs('operator.tanding.*'))
@@ -71,7 +65,7 @@
         </header>
 
         {{-- CONTENT --}}
-        <section class="flex-1 px-6 py-10 overflow-y-auto">
+        <section class="flex-1 px-6 pt-6 pb-4 overflow-y-auto flex flex-col">
 
             @yield('content')
 
@@ -84,6 +78,19 @@
 {{-- INIT LUCIDE --}}
 <script>
     lucide.createIcons();
+</script>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const alerts = document.querySelectorAll('.mb-5.bg-green-50, .mb-5.bg-red-50');
+        alerts.forEach(alert => {
+            setTimeout(() => {
+                alert.style.transition = 'opacity 0.5s ease';
+                alert.style.opacity = '0';
+                setTimeout(() => alert.remove(), 500);
+            }, 3000);
+        });
+    });
 </script>
 
 </body>

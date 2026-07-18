@@ -76,6 +76,9 @@
 
         let previousTimerStatus = null;
         let previousTimeRemaining = null;
+        let previousRound = null;
+        let currentMatchId = null;
+        let currentMatchStatus = null;
 
         const awardColors = [
             'bg-[#ff3b8f] text-white', // pink
@@ -154,6 +157,46 @@
             html += '</div>';
             cell.innerHTML = html;
         }
+        function clearMonitorUI() {
+            setText('header-match-id', 'MENUNGGU PERTANDINGAN');
+            setText('peserta-nama-biru', 'Nama Atlet');
+            setText('peserta-kontingen-biru', 'Asal Kontingen');
+            setText('peserta-nama-merah', 'Nama Atlet');
+            setText('peserta-kontingen-merah', 'Asal Kontingen');
+            setText('peserta-partai', '-');
+            
+            const juriPositions = ['juri_1', 'juri_2', 'juri_3'];
+            juriPositions.forEach(pos => {
+                for (let r = 1; r <= 3; r++) {
+                    let cellBlue = document.getElementById('val-blue-' + pos + '-r' + r);
+                    if (cellBlue) cellBlue.innerHTML = '';
+                    let cellRed = document.getElementById('val-red-' + pos + '-r' + r);
+                    if (cellRed) cellRed.innerHTML = '';
+                }
+                setText('val-blue-' + pos + '-total', '0');
+                setText('val-red-' + pos + '-total', '0');
+            });
+            
+            for (let r = 1; r <= 3; r++) {
+                setText('val-blue-jatuhan-r' + r, '');
+                setText('val-red-jatuhan-r' + r, '');
+                setText('val-blue-binaan-r' + r, '');
+                setText('val-red-binaan-r' + r, '');
+                setText('val-blue-hukuman-r' + r, '');
+                setText('val-red-hukuman-r' + r, '');
+            }
+            
+            setText('val-blue-jatuhan-total', '0');
+            setText('val-red-jatuhan-total', '0');
+            setText('val-blue-hukuman-total', '0');
+            setText('val-red-hukuman-total', '0');
+            
+            setText('grand-total-blue', '0');
+            setText('grand-total-red', '0');
+
+            setText('pemenang-value', '-');
+            setText('timer-value', '00:00');
+        }
 
         function updateMonitor() {
             fetch('{{ route("ketua.monitor.data") }}?_t=' + new Date().getTime())
@@ -164,8 +207,41 @@
                 .then(data => {
                     if (!data.success) {
                         console.warn('Monitor: ' + (data.message || 'No data'));
+                        clearMonitorUI();
                         return;
                     }
+
+                    // === MATCH COMPLETION REDIRECT & CLEAR UI ===
+                    if (currentMatchStatus === null) {
+                        // Initial page load
+                        if (data.match.status === 'finished' || data.match.status === 'final') {
+                            // Match is already finished. Just clear UI and don't render old data.
+                            clearMonitorUI();
+                            currentMatchId = data.match.id;
+                            currentMatchStatus = data.match.status;
+                            return;
+                        }
+                    } else if (currentMatchStatus === 'playing' && (data.match.status === 'finished' || data.match.status === 'final')) {
+                        // Match just finished while watching!
+                        if (!window.isRedirecting) {
+                            window.isRedirecting = true;
+                            showTimerNotification("Pertandingan Selesai! Mengalihkan ke halaman Akurasi Juri...");
+                            setTimeout(() => {
+                                window.location.href = '{{ route("ketua.akurasi") }}';
+                            }, 3000);
+                        }
+                        // Continue rendering to show final score during the 3-second wait
+                    } else if (data.match.status === 'finished' || data.match.status === 'final') {
+                        // Subsequent polls after it finished (while waiting to redirect, or if redirect failed)
+                        // Allow rendering to continue showing the final score, or clear it if they somehow bypassed it.
+                        if (!window.isRedirecting) {
+                            clearMonitorUI();
+                            return;
+                        }
+                    }
+                    
+                    currentMatchId = data.match.id;
+                    currentMatchStatus = data.match.status;
 
                     // === HEADER ===
                     setText('header-match-id', 'MATCH - ' + (data.match.partai || '00'));
@@ -197,27 +273,56 @@
                         renderAwardBoxes('val-red-score-r' + r, data.award_history, r, 'red');
 
                         const rt = data.round_totals[r];
-                        // Menampilkan Total Juri per ronde
-                        setText('juri-total-blue-' + r, rt ? rt.blue : '');
-                        setText('juri-total-red-' + r, rt ? rt.red : '');
+                        
+                        let totalJuriBlue = rt ? rt.blue : 0;
+                        let totalJuriRed = rt ? rt.red : 0;
 
-                        // Menampilkan Grand Total per ronde (untuk sementara nilainya disamakan atau biarkan seperti ini)
-                        setText('round-total-blue-' + r, rt ? rt.blue : '');
-                        setText('round-total-red-' + r, rt ? rt.red : '');
+                        // Menampilkan Total Juri per ronde
+                        setText('juri-total-blue-' + r, totalJuriBlue > 0 ? totalJuriBlue : '0');
+                        setText('juri-total-red-' + r, totalJuriRed > 0 ? totalJuriRed : '0');
+
+                        const pf = data.penalties_formatted[r];
+                        let roundTotalBlue = totalJuriBlue;
+                        let roundTotalRed = totalJuriRed;
+
+                        if (pf) {
+                            roundTotalBlue += pf.jatuhan_biru_points || 0;
+                            roundTotalBlue -= pf.hukuman_biru_points || 0;
+
+                            roundTotalRed += pf.jatuhan_merah_points || 0;
+                            roundTotalRed -= pf.hukuman_merah_points || 0;
+                        }
+
+                        // Cegah nilai negatif
+                        if (roundTotalBlue < 0) roundTotalBlue = 0;
+                        if (roundTotalRed < 0) roundTotalRed = 0;
+
+                        // Menampilkan Grand Total per ronde
+                        setText('round-total-blue-' + r, roundTotalBlue);
+                        setText('round-total-red-' + r, roundTotalRed);
                     }
 
-                    // === PENALTIES (same values for all rounds for now) ===
-                    const pen = data.penalties;
+                    // === PENALTIES (Per Ronde) ===
+                    const penFormatted = data.penalties_formatted;
                     for (let r = 1; r <= 3; r++) {
-                        setText('val-blue-jatuhan-r' + r, pen.jatuhan_biru || '');
-                        setText('val-red-jatuhan-r' + r, pen.jatuhan_merah || '');
-                        // Hukuman = teguran + peringatan
-                        const hukumanBiru = (pen.teguran_biru || 0) + (pen.peringatan_biru || 0);
-                        const hukumanMerah = (pen.teguran_merah || 0) + (pen.peringatan_merah || 0);
-                        setText('val-blue-hukuman-r' + r, hukumanBiru || '');
-                        setText('val-red-hukuman-r' + r, hukumanMerah || '');
-                        setText('val-blue-binaan-r' + r, pen.binaan_biru || '');
-                        setText('val-red-binaan-r' + r, pen.binaan_merah || '');
+                        const pf = penFormatted[r];
+                        if (pf) {
+                            setText('val-blue-jatuhan-r' + r, pf.jatuhan_biru);
+                            setText('val-red-jatuhan-r' + r, pf.jatuhan_merah);
+                            
+                            setText('val-blue-hukuman-r' + r, pf.hukuman_biru);
+                            setText('val-red-hukuman-r' + r, pf.hukuman_merah);
+                            
+                            setText('val-blue-binaan-r' + r, pf.binaan_biru);
+                            setText('val-red-binaan-r' + r, pf.binaan_merah);
+                        } else {
+                            setText('val-blue-jatuhan-r' + r, '');
+                            setText('val-red-jatuhan-r' + r, '');
+                            setText('val-blue-hukuman-r' + r, '');
+                            setText('val-red-hukuman-r' + r, '');
+                            setText('val-blue-binaan-r' + r, '');
+                            setText('val-red-binaan-r' + r, '');
+                        }
                     }
 
                     // === GRAND TOTAL ===
@@ -238,13 +343,14 @@
                     previousTimerStatus = currentTimerStatus;
 
                     let currentTimeRemaining = timeRemaining;
-                    if (previousTimeRemaining !== null && previousTimeRemaining > 0 && currentTimeRemaining === 0) {
-                        if (data.match.round < 3) {
-                            showTimerNotification("Waktu Babak " + data.match.round + " telah habis!");
-                        } else {
-                            showTimerNotification("Waktu Pertandingan telah selesai!");
-                        }
+                    const currentRound = data.timer.round ?? 1;
+
+                    if (previousRound !== null && currentRound > previousRound) {
+                        showTimerNotification("Waktu Babak " + previousRound + " telah habis!");
+                    } else if (previousRound !== null && currentRound === 3 && previousTimeRemaining > 0 && currentTimeRemaining === 0) {
+                        showTimerNotification("Waktu Pertandingan telah selesai!");
                     }
+                    previousRound = currentRound;
                     previousTimeRemaining = currentTimeRemaining;
                 })
                 .catch(err => {
