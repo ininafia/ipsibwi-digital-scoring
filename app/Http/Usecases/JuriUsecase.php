@@ -5,6 +5,7 @@ namespace App\Http\Usecases;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 use App\Http\Presenter\Response;
 use Exception;
 
@@ -40,7 +41,7 @@ class JuriUsecase extends Usecase
         $funcName = $this->className . '.inputScore';
 
         $idPertandingan  = (int) $request->input('id_pertandingan');
-
+        
         // Bersihkan window kadaluarsa DI LUAR transaksi utama (hindari nested transaction).
         $this->resolveExpiredEvents($idPertandingan);
 
@@ -76,7 +77,7 @@ class JuriUsecase extends Usecase
 
             try {
                 return DB::transaction(function () use (
-                    $idPertandingan, $idBabak, $juriPosition, $athlete, $technique, $scoreValue, $idKategoriNilai, $sudut
+                    $idPertandingan, $idBabak, $juriPosition, $athlete, $technique, $scoreValue, $idKategoriNilai
                 ) {
                     // Jangan me-lock table pertandingan karena akan memblokir query juri lain yang masuk bersamaan
                     $match = DB::table('pertandingan')->where('id', $idPertandingan)->first();
@@ -106,61 +107,49 @@ class JuriUsecase extends Usecase
 
                     $judgeId     = $petugasPertandingan->id;
                     $currentTime = microtime(true);
-                    $delayMax    = $kategori ? (float) $kategori->delay_max : self::DEFAULT_DELAY;
 
-                    // ----------------------------------------------------------------
-                    // CARI WINDOW AKTIF di tabel score_windows
-                    // Kriteria: pertandingan sama, babak sama, teknik sama, status 'open',
-                    // dan masih dalam rentang waktu delay_max.
-                    // ----------------------------------------------------------------
-                    $targetWindowId = null;
-
-                    $activeWindows = DB::table('score_windows')
+                    // PERBAIKAN FILTER TEKNIK:
+                    // Tambahkan ->where('technique', $technique) agar pukulan dan
+                    // tendangan tidak tercampur dalam satu window konsensus yang sama.
+                    $activeEvents = DB::table('score_events')
                         ->where('match_id', $idPertandingan)
-                        ->where('round_id', $idBabak)
-                        ->where('technique', $technique)
-                        ->where('status', 'open')
-                        ->where('opened_at', '>=', $currentTime - $delayMax)
-                        ->orderBy('opened_at', 'asc')
+                        ->where('round', $idBabak)
+                        ->where('athlete', $athlete)
+                        ->where('technique', $technique)  // <-- PERBAIKAN: filter per teknik
+                        ->where('status', 'pending')
+                        ->orderBy('server_time', 'asc')
                         ->lockForUpdate()
                         ->get();
 
-                    foreach ($activeWindows as $window) {
-                        // Cek apakah juri ini SUDAH input di window ini
-                        $alreadyInput = DB::table('score_events')
-                            ->where('window_id', $window->id)
-                            ->where('judge_id', $judgeId)
-                            ->where('status', 'pending')
-                            ->exists();
+                    $windows = $activeEvents->groupBy('award_id');
+                    $targetAwardId = null;
 
-                        if (!$alreadyInput) {
-                            // Window ini valid dan juri belum pernah input di sini
-                            $targetWindowId = $window->id;
-                            break;
+                    foreach ($windows as $awardId => $eventsInWindow) {
+                        $firstInput = $eventsInWindow->first();
+                        $firstKategoriId = array_search($firstInput->technique, self::TECHNIQUE_MAP, true);
+                        $firstKategori   = DB::table('kategori_nilai')->where('id', $firstKategoriId)->first();
+                        $delayMax        = $firstKategori ? (float) $firstKategori->delay_max : self::DEFAULT_DELAY;
+
+                        // Cek apakah window masih dalam batas waktu delay
+                        if (($currentTime - $firstInput->server_time) <= $delayMax) {
+                            // Cek apakah juri ini SUDAH input di window ini
+                            $alreadyInput = $eventsInWindow->contains('judge_id', $judgeId);
+
+                            if (!$alreadyInput) {
+                                $targetAwardId = $awardId;
+                                break; // Ketemu window yang valid dan juri ini belum join
+                            }
+                            // Jika juri ini sudah pernah input di window ini,
+                            // lanjutkan loop untuk mencari window lain yang valid.
+                            // Jika tidak ada, $targetAwardId tetap null dan window baru dibuat.
                         }
-                        // Jika juri sudah input di window ini, lanjut cari window berikutnya.
-                        // Jika tidak ada window lain, $targetWindowId tetap null dan window baru dibuat.
                     }
 
-                    if (!$targetWindowId) {
-                        // Buat window baru:
-                        // Jika semua window aktif sudah diisi juri ini, atau belum ada window aktif.
-                        $targetWindowId = DB::table('score_windows')->insertGetId([
-                            'match_id'    => $idPertandingan,
-                            'round_id'    => $idBabak,
-                            'athlete_red' => $match->sudut_merah,   // nama atlet sudut merah
-                            'athlete_blue'=> $match->sudut_biru,    // nama atlet sudut biru
-                            'technique'   => $technique,
-                            'opened'      => 1,
-                            'opened_at'   => $currentTime,
-                            'close_at'    => null,
-                            'status'      => 'open',
-                            'awarded'     => 0,
-                            'created_at'  => now(),
-                        ]);
+                    if (!$targetAwardId) {
+                        // Window baru: semua window aktif sudah diisi juri ini, atau belum ada window aktif
+                        $targetAwardId = (string) Str::uuid();
                     }
 
-                    // Simpan event mentah juri, referensi ke window
                     $newEventId = DB::table('score_events')->insertGetId([
                         'match_id'    => $idPertandingan,
                         'round'       => $idBabak,
@@ -170,31 +159,28 @@ class JuriUsecase extends Usecase
                         'score_value' => $scoreValue,
                         'server_time' => $currentTime,
                         'status'      => 'pending',
-                        'window_id'   => $targetWindowId,
+                        'award_id'    => $targetAwardId,
                         'created_at'  => now(),
                     ]);
 
-                    // Hitung jumlah juri BERBEDA yang sudah input di window ini
-                    $distinctJudgesInWindow = DB::table('score_events')
-                        ->where('window_id', $targetWindowId)
-                        ->where('status', 'pending')
-                        ->distinct()
-                        ->count('judge_id');
+                    $inputsInGroup = DB::table('score_events')
+                        ->where('award_id', $targetAwardId)
+                        ->lockForUpdate()
+                        ->get();
+                    $inputCount = $inputsInGroup->count();
 
-                    // Selesaikan window lebih awal jika semua 3 juri sudah menginput,
-                    // ATAU minimal 2 juri berbeda sudah sepakat (sesuai revisi.md poin 3).
-                    if ($distinctJudgesInWindow >= 3) {
-                        $this->resolveGroup($targetWindowId);
-                    } elseif ($distinctJudgesInWindow >= 2) {
-                        // Minimal 2 juri berbeda → langsung awarded sesuai catatan revisi.md
-                        $this->resolveGroup($targetWindowId);
+                    // Hanya selesaikan grup lebih awal jika semua 3 juri sudah menginput.
+                    // Jika baru 2 juri, tunggu sampai juri ke-3 menginput, ATAU waktu 3 detik habis
+                    // (ditangani otomatis oleh resolveExpiredEvents).
+                    if ($inputCount >= 3) {
+                        $this->resolveGroup($targetAwardId);
                     }
 
                     $juriName = match ($petugasPertandingan->posisi) {
                         'juri_1' => 'JURI 1',
                         'juri_2' => 'JURI 2',
                         'juri_3' => 'JURI 3',
-                        default  => 'JURI'
+                        default => 'JURI'
                     };
                     $techName  = $technique === 'punch' ? 'pukulan' : 'tendangan';
                     $sudutName = $athlete === 'red' ? 'merah' : 'biru';
@@ -211,7 +197,7 @@ class JuriUsecase extends Usecase
 
                     error_log("=== [ACTION] $juriName mencet $techName untuk sudut $sudutName ===");
 
-                    return Response::buildSuccess(['window_id' => $targetWindowId, 'score_event_id' => $newEventId], 200, 'Berhasil mencatat nilai');
+                    return Response::buildSuccess(['event_id' => $targetAwardId, 'score_event_id' => $newEventId], 200, 'Berhasil mencatat nilai');
                 });
             } finally {
                 // Selalu release lock agar juri berikutnya bisa masuk
@@ -224,29 +210,17 @@ class JuriUsecase extends Usecase
     }
 
     /**
-     * Menyelesaikan penilaian untuk suatu window (Sah / Tidak Sah).
-     * Menerima $windowId (BIGINT) — ID dari tabel score_windows.
+     * Menyelesaikan penilaian untuk suatu grup window (Sah / Tidak Sah)
      */
-    public function resolveGroup(int $windowId): void
+    public function resolveGroup(string $groupId): void
     {
         $funcName = $this->className . '.resolveGroup';
 
         try {
-            DB::transaction(function () use ($windowId) {
-                // Kunci window agar tidak diproses ganda oleh proses lain
-                $window = DB::table('score_windows')
-                    ->where('id', $windowId)
-                    ->where('status', 'open')
-                    ->lockForUpdate()
-                    ->first();
-
-                if (!$window) {
-                    return; // sudah diresolve sebelumnya atau tidak ditemukan
-                }
-
-                // Ambil semua event pending di window ini
+            DB::transaction(function () use ($groupId) {
+                // Kunci semua input pending di grup ini agar tidak diproses ganda oleh proses lain
                 $inputs = DB::table('score_events')
-                    ->where('window_id', $windowId)
+                    ->where('award_id', $groupId)
                     ->where('status', 'pending')
                     ->lockForUpdate()
                     ->get();
@@ -255,9 +229,7 @@ class JuriUsecase extends Usecase
                     return; // sudah diresolve sebelumnya
                 }
 
-                $currentTime = microtime(true);
-
-                // Hitung dukungan tiap teknik, satu juri hanya dihitung sekali per teknik
+                // Hitung dukungan tiap teknik
                 $techCounts = [];
                 $seenJudges = [];
                 foreach ($inputs as $input) {
@@ -291,7 +263,6 @@ class JuriUsecase extends Usecase
                         'technique'    => $winningTechnique,
                         'score_value'  => $winningScoreValue,
                         'awarded_time' => $winningInput->server_time,
-                        'window_id'    => $windowId,
                         'source'       => 'automatic',
                         'created_at'   => now(),
                     ]);
@@ -309,26 +280,19 @@ class JuriUsecase extends Usecase
                                     'created_at'     => now(),
                                 ]);
                             }
-
+                            
                             DB::table('score_events')
                                 ->where('id', $input->id)
-                                ->update(['status' => 'consumed']);
+                                ->update([
+                                    'status'   => 'consumed',
+                                    'award_id' => $awardIdDb
+                                ]);
                         } else {
                             DB::table('score_events')
                                 ->where('id', $input->id)
                                 ->update(['status' => 'expired']);
                         }
                     }
-
-                    // Update status window menjadi 'awarded'
-                    DB::table('score_windows')
-                        ->where('id', $windowId)
-                        ->update([
-                            'opened'   => 0,
-                            'close_at' => $currentTime,
-                            'status'   => 'awarded',
-                            'awarded'  => 1,
-                        ]);
 
                     // Tambahkan poin ke skor_pertandingan
                     $skorField = $winningInput->athlete === 'red' ? 'skor_merah' : 'skor_biru';
@@ -342,8 +306,8 @@ class JuriUsecase extends Usecase
                         DB::table('skor_pertandingan')
                             ->where('id_pertandingan', $winningInput->match_id)
                             ->update([
-                                $skorField   => DB::raw($skorField . ' + ' . $winningScoreValue),
-                                'updated_at' => now(),
+                                $skorField    => DB::raw($skorField . ' + ' . $winningScoreValue),
+                                'updated_at'  => now(),
                             ]);
                     } else {
                         DB::table('skor_pertandingan')->insert([
@@ -353,24 +317,14 @@ class JuriUsecase extends Usecase
                         ]);
                     }
 
-                    $winningTechName  = $winningTechnique === 'punch' ? 'pukulan' : 'tendangan';
+                    $winningTechName = $winningTechnique === 'punch' ? 'pukulan' : 'tendangan';
                     $winningSudutName = $winningInput->athlete === 'red' ? 'merah' : 'biru';
                     error_log("=== [KONSENSUS] SAH! Poin $winningTechName sudut $winningSudutName bertambah (nilai: $winningScoreValue) ===");
                 } else {
                     // KONSENSUS TIDAK TERCAPAI (mis. hanya 1 juri input, atau semua beda teknik)
                     DB::table('score_events')
-                        ->where('window_id', $windowId)
+                        ->where('award_id', $groupId)
                         ->update(['status' => 'expired']);
-
-                    // Update status window menjadi 'expired'
-                    DB::table('score_windows')
-                        ->where('id', $windowId)
-                        ->update([
-                            'opened'   => 0,
-                            'close_at' => $currentTime,
-                            'status'   => 'expired',
-                            'awarded'  => 0,
-                        ]);
 
                     error_log("=== [KONSENSUS] GAGAL/EXPIRED! Tidak mencapai kesepakatan juri ===");
                 }
@@ -381,8 +335,7 @@ class JuriUsecase extends Usecase
     }
 
     /**
-     * Memeriksa dan memutuskan window yang sudah melewati batas waktu (expired).
-     * Query berbasis tabel score_windows, bukan GROUP BY award_id.
+     * Memeriksa dan memutuskan event yang sudah melewati batas waktu (expired).
      */
     public function resolveExpiredEvents($matchId = null): void
     {
@@ -391,32 +344,42 @@ class JuriUsecase extends Usecase
         try {
             $currentTime = microtime(true);
 
-            // Ambil semua window yang masih 'open'
-            $query = DB::table('score_windows')
-                ->where('status', 'open');
-
+            $query = DB::table('score_events')
+                ->select('award_id')
+                ->selectRaw('MIN(server_time) as start_time')
+                ->where('status', 'pending')
+                ->whereNotNull('award_id');
+                
             if ($matchId) {
                 $query->where('match_id', $matchId);
             }
 
-            $openWindows = $query->get();
+            $pendingGroups = $query->groupBy('award_id')->get();
 
-            foreach ($openWindows as $window) {
-                // Ambil delay_max berdasarkan teknik window
-                $kategoriId = array_search($window->technique, self::TECHNIQUE_MAP, true);
-                $kategori   = DB::table('kategori_nilai')->where('id', $kategoriId)->first();
-                $delayMax   = $kategori ? (float) $kategori->delay_max : self::DEFAULT_DELAY;
+            foreach ($pendingGroups as $group) {
+                $firstInput = DB::table('score_events')
+                    ->where('award_id', $group->award_id)
+                    ->orderBy('server_time', 'asc')
+                    ->first();
 
-                if (($currentTime - $window->opened_at) > $delayMax) {
-                    // Window sudah melewati batas waktu → resolve
-                    $lockName = "resolve_window_" . $window->id;
-                    $lock = \Illuminate\Support\Facades\Cache::lock($lockName, 5); // 5 detik lock
+                if ($firstInput) {
+                    $kategoriId = array_search($firstInput->technique, self::TECHNIQUE_MAP, true);
+                    $kategori   = DB::table('kategori_nilai')->where('id', $kategoriId)->first();
+                    $delayMax   = $kategori ? (float) $kategori->delay_max : self::DEFAULT_DELAY;
 
-                    if ($lock->get()) {
-                        try {
-                            $this->resolveGroup($window->id);
-                        } finally {
-                            $lock->release();
+                    if (($currentTime - $group->start_time) > $delayMax) {
+                        $lockName = "resolve_group_" . $group->award_id;
+                        $lock = \Illuminate\Support\Facades\Cache::lock($lockName, 5); // 5 detik lock
+
+                        if ($lock->get()) {
+                            try {
+                                $this->resolveGroup($group->award_id);
+                            } finally {
+                                // Biarkan lock expire sendiri setelah 5 detik 
+                                // untuk mencegah thundering herd dari request bersamaan
+                                // atau bisa release jika mau. Kita release agar bersih.
+                                $lock->release();
+                            }
                         }
                     }
                 }
@@ -466,9 +429,9 @@ class JuriUsecase extends Usecase
                     DB::table('score_events')
                         ->where('id', $lastInput->id)
                         ->update([
-                            'status'         => 'deleted',
-                            'deleted_by'     => $petugasPertandingan->id,
-                            'deleted_at'     => now(),
+                            'status' => 'deleted',
+                            'deleted_by' => $petugasPertandingan->id,
+                            'deleted_at' => now(),
                             'deleted_reason' => 'Dihapus manual oleh juri'
                         ]);
 
@@ -476,18 +439,18 @@ class JuriUsecase extends Usecase
                         'juri_1' => 'JURI 1',
                         'juri_2' => 'JURI 2',
                         'juri_3' => 'JURI 3',
-                        default  => 'JURI'
+                        default => 'JURI'
                     };
                     $sudutName = $athlete === 'red' ? 'merah' : 'biru';
 
                     DB::table('log_activity_juri')->insert([
                         'id_pertandingan' => $idPertandingan,
-                        'id_juri'         => $petugasPertandingan->id,
-                        'id_babak'        => $idBabak,
-                        'id_score_event'  => $lastInput->id,
-                        'action'          => 'HAPUS_NILAI',
-                        'description'     => "$juriName menghapus nilai pending untuk sudut $sudutName",
-                        'created_at'      => now(),
+                        'id_juri' => $petugasPertandingan->id,
+                        'id_babak' => $idBabak,
+                        'id_score_event' => $lastInput->id,
+                        'action' => 'HAPUS_NILAI',
+                        'description' => "$juriName menghapus nilai pending untuk sudut $sudutName",
+                        'created_at' => now(),
                     ]);
 
                     error_log("=== [ACTION] $juriName menghapus nilai pending untuk sudut $sudutName ===");
@@ -520,14 +483,14 @@ class JuriUsecase extends Usecase
             if (!$petugasPertandingan) {
                 return Response::buildSuccess([
                     'history' => [],
-                    'juri'    => ['nama' => 'MENUNGGU PENUGASAN', 'posisi' => strtoupper(str_replace('_', ' ', $juriPosition))],
-                    'timer'   => [
+                    'juri' => ['nama' => 'MENUNGGU PENUGASAN', 'posisi' => strtoupper(str_replace('_', ' ', $juriPosition))],
+                    'timer' => [
                         'time_remaining' => 0,
-                        'status'         => 'stopped'
+                        'status' => 'stopped'
                     ]
                 ], 200, 'Berhasil mengambil riwayat (penugasan tidak ditemukan)');
             }
-
+            
             $petugas = DB::table('data_petugas')->where('id', $petugasPertandingan->id_petugas)->first();
 
             $events = DB::table('score_events')
@@ -545,36 +508,35 @@ class JuriUsecase extends Usecase
 
             $history = $events->map(function ($item) use ($votedEventIds) {
                 return [
-                    'id'                      => $item->id,
-                    'id_pertandingan'         => $item->match_id,
-                    'id_babak'                => $item->round,
-                    'id_petugas_pertandingan' => $item->judge_id,
-                    'sudut'                   => $item->athlete === 'red' ? 'merah' : 'biru',
-                    'nilai'                   => $item->score_value,
-                    'waktu_input'             => $item->server_time,
-                    'status'                  => $item->status,
-                    'window_id'               => $item->window_id,
-                    'is_sah'                  => $votedEventIds->has($item->id),
+                    'id'                       => $item->id,
+                    'id_pertandingan'          => $item->match_id,
+                    'id_babak'                 => $item->round,
+                    'id_petugas_pertandingan'  => $item->judge_id,
+                    'sudut'                    => $item->athlete === 'red' ? 'merah' : 'biru',
+                    'nilai'                    => $item->score_value,
+                    'waktu_input'              => $item->server_time,
+                    'status'                   => $item->status,
+                    'is_sah'                   => $votedEventIds->has($item->id),
                 ];
             });
 
             $juriData = [
-                'nama'   => strtoupper($petugas->nama),
+                'nama' => strtoupper($petugas->nama),
                 'posisi' => $petugasPertandingan->posisi ? strtoupper(str_replace('_', ' ', $petugasPertandingan->posisi)) : 'JURI'
             ];
 
             $timerState = \Illuminate\Support\Facades\Cache::get('current_timer_state_' . $idPertandingan, [
-                'round'          => 1,
+                'round' => 1,
                 'time_remaining' => 120,
-                'status'         => 'stopped'
+                'status' => 'stopped'
             ]);
 
             return Response::buildSuccess([
                 'history' => $history->toArray(),
-                'juri'    => $juriData,
-                'timer'   => [
+                'juri' => $juriData,
+                'timer' => [
                     'time_remaining' => $timerState['time_remaining'] ?? 0,
-                    'status'         => $timerState['status'] ?? 'stopped'
+                    'status' => $timerState['status'] ?? 'stopped'
                 ]
             ], 200, 'Berhasil mengambil riwayat');
         } catch (Exception $e) {
