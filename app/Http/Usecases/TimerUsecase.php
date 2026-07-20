@@ -50,9 +50,19 @@ class TimerUsecase extends Usecase
             }
         }
 
-        // BUG FIX: Selalu broadcast setiap kali Role Timer melakukan sync (tiap 1 detik)
-        // Agar Role Timer benar-benar menjadi acuan mutlak dan waktu tidak tertinggal (drift).
-        $shouldBroadcast = true;
+        $shouldBroadcast = false;
+        
+        if ($oldState['round'] !== $state['round'] || $oldState['status'] !== $state['status']) {
+            $shouldBroadcast = true;
+        }
+
+        // Sinkronisasi waktu setiap kelipatan 10 detik agar tidak drift
+        // atau jika ada perbedaan signifikan (tapi timer client cukup akurat)
+        if ($oldState['status'] === 'playing' && $state['status'] === 'playing') {
+            if ($state['time_remaining'] % 15 === 0) {
+                $shouldBroadcast = true;
+            }
+        }
 
         Cache::put($cacheKey, $state);
 
