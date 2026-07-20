@@ -253,7 +253,8 @@ CREATE TABLE score_events (
     score_value INT NOT NULL,
     server_time DECIMAL(16,3) NOT NULL,
     status ENUM('pending', 'consumed', 'expired', 'deleted') DEFAULT 'pending',
-    -- Menggantikan award_id (UUID). Setiap event terikat ke satu score_window.
+    award_id VARCHAR(36) NULL COMMENT 'UUID untuk grup consensus, nantinya diupdate menjadi ID dari score_awards',
+    -- Menggantikan award_id (UUID). Setiap event terikat ke satu score_window. (Kode PHP saat ini masih pakai award_id)
     window_id BIGINT NULL DEFAULT NULL,
     deleted_by INT NULL,
     deleted_at TIMESTAMP NULL,

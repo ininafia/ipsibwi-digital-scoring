@@ -232,7 +232,6 @@ class PetugasUsecase extends Usecase
         try {
             // Fetch pertandingan
             $pertandingan = DB::table('pertandingan')
-                ->whereNotIn('status', ['finished', 'final'])
                 ->whereNull('deleted_at')
                 ->orderBy('partai', 'asc')
                 ->get(['id', 'partai', 'gelanggang']);
