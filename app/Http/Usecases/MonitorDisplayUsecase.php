@@ -14,6 +14,7 @@ class MonitorDisplayUsecase extends Usecase
         $match = DB::table('pertandingan')
             ->where('status', 'playing')
             ->whereNull('deleted_at')
+            ->orderBy('updated_at', 'desc')
             ->first();
             
         if (!$match) return null;

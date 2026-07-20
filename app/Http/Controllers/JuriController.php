@@ -70,6 +70,7 @@ class JuriController extends Controller
         $match = DB::table('pertandingan')
             ->where('status', 'playing')
             ->whereNull('deleted_at')
+            ->orderBy('updated_at', 'desc')
             ->first();
 
         $namaPosisi = 'JURI ' . $juriNumber;
@@ -95,7 +96,13 @@ class JuriController extends Controller
         if ($unauthorized = $this->requireJuriAjax()) {
             return $unauthorized;
         }
-        return response()->json($this->usecase->inputScore($request));
+        $response = $this->usecase->inputScore($request);
+        if ($response['success'] ?? false) {
+            // BUG-7 FIX: Gunakan id_pertandingan (bukan match_id yang selalu null)
+            // agar scoreboard update real-time setelah juri input nilai
+            event(new \App\Events\MatchUpdated($request->id_pertandingan));
+        }
+        return response()->json($response);
     }
 
     public function deleteScore(Request $request)
@@ -103,7 +110,12 @@ class JuriController extends Controller
         if ($unauthorized = $this->requireJuriAjax()) {
             return $unauthorized;
         }
-        return response()->json($this->usecase->deleteScore($request));
+        $response = $this->usecase->deleteScore($request);
+        if ($response['success'] ?? false) {
+            // BUG-7 FIX: Gunakan id_pertandingan (bukan match_id yang selalu null)
+            event(new \App\Events\MatchUpdated($request->id_pertandingan));
+        }
+        return response()->json($response);
     }
 
     public function getHistory(Request $request)

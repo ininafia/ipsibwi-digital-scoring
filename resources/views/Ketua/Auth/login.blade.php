@@ -63,8 +63,13 @@
         </button>
 
         <!-- LINK -->
-        <a href="#"
-           class="block text-center mt-4 text-gray-400 text-sm hover:text-gray-500">
+        <a onclick="Swal.fire({
+               icon: 'info',
+               title: 'Lupa Password?',
+               text: 'Silakan hubungi Operator/Admin IT di meja pertandingan untuk mereset password Anda.',
+               confirmButtonColor: '#38bdf8'
+           })"
+           class="block text-center mt-4 text-gray-400 text-sm hover:text-gray-500 cursor-pointer">
             Lupa Password?
         </a>
 

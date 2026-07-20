@@ -21,7 +21,7 @@ class FinishedController extends Controller
         $pdf = Pdf::loadView('Operator.finished.pdf-detail', $data);
         $pdf->setPaper('a4', 'landscape');
         
-        return $pdf->download("Detail_Skor_Partai_{$data['match']->partai}.pdf");
+        return $pdf->stream("Detail_Skor_Partai_{$data['match']->partai}.pdf");
     }
 
     private function getMatchData($id)
@@ -81,11 +81,14 @@ class FinishedController extends Controller
             }
         }
 
-        $allVoteJudgeIds = [];
+        $allVoteEventIds = [];
         if (!empty($awardIds)) {
-            $allVoteRows = DB::table('score_award_votes')->whereIn('award_id', $awardIds)->get();
+            // Lookup sah/tidak-sah berdasarkan score_event_id di score_award_votes
+            $allVoteRows = DB::table('score_award_votes')
+                ->whereIn('award_id', $awardIds)
+                ->get();
             foreach ($allVoteRows as $vr) {
-                $allVoteJudgeIds[$vr->award_id . '_' . $vr->judge_id] = true;
+                $allVoteEventIds[$vr->score_event_id] = true;
             }
         }
 
@@ -113,15 +116,15 @@ class FinishedController extends Controller
             if (!$juriPosisi) continue;
 
             $isSah = false;
-            if ($evt->status === 'consumed' && $evt->award_id) {
-                $key = $evt->award_id . '_' . $evt->judge_id;
-                $isSah = isset($allVoteJudgeIds[$key]);
+            if ($evt->status === 'consumed') {
+                // Sah jika event ini tercatat di score_award_votes
+                $isSah = isset($allVoteEventIds[$evt->id]);
             }
 
             $eventHistory[$juriPosisi][$evt->round][$evt->athlete][] = [
-                'value' => $evt->score_value,
-                'sah' => $isSah,
-                'award_id' => $evt->award_id,
+                'value'     => $evt->score_value,
+                'sah'       => $isSah,
+                'window_id' => $evt->window_id,
             ];
         }
 
@@ -131,8 +134,8 @@ class FinishedController extends Controller
         }
         foreach ($awards as $awd) {
             $awardHistory[$awd->round][$awd->athlete][] = [
-                'value' => $awd->score_value,
-                'award_id' => (string) $awd->id,
+                'value'     => $awd->score_value,
+                'award_id'  => (string) $awd->id,  // ID dari score_awards, masih valid
             ];
         }
 

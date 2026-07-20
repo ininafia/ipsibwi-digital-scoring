@@ -106,7 +106,7 @@
                 $html = '<div style="text-align: left;">';
                 foreach ($events as $evt) {
                     if ($evt['sah']) {
-                        $html .= '<span style="display:inline-block; min-width:14px; text-align:center; padding:1px 2px; font-weight:bold; font-size:10px; border-radius:2px; margin-right:2px; ' . getPdfBoxColor($evt['award_id'], $athlete, true) . '">' . $evt['value'] . '</span>';
+                        $html .= '<span style="display:inline-block; min-width:14px; text-align:center; padding:1px 2px; font-weight:bold; font-size:10px; border-radius:2px; margin-right:2px; ' . getPdfBoxColor($evt['window_id'], $athlete, true) . '">' . $evt['value'] . '</span>';
                     } else {
                         $html .= '<span style="display:inline-block; min-width:14px; text-align:center; padding:1px 2px; font-weight:bold; font-size:10px; color:#666; text-decoration:line-through; margin-right:2px;">' . $evt['value'] . '</span>';
                     }

@@ -3,7 +3,7 @@
 @section('content')
 
     {{-- TITLE --}}
-    <h1 class="text-[42px] font-bold text-[#59d0ff] leading-none">
+    <h1 class="text-[28px] font-bold text-[#59d0ff] leading-none">
         Dashboard Kategori Tanding
     </h1>
 

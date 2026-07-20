@@ -109,6 +109,7 @@ CREATE TABLE pertandingan (
     winning_method VARCHAR(255) NULL,
     final_score_biru INT NULL,
     final_score_merah INT NULL,
+    catatan_finalisasi TEXT NULL,
     finalized_by INT NULL,
     finalized_at TIMESTAMP NULL,
     created_by INT NULL,
@@ -212,7 +213,33 @@ CREATE TABLE akurasi_juri (
 ) ENGINE=InnoDB;
 
 -- =========================================
--- 11. SCORE EVENTS (BARU - INPUT MENTAH JURI)
+-- 11. SCORE WINDOWS (ENTITAS WINDOW PENILAIAN)
+-- =========================================
+DROP TABLE IF EXISTS score_windows;
+
+CREATE TABLE score_windows (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    match_id INT NOT NULL,
+    round_id INT NOT NULL,
+    -- Nama atlet sesuai sudut, diambil dari pertandingan saat window dibuka
+    athlete_red VARCHAR(100) NULL COMMENT 'Nama atlet sudut merah',
+    athlete_blue VARCHAR(100) NULL COMMENT 'Nama atlet sudut biru',
+    technique ENUM('punch', 'kick') NOT NULL COMMENT 'Kategori teknik: tendangan atau pukulan',
+    opened TINYINT(1) NOT NULL DEFAULT 1 COMMENT '1 = window masih terbuka',
+    opened_at DECIMAL(16,3) NOT NULL COMMENT 'Unix timestamp saat window pertama kali dibuka',
+    close_at DECIMAL(16,3) NULL COMMENT 'Unix timestamp saat window ditutup (awarded/expired)',
+    status ENUM('open', 'awarded', 'expired') NOT NULL DEFAULT 'open' COMMENT 'Status window penilaian',
+    awarded TINYINT(1) NOT NULL DEFAULT 0 COMMENT '1 = window ini menghasilkan poin sah',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (match_id) REFERENCES pertandingan(id),
+    FOREIGN KEY (round_id) REFERENCES babak(id),
+    INDEX idx_score_windows_active (match_id, round_id, technique, status),
+    INDEX idx_score_windows_opened_at (opened_at)
+) ENGINE=InnoDB;
+
+
+-- =========================================
+-- 12. SCORE EVENTS (INPUT MENTAH JURI)
 -- =========================================
 DROP TABLE IF EXISTS score_events;
 
@@ -226,7 +253,8 @@ CREATE TABLE score_events (
     score_value INT NOT NULL,
     server_time DECIMAL(16,3) NOT NULL,
     status ENUM('pending', 'consumed', 'expired', 'deleted') DEFAULT 'pending',
-    award_id VARCHAR(20) NULL DEFAULT NULL,
+    -- Menggantikan award_id (UUID). Setiap event terikat ke satu score_window.
+    window_id BIGINT NULL DEFAULT NULL,
     deleted_by INT NULL,
     deleted_at TIMESTAMP NULL,
     deleted_reason VARCHAR(255) NULL,
@@ -234,14 +262,16 @@ CREATE TABLE score_events (
     FOREIGN KEY (match_id) REFERENCES pertandingan(id),
     FOREIGN KEY (round) REFERENCES babak(id),
     FOREIGN KEY (judge_id) REFERENCES petugas_pertandingan(id),
+    FOREIGN KEY (window_id) REFERENCES score_windows(id),
     INDEX idx_score_events_status (status),
-    INDEX idx_score_events_award_id (award_id),
-    INDEX idx_score_events_lock (match_id, round, athlete, status)
+    INDEX idx_score_events_window_id (window_id),
+    INDEX idx_score_events_lock (match_id, round, athlete, status),
+    INDEX idx_score_events_technique (match_id, round, athlete, technique, status)
 ) ENGINE=InnoDB;
 
 
 -- =========================================
--- 12. SCORE AWARDS (BARU - SKOR DIAKUI SAH)
+-- 13. SCORE AWARDS (SKOR DIAKUI SAH)
 -- =========================================
 DROP TABLE IF EXISTS score_awards;
 
@@ -253,15 +283,18 @@ CREATE TABLE score_awards (
     technique ENUM('punch', 'kick') NOT NULL,
     score_value INT NOT NULL,
     awarded_time DECIMAL(16,3) NOT NULL,
+    -- Referensi ke window yang menghasilkan award ini
+    window_id BIGINT NULL DEFAULT NULL,
     source ENUM('automatic', 'manual override') DEFAULT 'automatic',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (match_id) REFERENCES pertandingan(id),
-    FOREIGN KEY (round) REFERENCES babak(id)
+    FOREIGN KEY (round) REFERENCES babak(id),
+    FOREIGN KEY (window_id) REFERENCES score_windows(id)
 ) ENGINE=InnoDB;
 
 
 -- =========================================
--- 13. SCORE AWARD VOTES (BARU - JEMBATAN REALISASI)
+-- 14. SCORE AWARD VOTES (JEMBATAN REALISASI)
 -- =========================================
 DROP TABLE IF EXISTS score_award_votes;
 
@@ -278,24 +311,28 @@ CREATE TABLE score_award_votes (
 ) ENGINE=InnoDB;
 
 -- =========================================
--- 14. RIWAYAT HUKUMAN
+-- 15. RIWAYAT HUKUMAN
 -- =========================================
 DROP TABLE IF EXISTS riwayat_hukuman;
 
 CREATE TABLE riwayat_hukuman (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
-    id_pertandingan BIGINT UNSIGNED NOT NULL,
+    -- BUG-3 FIX: Ubah tipe dari BIGINT UNSIGNED ke INT agar konsisten dengan
+    -- pertandingan.id (INT) dan tambahkan FOREIGN KEY untuk referential integrity
+    id_pertandingan INT NOT NULL,
     id_babak INT NOT NULL,
     sudut ENUM('biru', 'merah') NOT NULL,
     jenis_hukuman VARCHAR(50) NOT NULL,
     action VARCHAR(20) NOT NULL,
-    created_by BIGINT UNSIGNED NULL,
+    created_by INT NULL,
     created_at TIMESTAMP NULL,
-    updated_at TIMESTAMP NULL
+    updated_at TIMESTAMP NULL,
+    FOREIGN KEY (id_pertandingan) REFERENCES pertandingan(id),
+    INDEX idx_riwayat_hukuman_match (id_pertandingan, id_babak)
 ) ENGINE=InnoDB;
 
 -- =========================================
--- 15. LOG ACTIVITY JURI
+-- 16. LOG ACTIVITY JURI
 -- =========================================
 DROP TABLE IF EXISTS log_activity_juri;
 

@@ -181,6 +181,12 @@ Route::prefix('operator')->name('operator.')->middleware(['role:1'])->group(func
         });
     });
 
+    // Manajemen Akun Route
+    Route::prefix('akun')->name('akun.')->controller(\App\Http\Controllers\Operator\AkunController::class)->group(function () {
+        Route::get('/', 'index')->name('index');
+        Route::post('/reset-password', 'resetPassword')->name('reset-password');
+    });
+
     // Pertandingan Route
     Route::prefix('pertandingan')->name('pertandingan.')->controller(PertandinganController::class)->group(function () {
         Route::get('/{id}/play', 'play')->name('play');

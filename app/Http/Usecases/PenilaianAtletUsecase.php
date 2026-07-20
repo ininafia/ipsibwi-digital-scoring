@@ -19,10 +19,11 @@ class PenilaianAtletUsecase extends Usecase
 
     private function validateTimerState(int $id_pertandingan): void
     {
-        $timerState = \Illuminate\Support\Facades\Cache::get('current_timer_state_' . $id_pertandingan, ['status' => 'stopped']);
-        if ($timerState['status'] !== 'playing') {
-            throw new Exception('Waktu pertandingan sedang berhenti (Timer pause/stop)');
-        }
+        // Validasi timer dimatikan sesuai permintaan agar Dewan bisa input kapan saja
+        // $timerState = \Illuminate\Support\Facades\Cache::get('current_timer_state_' . $id_pertandingan, ['status' => 'stopped']);
+        // if ($timerState['status'] !== 'playing') {
+        //     throw new Exception('Waktu pertandingan sedang berhenti (Timer pause/stop)');
+        // }
     }
 
     private function logRiwayatHukuman(int $id_pertandingan, string $sudut, string $jenis, string $action): void
@@ -59,6 +60,7 @@ class PenilaianAtletUsecase extends Usecase
             $jatuhanField = 'jatuhan_' . $sudut;
             $skorRecord = DB::table('skor_pertandingan')
                 ->where('id_pertandingan', $id_pertandingan)
+                ->lockForUpdate()  // BUG-2 FIX: cegah double-click
                 ->first();
 
             if ($skorRecord) {
@@ -111,6 +113,7 @@ class PenilaianAtletUsecase extends Usecase
             $jatuhanField = 'jatuhan_' . $sudut;
             $skorRecord = DB::table('skor_pertandingan')
                 ->where('id_pertandingan', $id_pertandingan)
+                ->lockForUpdate()  // BUG-2 FIX: cegah double-click
                 ->first();
 
             if ($skorRecord) {
@@ -157,6 +160,7 @@ class PenilaianAtletUsecase extends Usecase
             $binaanField = 'binaan_' . $sudut;
             $skorRecord = DB::table('skor_pertandingan')
                 ->where('id_pertandingan', $id_pertandingan)
+                ->lockForUpdate()  // BUG-2 FIX: cegah double-click
                 ->first();
 
             if ($skorRecord) {
@@ -211,6 +215,7 @@ class PenilaianAtletUsecase extends Usecase
             $skorField = 'skor_' . $sudut;
             $skorRecord = DB::table('skor_pertandingan')
                 ->where('id_pertandingan', $id_pertandingan)
+                ->lockForUpdate()  // BUG-2 FIX: cegah double-click
                 ->first();
 
             if ($skorRecord) {
@@ -273,6 +278,7 @@ class PenilaianAtletUsecase extends Usecase
             $skorField = 'skor_' . $sudut;
             $skorRecord = DB::table('skor_pertandingan')
                 ->where('id_pertandingan', $id_pertandingan)
+                ->lockForUpdate()  // BUG-2 FIX: cegah double-click
                 ->first();
 
             if ($skorRecord) {
@@ -337,6 +343,7 @@ class PenilaianAtletUsecase extends Usecase
             $teguranField = 'teguran_' . $sudut;
             $skorRecord = DB::table('skor_pertandingan')
                 ->where('id_pertandingan', $id_pertandingan)
+                ->lockForUpdate()  // BUG-2 FIX: cegah double-click
                 ->first();
 
             if ($skorRecord) {
@@ -385,6 +392,7 @@ class PenilaianAtletUsecase extends Usecase
             
             $skorRecord = DB::table('skor_pertandingan')
                 ->where('id_pertandingan', $id_pertandingan)
+                ->lockForUpdate()  // BUG-2 FIX: cegah double-click
                 ->first();
 
             if ($skorRecord) {
@@ -435,6 +443,7 @@ class PenilaianAtletUsecase extends Usecase
             
             $skorRecord = DB::table('skor_pertandingan')
                 ->where('id_pertandingan', $id_pertandingan)
+                ->lockForUpdate()  // BUG-2 FIX: cegah double-click
                 ->first();
 
             if ($skorRecord) {

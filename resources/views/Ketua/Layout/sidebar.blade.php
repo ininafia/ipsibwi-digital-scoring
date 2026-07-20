@@ -27,15 +27,6 @@
 
         </a>
 
-        <!-- PERSENTASE JURI -->
-        <a href="{{ route('ketua.akurasi') }}"
-            class="flex items-center gap-3 h-[60px] pl-12 pr-5 {{ request()->routeIs('ketua.akurasi') ? 'bg-[#dcf8ff] text-[#4fcfff]' : 'text-[#4fcfff] hover:bg-gray-100' }} text-base font-medium transition">
-
-            <i class="fa-solid fa-user-group w-5 text-center"></i>
-            <span>Persentase Juri</span>
-
-        </a>
-
         <!-- MONITOR PERTANDINGAN -->
         <a href="{{ route('ketua.monitor') }}"
             class="flex items-center gap-3 h-[60px] pl-12 pr-5 {{ request()->routeIs('ketua.monitor') ? 'bg-[#dcf8ff] text-[#4fcfff]' : 'text-[#4fcfff] hover:bg-gray-100' }} text-base font-medium transition">
@@ -51,6 +42,15 @@
 
             <i class="fa-solid fa-clipboard-list w-5 text-center"></i>
             <span>Log Activity Juri</span>
+
+        </a>
+
+        <!-- PERSENTASE JURI -->
+        <a href="{{ route('ketua.akurasi') }}"
+            class="flex items-center gap-3 h-[60px] pl-12 pr-5 {{ request()->routeIs('ketua.akurasi') ? 'bg-[#dcf8ff] text-[#4fcfff]' : 'text-[#4fcfff] hover:bg-gray-100' }} text-base font-medium transition">
+
+            <i class="fa-solid fa-user-group w-5 text-center"></i>
+            <span>Persentase Juri</span>
 
         </a>
 

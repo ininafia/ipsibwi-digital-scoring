@@ -59,13 +59,13 @@
         </div>
 
         <div class="overflow-x-auto w-full">
-            <table class="w-full text-sm text-center border-collapse border border-black bg-white">
+            <table class="w-full text-sm text-center border-collapse border border-black bg-white table-fixed">
                 <thead>
                     <tr class="bg-[#a2d8f3]">
                         <th class="border border-black py-3 font-extrabold text-black w-16">Partai</th>
                         <th class="border border-black py-3 font-extrabold text-black w-24">Gelanggang</th>
-                        <th class="border border-black py-3 font-extrabold text-black">KP</th>
-                        <th class="border border-black py-3 font-extrabold text-black">DT</th>
+                        <th class="border border-black py-3 font-extrabold text-black">Ketua Pertandingan</th>
+                        <th class="border border-black py-3 font-extrabold text-black">Delegasi Teknik</th>
                         <th class="border border-black py-3 font-extrabold text-black">Dewan</th>
                         <th class="border border-black py-3 font-extrabold text-black">Juri 1</th>
                         <th class="border border-black py-3 font-extrabold text-black">Juri 2</th>

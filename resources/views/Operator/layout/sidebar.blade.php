@@ -59,6 +59,16 @@
 
         </div>
 
+        {{-- MANAJEMEN AKUN --}}
+        <a href="{{ route('operator.akun.index') }}"
+            class="flex items-center gap-3 h-[45px] px-7 text-[#57d2ff] text-[18px] font-medium hover:bg-gray-50 transition duration-200">
+
+            <i class="fa-solid fa-users-gear text-[18px]"></i>
+
+            <span>Akun & Password</span>
+
+        </a>
+
         {{-- LOGOUT --}}
         <form method="POST" action="{{ route('logout') }}">
             @csrf

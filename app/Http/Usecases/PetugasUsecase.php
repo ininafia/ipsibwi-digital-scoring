@@ -232,7 +232,7 @@ class PetugasUsecase extends Usecase
         try {
             // Fetch pertandingan
             $pertandingan = DB::table('pertandingan')
-                ->where('status', '!=', 'final')
+                ->whereNotIn('status', ['finished', 'final'])
                 ->whereNull('deleted_at')
                 ->orderBy('partai', 'asc')
                 ->get(['id', 'partai', 'gelanggang']);

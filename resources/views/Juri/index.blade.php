@@ -6,6 +6,7 @@
     <title>Juri IPSI</title>
 
     <script src="https://cdn.tailwindcss.com"></script>
+    @vite(['resources/js/app.js'])
 </head>
 
 <body class="bg-gray-200 h-screen flex flex-col font-sans overflow-hidden">
@@ -35,6 +36,7 @@
         let currentRound = 1;
         let currentJuriPosition = '{{ $posisiTarget }}';
         let currentMatchId = '{{ $match ? $match->id : "" }}';
+        let subscribedMatchId = null;
 
         function formatTimer(totalSeconds) {
             if (!totalSeconds || totalSeconds < 0) return '00:00';
@@ -65,12 +67,50 @@
         let previousTimeRemaining = null;
         let previousRound = null;
 
+        let localTimerStatus = 'stopped';
+        let localTimerInterval = null;
+        let localTimeRemaining = 0;
+
+        // Selalu reset interval dari waktu server agar tidak drift
+        function syncLocalTimer(serverTime, timerStatus) {
+            localTimeRemaining = serverTime;
+            localTimerStatus = timerStatus;
+
+            // Reset interval lama
+            if (localTimerInterval) {
+                clearInterval(localTimerInterval);
+                localTimerInterval = null;
+            }
+
+            // Jalankan interval baru jika sedang playing
+            if (timerStatus === 'playing' && localTimeRemaining > 0) {
+                localTimerInterval = setInterval(() => {
+                    if (localTimeRemaining > 0) {
+                        localTimeRemaining--;
+                        let timerVal = document.getElementById('timer-value');
+                        if (timerVal) timerVal.innerText = formatTimer(localTimeRemaining);
+                    } else {
+                        clearInterval(localTimerInterval);
+                        localTimerInterval = null;
+                    }
+                }, 1000);
+            }
+
+            // Update display sekarang juga
+            let timerVal = document.getElementById('timer-value');
+            if (timerVal) timerVal.innerText = formatTimer(localTimeRemaining);
+        }
+
+        let isSubmittingScore = false;
         function addScore(sudut, nilai) {
             if(!currentMatchId) {
                 console.warn('addScore aborted: currentMatchId is empty');
                 showToast('Gagal: Tidak ada pertandingan aktif yang terpantau.');
                 return;
             }
+
+            if (isSubmittingScore) return;
+            isSubmittingScore = true;
 
             fetch('{{ route('juri.input-score') }}', {
                 method: 'POST',
@@ -88,6 +128,7 @@
             })
             .then(res => res.json())
             .then(data => {
+                isSubmittingScore = false;
                 if(!data.success) {
                     console.error('addScore error:', data.message);
                     showToast('Gagal menambah nilai: ' + data.message);
@@ -96,6 +137,7 @@
                 }
             })
             .catch(err => {
+                isSubmittingScore = false;
                 console.error(err);
                 showToast('Terjadi kesalahan koneksi.');
             });
@@ -106,6 +148,9 @@
                 showToast('Gagal: Tidak ada pertandingan aktif.');
                 return;
             }
+
+            if (isSubmittingScore) return;
+            isSubmittingScore = true;
 
             fetch('{{ route('juri.delete-score') }}', {
                 method: 'POST',
@@ -121,6 +166,7 @@
             })
             .then(res => res.json())
             .then(data => {
+                isSubmittingScore = false;
                 if(!data.success) {
                     console.error('deleteScore error:', data.message);
                     showToast('Gagal menghapus nilai: ' + data.message);
@@ -129,6 +175,7 @@
                 }
             })
             .catch(err => {
+                isSubmittingScore = false;
                 console.error(err);
                 showToast('Terjadi kesalahan koneksi.');
             });
@@ -141,6 +188,14 @@
                         // Update Match ID dynamically
                         currentMatchId = res.match.id || '';
 
+                        // Subscribe ke kanal match yang benar (setelah ID diketahui)
+                        if (typeof window.Echo !== 'undefined' && currentMatchId && subscribedMatchId !== currentMatchId) {
+                            if (subscribedMatchId) window.Echo.leaveChannel('match.' + subscribedMatchId);
+                            window.Echo.channel('match.' + currentMatchId)
+                                .listen('MatchUpdated', (e) => { updateJuriDisplay(); });
+                            subscribedMatchId = currentMatchId;
+                        }
+
                         // Update Data Peserta
                         document.getElementById('juri-nama-biru').innerText = res.match.sudut_biru && res.match.sudut_biru !== '-' ? res.match.sudut_biru : 'Nama Atlet';
                         document.getElementById('juri-sekolah-biru').innerText = res.match.kontingen_biru && res.match.kontingen_biru !== '-' ? res.match.kontingen_biru : 'Asal Kontingen';
@@ -150,7 +205,9 @@
                         
                         let timerVal = document.getElementById('timer-value');
                         if(timerVal) {
-                            timerVal.innerText = formatTimer(Math.round(res.match.time_remaining || 0));
+                            let serverTime = Math.round(res.match.time_remaining || 0);
+                            // Selalu reset dari server agar tidak drift
+                            syncLocalTimer(serverTime, res.match.timer_status);
                         }
 
                         let currentTimerStatus = res.match.timer_status;
@@ -255,7 +312,14 @@
                 .catch(console.error);
         }
 
-        setInterval(updateJuriDisplay, 1500);
+        if (typeof window.Echo !== 'undefined') {
+            window.Echo.channel('system')
+                .listen('SystemStateChanged', (e) => {
+                    window.location.reload();
+                });
+            // NOTE: subscribe 'match.*' dilakukan di dalam updateJuriDisplay() setelah ID diketahui
+        }
+
         updateJuriDisplay();
     </script>
 </body>

@@ -48,6 +48,7 @@ class PenilaianAtletController extends Controller
             return response()->json(['success' => false, 'message' => $res['message']], 400);
         }
 
+        event(new \App\Events\MatchUpdated($request->id_pertandingan));
         return response()->json(['success' => true, 'message' => $res['message']]);
     }
 
@@ -63,6 +64,7 @@ class PenilaianAtletController extends Controller
             return response()->json(['success' => false, 'message' => $res['message']], 400);
         }
 
+        event(new \App\Events\MatchUpdated($request->id_pertandingan));
         return response()->json(['success' => true, 'message' => $res['message']]);
     }
 
@@ -78,6 +80,7 @@ class PenilaianAtletController extends Controller
             return response()->json(['success' => false, 'message' => $res['message']], 400);
         }
 
+        event(new \App\Events\MatchUpdated($request->id_pertandingan));
         return response()->json(['success' => true, 'message' => $res['message']]);
     }
 
@@ -93,6 +96,7 @@ class PenilaianAtletController extends Controller
             return response()->json(['success' => false, 'message' => $res['message']], 400);
         }
 
+        event(new \App\Events\MatchUpdated($request->id_pertandingan));
         return response()->json(['success' => true, 'message' => $res['message']]);
     }
 
@@ -108,6 +112,7 @@ class PenilaianAtletController extends Controller
             return response()->json(['success' => false, 'message' => $res['message']], 400);
         }
 
+        event(new \App\Events\MatchUpdated($request->id_pertandingan));
         return response()->json(['success' => true, 'message' => $res['message']]);
     }
 
@@ -123,6 +128,7 @@ class PenilaianAtletController extends Controller
             return response()->json(['success' => false, 'message' => $res['message']], 400);
         }
 
+        event(new \App\Events\MatchUpdated($request->id_pertandingan));
         return response()->json(['success' => true, 'message' => $res['message']]);
     }
 
@@ -138,6 +144,7 @@ class PenilaianAtletController extends Controller
             return response()->json(['success' => false, 'message' => $res['message']], 400);
         }
 
+        event(new \App\Events\MatchUpdated($request->id_pertandingan));
         return response()->json(['success' => true, 'message' => $res['message']]);
     }
 
@@ -153,6 +160,7 @@ class PenilaianAtletController extends Controller
             return response()->json(['success' => false, 'message' => $res['message']], 400);
         }
 
+        event(new \App\Events\MatchUpdated($request->id_pertandingan));
         return response()->json(['success' => true, 'message' => $res['message']]);
     }
 

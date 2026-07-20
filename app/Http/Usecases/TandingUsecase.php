@@ -330,6 +330,9 @@ class TandingUsecase extends Usecase
 
             DB::commit();
 
+            // BUG FIX: Siarkan perubahan sistem agar semua monitor/juri memuat ulang dan menghapus timer pertandingan ini
+            event(new \App\Events\SystemStateChanged());
+
             return Response::buildSuccess(
                 message: ResponseEntity::SUCCESS_MESSAGE_DELETED
             );
@@ -393,6 +396,8 @@ class TandingUsecase extends Usecase
             }
 
             DB::commit();
+
+            event(new \App\Events\SystemStateChanged());
 
             return Response::buildSuccess(
                 message: ResponseEntity::SUCCESS_MESSAGE_UPDATED

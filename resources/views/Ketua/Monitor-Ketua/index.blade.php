@@ -12,6 +12,7 @@
     <style>
         body { font-family: 'Poppins', sans-serif; }
     </style>
+    @vite(['resources/js/app.js'])
 </head>
 <body class="bg-gray-100 min-h-screen flex flex-col">
 
@@ -79,6 +80,36 @@
         let previousRound = null;
         let currentMatchId = null;
         let currentMatchStatus = null;
+        let subscribedMatchId = null; // Lacak kanal yang sudah disubscribe
+
+        let localTimeRemaining = 0;
+        let localTimerStatus = 'stopped';
+        let localTimerInterval = null;
+
+        // Selalu reset interval dari waktu server agar tidak drift
+        function syncLocalTimer(serverTime, timerStatus) {
+            localTimeRemaining = serverTime;
+            localTimerStatus = timerStatus;
+
+            if (localTimerInterval) {
+                clearInterval(localTimerInterval);
+                localTimerInterval = null;
+            }
+
+            if (timerStatus === 'playing' && localTimeRemaining > 0) {
+                localTimerInterval = setInterval(() => {
+                    if (localTimeRemaining > 0) {
+                        localTimeRemaining--;
+                        setText('timer-value', formatTimer(localTimeRemaining));
+                    } else {
+                        clearInterval(localTimerInterval);
+                        localTimerInterval = null;
+                    }
+                }, 1000);
+            }
+
+            setText('timer-value', formatTimer(localTimeRemaining));
+        }
 
         const awardColors = [
             'bg-[#ff3b8f] text-white', // pink
@@ -122,8 +153,8 @@
             let html = '<div class="evt-container">';
             events.forEach(evt => {
                 if (evt.sah) {
-                    // Sah: colored box based on award_id
-                    const colorClass = evt.award_id ? getColorForAward(evt.award_id) : (athlete === 'blue' ? 'evt-sah-blue' : 'evt-sah-red');
+                    // Sah: colored box based on window_id
+                    const colorClass = evt.window_id ? getColorForAward(evt.window_id) : (athlete === 'blue' ? 'evt-sah-blue' : 'evt-sah-red');
                     html += `<span class="evt-box ${colorClass}">${evt.value}</span>`;
                 } else {
                     // Tidak sah: strikethrough style
@@ -243,6 +274,18 @@
                     currentMatchId = data.match.id;
                     currentMatchStatus = data.match.status;
 
+                    // === SUBSCRIBE ke kanal pertandingan ini (setelah ID diketahui) ===
+                    if (typeof window.Echo !== 'undefined' && subscribedMatchId !== currentMatchId) {
+                        if (subscribedMatchId !== null) {
+                            window.Echo.leaveChannel('match.' + subscribedMatchId);
+                        }
+                        window.Echo.channel('match.' + currentMatchId)
+                            .listen('MatchUpdated', (e) => {
+                                updateMonitor();
+                            });
+                        subscribedMatchId = currentMatchId;
+                    }
+
                     // === HEADER ===
                     setText('header-match-id', 'MATCH - ' + (data.match.partai || '00'));
 
@@ -334,7 +377,9 @@
 
                     // === TIMER ===
                     const timeRemaining = data.timer.time_remaining ?? 0;
-                    setText('timer-value', formatTimer(Math.round(timeRemaining)));
+                    // Selalu reset dari server agar tidak drift
+                    syncLocalTimer(Math.round(timeRemaining), data.timer.status);
+                    localTimerStatus = data.timer.status;
 
                     let currentTimerStatus = data.timer.status;
                     if (previousTimerStatus === 'playing' && (currentTimerStatus === 'stopped' || currentTimerStatus === 'paused')) {
@@ -358,8 +403,15 @@
                 });
         }
 
-        // Poll setiap 1 detik
-        setInterval(updateMonitor, 1000);
+        if (typeof window.Echo !== 'undefined') {
+            window.Echo.channel('system')
+                .listen('SystemStateChanged', (e) => {
+                    window.location.reload();
+                });
+            // NOTE: subscribe ke 'match.*' dilakukan di dalam updateMonitor()
+            // setelah currentMatchId diketahui dari respons server.
+        }
+        
         updateMonitor();
     </script>
 

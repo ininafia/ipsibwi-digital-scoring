@@ -90,7 +90,7 @@
             <button
                 type="submit"
                 class="bg-sky-400 hover:bg-sky-500 text-white font-semibold px-10 py-3 rounded-lg shadow transition">
-                Simpan Data
+                Save
             </button>
         </div>
 

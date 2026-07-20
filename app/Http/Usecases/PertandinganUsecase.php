@@ -223,6 +223,15 @@ class PertandinganUsecase extends Usecase
             );
         }
 
+        $catatanFinalisasi = $resultData['catatan_finalisasi'] ?? null;
+
+        // BUG-1 FIX: Resolve expired events DI LUAR transaksi utama.
+        // Memanggil resolveExpiredEvents() di dalam beginTransaction() menyebabkan
+        // nested transaction (MySQL tidak mendukung secara nyata) yang bisa
+        // membuat commit/rollback berperilaku tidak terduga.
+        $juriUsecase = new \App\Http\Usecases\JuriUsecase();
+        $juriUsecase->resolveExpiredEvents($id);
+
         DB::beginTransaction();
 
         try {
@@ -245,28 +254,7 @@ class PertandinganUsecase extends Usecase
                 );
             }
 
-            // 2. Cek timer harus sudah berhenti
-            $timerState = \Illuminate\Support\Facades\Cache::get('current_timer_state_' . $id, ['status' => 'stopped', 'round' => 1]);
-            if ($timerState['status'] === 'playing') {
-                DB::rollback();
-                return Response::buildErrorService(
-                    'Timer masih berjalan. Hentikan timer terlebih dahulu sebelum finalisasi.'
-                );
-            }
-
-            if ($jenisKemenangan === 'angka' && $timerState['round'] < 3) {
-                // Untuk kemenangan angka, sebaiknya pertandingan selesaikan semua ronde.
-                // Atau jika timer dihentikan di ronde 3, pastikan timer stopped.
-                // Jika masih ronde 1 atau 2 dan timer dihentikan lalu finalisasi kemenangan angka, kita tolak kecuali ada kebijakan khusus.
-                DB::rollback();
-                return Response::buildErrorService(
-                    'Kemenangan angka hanya bisa dilakukan setelah ronde 3 selesai.'
-                );
-            }
-
-            // 3. Resolve semua pending score events untuk pertandingan ini
-            $juriUsecase = new \App\Http\Usecases\JuriUsecase();
-            $juriUsecase->resolveExpiredEvents();
+            // Cek apakah masih ada score_events pending setelah resolusi
 
             // 4. Cek apakah masih ada score_events pending setelah resolusi
             $pendingCount = DB::table('score_events')
@@ -321,16 +309,17 @@ class PertandinganUsecase extends Usecase
                 ->where('id', $id)
                 ->whereNull('deleted_at')
                 ->update([
-                    'status'            => 'finished',
-                    'winner_corner'     => $sudutPemenang,
-                    'winner_name'       => $namaPemenang,
-                    'winning_method'    => $jenisKemenangan,
-                    'final_score_biru'  => $skorBiru,
-                    'final_score_merah' => $skorMerah,
-                    'finalized_by'      => session('user_id'),
-                    'finalized_at'      => now(),
-                    'updated_by'        => session('user_id'),
-                    'updated_at'        => now(),
+                    'status'              => 'finished',
+                    'winner_corner'       => $sudutPemenang,
+                    'winner_name'         => $namaPemenang,
+                    'winning_method'      => $jenisKemenangan,
+                    'final_score_biru'    => $skorBiru,
+                    'final_score_merah'   => $skorMerah,
+                    'catatan_finalisasi'  => $catatanFinalisasi,
+                    'finalized_by'        => session('user_id'),
+                    'finalized_at'        => now(),
+                    'updated_by'          => session('user_id'),
+                    'updated_at'          => now(),
                 ]);
 
             if (!$updated) {
@@ -343,6 +332,10 @@ class PertandinganUsecase extends Usecase
             $akurasiUsecase->calculateForMatch($id);
 
             DB::commit();
+
+            // BUG-9 FIX: Bersihkan cache timer setelah finalisasi agar
+            // pertandingan berikutnya tidak menampilkan waktu sisa yang lama.
+            \Illuminate\Support\Facades\Cache::forget('current_timer_state_' . $id);
 
             return Response::buildSuccess(
                 message: "Pertandingan berhasil difinalisasi"

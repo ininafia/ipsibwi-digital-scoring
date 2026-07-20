@@ -7,6 +7,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet"
           href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+    @vite(['resources/js/app.js'])
 </head>
 <body class="bg-gray-100 flex flex-col min-h-screen m-0">
 
@@ -70,6 +71,39 @@
     let previousTimeRemaining = null;
     let previousRound = null;
 
+    let localTimeRemaining = 0;
+    let localTimerStatus = 'stopped';
+    let localTimerInterval = null;
+
+    // Selalu reset interval dari waktu server agar tidak drift
+    function syncLocalTimer(serverTime, timerStatus) {
+        localTimeRemaining = serverTime;
+        localTimerStatus = timerStatus;
+
+        if (localTimerInterval) {
+            clearInterval(localTimerInterval);
+            localTimerInterval = null;
+        }
+
+        if (timerStatus === 'playing' && localTimeRemaining > 0) {
+            localTimerInterval = setInterval(() => {
+                if (localTimeRemaining > 0) {
+                    localTimeRemaining--;
+                    const minutes = Math.floor(localTimeRemaining / 60);
+                    const seconds = localTimeRemaining % 60;
+                    document.getElementById('monitor-timer').innerText = `${String(minutes).padStart(2, '0')} : ${String(seconds).padStart(2, '0')}`;
+                } else {
+                    clearInterval(localTimerInterval);
+                    localTimerInterval = null;
+                }
+            }, 1000);
+        }
+
+        const minutes = Math.floor(localTimeRemaining / 60);
+        const seconds = localTimeRemaining % 60;
+        document.getElementById('monitor-timer').innerText = `${String(minutes).padStart(2, '0')} : ${String(seconds).padStart(2, '0')}`;
+    }
+
     function updateMonitorDisplay() {
         fetch('{{ route('operator.monitor-display.data') }}?_t=' + new Date().getTime())
             .then(res => res.json())
@@ -77,6 +111,9 @@
                 if(res.success && res.data && res.match) {
                     
                     // Update Header / Match Data
+                    if ('match.' + res.match.id !== currentEchoChannel) {
+                        subscribeToMatch(res.match.id);
+                    }
                     document.getElementById('monitor-nama-biru').innerText = res.match.sudut_biru && res.match.sudut_biru !== '-' ? res.match.sudut_biru : 'Nama Atlet';
                     document.getElementById('monitor-sekolah-biru').innerText = res.match.kontingen_biru && res.match.kontingen_biru !== '-' ? res.match.kontingen_biru : 'Asal Kontingen';
                     document.getElementById('monitor-nama-merah').innerText = res.match.sudut_merah && res.match.sudut_merah !== '-' ? res.match.sudut_merah : 'Nama Atlet';
@@ -94,10 +131,9 @@
                             }
                         }
                     }
-                    const time = res.match.time_remaining || 0;
-                    const minutes = Math.floor(time / 60);
-                    const seconds = time % 60;
-                    document.getElementById('monitor-timer').innerText = `${String(minutes).padStart(2, '0')} : ${String(seconds).padStart(2, '0')}`;
+                    
+                    // Selalu reset dari server agar tidak drift
+                    syncLocalTimer(Math.round(res.match.time_remaining || 0), res.match.timer_status);
                     // Update Score Box
                     let elBiru = document.getElementById('skor_biru');
                     if (elBiru) elBiru.innerText = res.data.skor_biru || 0;
@@ -248,7 +284,31 @@
         }
     }
 
-    setInterval(updateMonitorDisplay, 1000);
+    let currentEchoChannel = null;
+
+    if (typeof window.Echo !== 'undefined') {
+        window.Echo.channel('system')
+            .listen('SystemStateChanged', (e) => {
+                window.location.reload();
+            });
+            
+
+    }
+
+    function subscribeToMatch(matchId) {
+        if (typeof window.Echo === 'undefined' || !matchId) return;
+        
+        if (currentEchoChannel) {
+            window.Echo.leave(currentEchoChannel);
+        }
+        
+        currentEchoChannel = 'match.' + matchId;
+        window.Echo.channel(currentEchoChannel)
+            .listen('MatchUpdated', (e) => {
+                updateMonitorDisplay();
+            });
+    }
+
     updateMonitorDisplay();
 </script>
 

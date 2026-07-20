@@ -70,6 +70,8 @@ class PertandinganController extends Controller
         // Reset timer cache
         \Illuminate\Support\Facades\Cache::forget('current_timer_state_' . $id);
 
+        event(new \App\Events\MatchUpdated($id));
+
         // 3. Tampilkan halaman play dengan data pertandingan
         return view('Operator.pertandingan.play', [
             'data' => (object) $result['data'],
@@ -79,8 +81,9 @@ class PertandinganController extends Controller
     {
         // Hanya jenis_kemenangan dari form; pemenang dihitung server-side dari skor DB (Kecuali Disk/WMP dsb)
         $resultData = [
-            'jenis_kemenangan' => $request->input('jenis_kemenangan'),
-            'sudut_pemenang'   => $request->input('sudut_pemenang'),
+            'jenis_kemenangan'   => $request->input('jenis_kemenangan'),
+            'sudut_pemenang'     => $request->input('sudut_pemenang'),
+            'catatan_finalisasi' => $request->input('catatan_finalisasi'),
         ];
         
         $result = $this->usecase->finalizeMatch($id, $resultData);
@@ -90,6 +93,8 @@ class PertandinganController extends Controller
                 ->back()
                 ->with('error', $result['message'] ?? 'Gagal melakukan finalisasi');
         }
+
+        event(new \App\Events\MatchUpdated($id));
 
         return redirect()
             ->route('operator.tanding.index', ['tab' => 'finished'])

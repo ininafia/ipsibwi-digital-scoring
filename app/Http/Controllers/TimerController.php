@@ -31,6 +31,7 @@ class TimerController extends Controller
         $match = \Illuminate\Support\Facades\DB::table('pertandingan')
             ->where('status', 'playing')
             ->whereNull('deleted_at')
+            ->orderBy('updated_at', 'desc')
             ->first();
 
         return view('Timer.index', compact('match'));
@@ -45,9 +46,21 @@ class TimerController extends Controller
             $match = \Illuminate\Support\Facades\DB::table('pertandingan')
                 ->where('status', 'playing')
                 ->whereNull('deleted_at')
+                ->orderBy('updated_at', 'desc')
                 ->first();
             if (!$match) return response()->json(['error' => 'No active match'], 404);
             $matchId = $match->id;
+        } else {
+            // BUG-6 FIX: Validasi bahwa id_pertandingan yang dikirim timer
+            // memang statusnya 'playing' agar timer tidak manipulasi pertandingan lain
+            $match = \Illuminate\Support\Facades\DB::table('pertandingan')
+                ->where('id', $matchId)
+                ->where('status', 'playing')
+                ->whereNull('deleted_at')
+                ->first();
+            if (!$match) {
+                return response()->json(['error' => 'Pertandingan tidak ditemukan atau tidak sedang berjalan'], 403);
+            }
         }
 
         $data = $request->only(['round', 'time_remaining', 'status']);
@@ -55,6 +68,10 @@ class TimerController extends Controller
         
         if (isset($result['success']) && !$result['success']) {
             return response()->json($result, $result['code'] ?? 400);
+        }
+        
+        if (!empty($result['should_broadcast'])) {
+            event(new \App\Events\MatchUpdated($matchId));
         }
         
         return response()->json($result);

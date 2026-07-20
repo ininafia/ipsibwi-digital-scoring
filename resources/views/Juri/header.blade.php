@@ -2,7 +2,7 @@
 
     <!-- LOGO -->
     <div class="flex items-center gap-4">
-        <img src="{{ asset('images/logos/LOGO IPSI.png') }}" class="w-9 h-9 object-contain" alt="Logo IPSI">
+        <img src="{{ asset('images/logos/LOGO IPSI.png') }}" class="w-[52px] h-[52px] object-contain" alt="Logo IPSI">
         <div id="timer-value" class="text-[20px] font-bold text-red-600 bg-white px-3 py-1 rounded shadow-inner border border-red-200">
             00:00
         </div>

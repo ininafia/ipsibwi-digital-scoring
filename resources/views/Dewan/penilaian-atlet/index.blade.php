@@ -7,6 +7,7 @@
 
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+    @vite(['resources/js/app.js'])
 </head>
 
 <body class="bg-white min-h-screen font-sans">
@@ -30,8 +31,10 @@
 
     <script>
         let currentMatchId = '{{ $pertandingan ? $pertandingan->id : "" }}';
+        let subscribedMatchId = null;
         let isActionPending = false;
         let latestDewanFetchId = 0;
+        let currentRound = 1;
 
         function formatTimer(totalSeconds) {
             if (!totalSeconds || totalSeconds < 0) return '00:00';
@@ -62,6 +65,37 @@
         let previousTimeRemaining = null;
         let previousRound = null;
 
+        let localTimeRemaining = 0;
+        let localTimerStatus = 'stopped';
+        let localTimerInterval = null;
+
+        // Selalu reset interval dari waktu server agar tidak drift
+        function syncLocalTimer(serverTime, timerStatus) {
+            localTimeRemaining = serverTime;
+            localTimerStatus = timerStatus;
+
+            if (localTimerInterval) {
+                clearInterval(localTimerInterval);
+                localTimerInterval = null;
+            }
+
+            if (timerStatus === 'playing' && localTimeRemaining > 0) {
+                localTimerInterval = setInterval(() => {
+                    if (localTimeRemaining > 0) {
+                        localTimeRemaining--;
+                        let timerVal = document.getElementById('timer-value');
+                        if (timerVal) timerVal.innerText = formatTimer(localTimeRemaining);
+                    } else {
+                        clearInterval(localTimerInterval);
+                        localTimerInterval = null;
+                    }
+                }, 1000);
+            }
+
+            let timerVal = document.getElementById('timer-value');
+            if (timerVal) timerVal.innerText = formatTimer(localTimeRemaining);
+        }
+
         function updateDewanUI() {
             if (isActionPending) return;
             let currentFetchId = ++latestDewanFetchId;
@@ -80,6 +114,14 @@
 
                         currentMatchId = matchData.id || 0;
 
+                        // Subscribe ke kanal match yang benar (setelah ID diketahui)
+                        if (typeof window.Echo !== 'undefined' && currentMatchId && subscribedMatchId != currentMatchId) {
+                            if (subscribedMatchId) window.Echo.leaveChannel('match.' + subscribedMatchId);
+                            window.Echo.channel('match.' + currentMatchId)
+                                .listen('MatchUpdated', (e) => { updateDewanUI(); });
+                            subscribedMatchId = currentMatchId;
+                        }
+
                         // Update Nama Dewan di Panel
                         if (dewanData) {
                             document.getElementById('dewan-nama-posisi').innerText = dewanData.posisi;
@@ -89,7 +131,9 @@
 
                         let timerVal = document.getElementById('timer-value');
                         if(timerVal) {
-                            timerVal.innerText = formatTimer(Math.round(matchData.time_remaining || 0));
+                            let serverTime = Math.round(matchData.time_remaining || 0);
+                            // Selalu reset dari server agar tidak drift
+                            syncLocalTimer(serverTime, matchData.timer_status);
                         }
 
                         let currentTimerStatus = matchData.timer_status;
@@ -99,7 +143,7 @@
                         previousTimerStatus = currentTimerStatus;
 
                         let currentTimeRemaining = matchData.time_remaining;
-                        let currentRound = matchData.round || 1;
+                        currentRound = matchData.round || 1;
 
                         if (previousRound !== null && currentRound > previousRound) {
                             showTimerNotification("Waktu Babak " + previousRound + " telah habis!");
@@ -172,7 +216,14 @@
                 .catch(console.error);
         }
 
-        setInterval(updateDewanUI, 1000);
+        if (typeof window.Echo !== 'undefined') {
+            window.Echo.channel('system')
+                .listen('SystemStateChanged', (e) => {
+                    window.location.reload();
+                });
+            // NOTE: subscribe 'match.*' dilakukan di dalam updateDewanUI() setelah ID diketahui
+        }
+        
         updateDewanUI();
     </script>
 </body>

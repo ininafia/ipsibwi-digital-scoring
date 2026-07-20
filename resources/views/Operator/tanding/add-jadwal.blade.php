@@ -56,7 +56,7 @@
             {{-- ========================= --}}
             {{-- LEFT --}}
             {{-- ========================= --}}
-            <div class="space-y-5">
+            <div class="space-y-3">
 
                 {{-- NOMOR --}}
                 <div>
@@ -70,7 +70,7 @@
                         name="nomor"
                         value="{{ old('nomor') }}"
                         placeholder="Masukkan nomor"
-                        class="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-sky-300 outline-none">
+                        class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-sky-300 outline-none">
 
                 </div>
 
@@ -89,7 +89,7 @@
                         maxlength="3"
                         pattern="\d{3}"
                         title="Format 3 digit angka, contoh: 001"
-                        class="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-sky-300 outline-none">
+                        class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-sky-300 outline-none">
                 </div>
 
                 {{-- GELANGGANG --}}
@@ -101,7 +101,7 @@
 
                     <select
                         name="gelanggang"
-                        class="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-sky-300 outline-none">
+                        class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-sky-300 outline-none">
 
                         <option value="">
                             Pilih Gelanggang
@@ -132,7 +132,7 @@
 
                     <select
                         name="kelas"
-                        class="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-sky-300 outline-none">
+                        class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-sky-300 outline-none">
 
                         <option value="">
                             Pilih Kelas
@@ -168,7 +168,7 @@
 
                     <select
                         name="golongan"
-                        class="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-sky-300 outline-none">
+                        class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-sky-300 outline-none">
 
                         <option value="">
                             Pilih Golongan
@@ -202,7 +202,7 @@
             {{-- ========================= --}}
             {{-- RIGHT --}}
             {{-- ========================= --}}
-            <div class="space-y-5">
+            <div class="space-y-3">
 
                 {{-- JENIS KELAMIN --}}
                 <div>
@@ -213,7 +213,7 @@
 
                     <select
                         name="jenis_kelamin"
-                        class="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-sky-300 outline-none">
+                        class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-sky-300 outline-none">
 
                         <option value="">
                             Pilih Jenis Kelamin
@@ -252,7 +252,7 @@
                         value="{{ old('sudut_biru') }}"
                         placeholder="Masukkan nama atlet biru"
                         oninput="this.value = this.value.replace(/\b\w/g, l => l.toUpperCase())"
-                        class="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-sky-300 outline-none">
+                        class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-sky-300 outline-none">
 
                 </div>
 
@@ -269,7 +269,7 @@
                         value="{{ old('kontingen_biru') }}"
                         placeholder="Masukkan kontingen biru"
                         oninput="this.value = this.value.replace(/\b\w/g, l => l.toUpperCase())"
-                        class="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-sky-300 outline-none">
+                        class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-sky-300 outline-none">
 
                 </div>
 
@@ -286,7 +286,7 @@
                         value="{{ old('sudut_merah') }}"
                         placeholder="Masukkan nama atlet merah"
                         oninput="this.value = this.value.replace(/\b\w/g, l => l.toUpperCase())"
-                        class="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-sky-300 outline-none">
+                        class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-sky-300 outline-none">
 
                 </div>
 
@@ -303,7 +303,7 @@
                         value="{{ old('kontingen_merah') }}"
                         placeholder="Masukkan kontingen merah"
                         oninput="this.value = this.value.replace(/\b\w/g, l => l.toUpperCase())"
-                        class="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-sky-300 outline-none">
+                        class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-sky-300 outline-none">
 
                 </div>
 
@@ -316,9 +316,9 @@
 
             <button
                 type="submit"
-                class="bg-sky-400 hover:bg-sky-500 text-white font-semibold px-10 py-3 rounded-lg shadow transition">
+                class="bg-sky-400 hover:bg-sky-500 text-white font-semibold px-6 py-2 text-sm rounded-lg shadow transition">
 
-                Save Jadwal
+                Save
 
             </button>
 

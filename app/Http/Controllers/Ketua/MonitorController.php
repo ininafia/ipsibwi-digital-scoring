@@ -260,14 +260,14 @@ class MonitorController extends Controller
                 ->orderBy('server_time', 'asc')
                 ->get();
 
-            // Ambil semua vote judge_id untuk menentukan sah/tidak sah
-            $allVoteJudgeIds = [];
+            // Lookup sah/tidak-sah berdasarkan score_event_id di score_award_votes
+            $allVoteEventIds = [];
             if (!empty($awardIds)) {
                 $allVoteRows = DB::table('score_award_votes')
                     ->whereIn('award_id', $awardIds)
                     ->get();
                 foreach ($allVoteRows as $vr) {
-                    $allVoteJudgeIds[$vr->award_id . '_' . $vr->judge_id] = true;
+                    $allVoteEventIds[$vr->score_event_id] = true;
                 }
             }
 
@@ -291,16 +291,16 @@ class MonitorController extends Controller
                 if (!$juriPosisi) continue;
 
                 $isSah = false;
-                if ($evt->status === 'consumed' && $evt->award_id) {
-                    $key = $evt->award_id . '_' . $evt->judge_id;
-                    $isSah = isset($allVoteJudgeIds[$key]);
+                if ($evt->status === 'consumed') {
+                    // Sah jika event ini tercatat di score_award_votes
+                    $isSah = isset($allVoteEventIds[$evt->id]);
                 }
 
                 $eventHistory[$juriPosisi][$evt->round][$evt->athlete][] = [
-                    'value' => $evt->score_value,
-                    'sah' => $isSah,
+                    'value'     => $evt->score_value,
+                    'sah'       => $isSah,
                     'technique' => $evt->technique,
-                    'award_id' => $evt->award_id,
+                    'window_id' => $evt->window_id,
                 ];
             }
 
@@ -313,17 +313,21 @@ class MonitorController extends Controller
             }
             foreach ($awards as $awd) {
                 $awardHistory[$awd->round][$awd->athlete][] = [
-                    'value' => $awd->score_value,
-                    'award_id' => (string) $awd->id,
+                    'value'    => $awd->score_value,
+                    'award_id' => (string) $awd->id,  // ID dari score_awards, masih valid
                 ];
             }
 
-            // Pemenang
+            // Pemenang — BUG-4 FIX: baca winner_corner dari DB saat finished/final
+            // agar kemenangan Disk/WMP/dll tampil benar, bukan dihitung ulang dari skor
             $pemenang = 'Waiting....';
             if (in_array($match->status, ['finished', 'final'])) {
-                if ($grandTotalBlue > $grandTotalRed) {
+                if ($match->winner_name) {
+                    // Gunakan nama pemenang yang tersimpan saat finalisasi
+                    $pemenang = strtoupper($match->winner_name);
+                } elseif ($match->winner_corner === 'biru') {
                     $pemenang = $match->sudut_biru ?? 'Sudut Biru';
-                } elseif ($grandTotalRed > $grandTotalBlue) {
+                } elseif ($match->winner_corner === 'merah') {
                     $pemenang = $match->sudut_merah ?? 'Sudut Merah';
                 } else {
                     $pemenang = 'DRAW';

@@ -17,7 +17,7 @@ function renderEvents($events, $athlete) {
     $html = '<div class="flex flex-wrap gap-1 justify-start items-center p-1">';
     foreach ($events as $evt) {
         if ($evt['sah']) {
-            $html .= '<span class="inline-flex items-center justify-center min-w-[20px] h-5 px-1 text-xs font-bold rounded-sm ' . getBoxColor($evt['award_id'], $athlete, true) . '">' . $evt['value'] . '</span>';
+            $html .= '<span class="inline-flex items-center justify-center min-w-[20px] h-5 px-1 text-xs font-bold rounded-sm ' . getBoxColor($evt['window_id'], $athlete, true) . '">' . $evt['value'] . '</span>';
         } else {
             $html .= '<span class="inline-flex items-center justify-center min-w-[20px] h-5 px-1 text-xs font-bold text-gray-500 line-through">' . $evt['value'] . '</span>';
         }
@@ -47,7 +47,7 @@ function renderAwards($awards, $athlete) {
             </svg>
             KEMBALI
         </a>
-        <a href="{{ route('operator.tanding.finished.export-pdf', $match->id) }}" class="bg-[#ffcc00] hover:bg-yellow-500 text-white font-bold py-2 px-8 rounded text-sm tracking-widest shadow-md inline-block">
+        <a href="{{ route('operator.tanding.finished.export-pdf', $match->id) }}" target="_blank" class="bg-[#ffcc00] hover:bg-yellow-500 text-white font-bold py-2 px-8 rounded text-sm tracking-widest shadow-md inline-block">
             PRINT
         </a>
     </div>

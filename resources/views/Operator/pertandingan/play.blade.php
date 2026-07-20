@@ -131,10 +131,10 @@
 <div id="modalFinalisasi"
      class="hidden fixed inset-0 bg-black/40 flex items-center justify-center z-50">
 
-    <div class="bg-white rounded-xl shadow-2xl w-[620px] p-6 relative">
+    <div class="bg-white rounded-xl shadow-2xl w-[640px] p-6 relative">
 
         {{-- JUDUL MODAL --}}
-        <h2 class="text-[18px] font-bold text-gray-800 mb-5">Winners Score</h2>
+        <h2 class="text-[18px] font-bold text-gray-800 mb-5">Finalisasi Pertandingan</h2>
 
         {{-- TOMBOL TUTUP --}}
         <button
@@ -154,9 +154,9 @@
                     <div class="w-[90px] h-[70px] bg-blue-600 rounded-lg flex items-center justify-center">
                         <span class="text-[36px] font-bold text-white" id="scoreBlue">0</span>
                     </div>
-                    <p class="text-[10px] text-gray-500 mt-1">Winner Corner</p>
+                    <p class="text-[10px] text-gray-500 mt-1">Skor Biru</p>
                     <span class="inline-block mt-1 px-3 py-[2px] bg-blue-600 text-white text-[11px] font-bold rounded">
-                        SCORE
+                        BIRU
                     </span>
                 </div>
 
@@ -171,9 +171,9 @@
                     <div class="w-[90px] h-[70px] bg-red-600 rounded-lg flex items-center justify-center">
                         <span class="text-[36px] font-bold text-white" id="scoreRed">0</span>
                     </div>
-                    <p class="text-[10px] text-gray-500 mt-1">Stage Winner</p>
+                    <p class="text-[10px] text-gray-500 mt-1">Skor Merah</p>
                     <span class="inline-block mt-1 px-3 py-[2px] bg-gray-200 text-gray-700 text-[11px] font-bold rounded">
-                        SCORE
+                        MERAH
                     </span>
                 </div>
 
@@ -181,19 +181,6 @@
 
             {{-- FORM DROPDOWN --}}
             <div class="flex-1 space-y-4 mt-1">
-
-                {{-- SUDUT PEMENANG --}}
-                <div class="flex items-center gap-3">
-                    <label class="text-[14px] font-semibold text-gray-700 w-[140px] shrink-0">
-                        Sudut Pemenang
-                    </label>
-                    <div class="flex-1">
-                        <div id="sudutPemenangLabel" class="border border-gray-300 rounded px-3 py-1.5 text-sm font-bold text-gray-800 bg-gray-50 shadow-sm flex items-center gap-2 max-w-[200px] uppercase">
-                            <i class="fa-solid fa-trophy text-gray-400 text-xs"></i>
-                            <span id="sudutPemenangText">-</span>
-                        </div>
-                    </div>
-                </div>
 
                 {{-- JENIS KEMENANGAN --}}
                 <div class="flex items-center gap-3">
@@ -203,15 +190,54 @@
                     <div class="flex-1">
                         <select id="jenisKemenangan"
                                 name="jenis_kemenangan"
+                                onchange="handleJenisKemenanganChange(this.value)"
                                 class="border border-gray-300 rounded px-2 py-1.5 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-400 max-w-[200px] w-full bg-white shadow-sm">
                             <option value="">-- Pilih --</option>
-                        <option value="angka">Angka</option>
-                        <option value="teknik">Teknik</option>
-                        <option value="mutlak">Mutlak</option>
-                        <option value="wmp">Wmp</option>
-                        <option value="disk">Disk</option>
-                        <option value="undur_diri">Undur Diri</option>
-                    </select>
+                            <option value="angka">Angka</option>
+                            <option value="teknik">Teknik</option>
+                            <option value="mutlak">Mutlak</option>
+                            <option value="wmp">Wmp</option>
+                            <option value="disk">Disk (Diskualifikasi)</option>
+                            <option value="undur_diri">Undur Diri</option>
+                        </select>
+                    </div>
+                </div>
+
+                {{-- SUDUT PEMENANG --}}
+                <div class="flex items-center gap-3">
+                    <label class="text-[14px] font-semibold text-gray-700 w-[140px] shrink-0">
+                        Sudut Pemenang
+                    </label>
+                    <div class="flex-1">
+                        {{-- Info otomatis (hanya muncul saat jenis = angka) --}}
+                        <div id="sudutPemenangAuto" class="hidden rounded px-4 py-2 text-sm font-extrabold shadow-sm flex items-center justify-center gap-2 max-w-[200px] w-full transition-all duration-300">
+                            <i id="sudutPemenangAutoIcon" class="fa-solid fa-trophy"></i>
+                            <span id="sudutPemenangAutoText" class="tracking-wide uppercase">Dihitung otomatis</span>
+                        </div>
+                        {{-- Dropdown manual (aktif untuk kemenangan non-angka) --}}
+                        <select id="sudutPemenangManual"
+                                class="border border-gray-300 rounded px-3 py-2 text-sm font-semibold text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-400 max-w-[200px] w-full bg-white shadow-sm transition-all cursor-pointer">
+                            <option value="">-- Pilih Pemenang --</option>
+                            <option value="biru">🔵 Sudut Biru</option>
+                            <option value="merah">🔴 Sudut Merah</option>
+                        </select>
+                        <p id="sudutPemenangHint" class="text-[11px] text-orange-600 mt-1 hidden">
+                            ⚠️ Pilih pemenang secara manual karena bukan kemenangan angka.
+                        </p>
+                    </div>
+                </div>
+
+                {{-- CATATAN FINALISASI --}}
+                <div class="flex items-start gap-3">
+                    <label class="text-[14px] font-semibold text-gray-700 w-[140px] shrink-0 pt-1">
+                        Catatan
+                        <span class="text-gray-400 text-[11px] font-normal">(opsional)</span>
+                    </label>
+                    <div class="flex-1">
+                        <textarea id="catatanFinalisasi"
+                                  rows="2"
+                                  placeholder="Mis: Atlet merah terkena diskualifikasi karena pelanggaran berat..."
+                                  class="border border-gray-300 rounded px-2 py-1.5 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-400 w-full bg-white shadow-sm resize-none"></textarea>
                     </div>
                 </div>
 
@@ -221,10 +247,11 @@
 
         {{-- TOMBOL SAVE --}}
         <div class="flex justify-end mt-6">
-            <form method="POST" action="{{ route('operator.tanding.finalisasi.store', $data->id) }}">
+            <form method="POST" action="{{ route('operator.tanding.finalisasi.store', $data->id) }}" id="formFinalisasi">
                 @csrf
-                <input type="hidden" name="sudut_pemenang"   id="hidSudut">
-                <input type="hidden" name="jenis_kemenangan" id="hidJenis">
+                <input type="hidden" name="sudut_pemenang"      id="hidSudut">
+                <input type="hidden" name="jenis_kemenangan"    id="hidJenis">
+                <input type="hidden" name="catatan_finalisasi"  id="hidCatatan">
                 <button type="button"
                         onclick="submitFinalisasi()"
                         class="px-6 py-2 bg-gray-800 hover:bg-black text-white text-sm font-bold rounded transition">
@@ -245,40 +272,24 @@
             .then(res => res.json())
             .then(res => {
                 if (res.success && res.data) {
-                    let sBiru = res.data.skor_biru || 0;
+                    let sBiru  = res.data.skor_biru  || 0;
                     let sMerah = res.data.skor_merah || 0;
-                    
-                    document.getElementById('scoreBlue').innerText = sBiru;
-                    document.getElementById('scoreRed').innerText = sMerah;
-                    
-                    let pemenang = '';
-                    let pemenangLabel = '';
-                    if (sBiru > sMerah) {
-                        pemenang = 'biru';
-                        pemenangLabel = 'Biru';
-                    } else if (sMerah > sBiru) {
-                        pemenang = 'merah';
-                        pemenangLabel = 'Merah';
-                    } else {
-                        pemenang = 'no_win';
-                        pemenangLabel = 'Seri / No Win';
-                    }
-                    
-                    document.getElementById('sudutPemenangText').innerText = pemenangLabel;
-                    
-                    // Set color for label
-                    let labelEl = document.getElementById('sudutPemenangLabel');
-                    labelEl.classList.remove('text-blue-700', 'text-red-700', 'text-gray-800', 'bg-blue-50', 'bg-red-50', 'bg-gray-50', 'border-blue-300', 'border-red-300');
-                    if(pemenang === 'biru') {
-                        labelEl.classList.add('text-blue-700', 'bg-blue-50', 'border-blue-300');
-                    } else if(pemenang === 'merah') {
-                        labelEl.classList.add('text-red-700', 'bg-red-50', 'border-red-300');
-                    } else {
-                        labelEl.classList.add('text-gray-800', 'bg-gray-50');
-                    }
 
-                    document.getElementById('hidSudut').value = pemenang;
-                    
+                    document.getElementById('scoreBlue').innerText = sBiru;
+                    document.getElementById('scoreRed').innerText  = sMerah;
+
+                    // Reset form ke state awal
+                    document.getElementById('jenisKemenangan').value = '';
+                    document.getElementById('sudutPemenangManual').value = '';
+                    document.getElementById('catatanFinalisasi').value   = '';
+
+                    // Simpan skor untuk kebutuhan handleJenisKemenanganChange()
+                    window._finalisasiSkorBiru  = sBiru;
+                    window._finalisasiSkorMerah = sMerah;
+
+                    // Tampilkan kondisi awal (belum pilih jenis)
+                    handleJenisKemenanganChange('');
+
                     document.getElementById('modalFinalisasi').classList.remove('hidden');
                 } else {
                     alert('Gagal mengambil data skor.');
@@ -288,6 +299,57 @@
                 console.error(err);
                 alert('Terjadi kesalahan saat mengambil skor.');
             });
+    }
+
+    /**
+     * Dipanggil setiap kali jenis kemenangan berubah.
+     * - Angka   : sudut pemenang dihitung otomatis dari skor (dropdown disabled)
+     * - Lainnya : sudut pemenang WAJIB dipilih manual oleh operator
+     */
+    function handleJenisKemenanganChange(jenis) {
+        const autoEl    = document.getElementById('sudutPemenangAuto');
+        const manualEl  = document.getElementById('sudutPemenangManual');
+        const hintEl    = document.getElementById('sudutPemenangHint');
+        const autoText  = document.getElementById('sudutPemenangAutoText');
+
+        if (jenis === 'angka') {
+            // Hitung otomatis dari skor
+            const sBiru  = window._finalisasiSkorBiru  || 0;
+            const sMerah = window._finalisasiSkorMerah || 0;
+            let autoLabel = 'Seri (tidak bisa finalisasi)';
+            let autoClass = 'bg-gray-200 text-gray-600 border border-gray-300';
+            let iconClass = 'fa-solid fa-triangle-exclamation';
+
+            if (sBiru > sMerah) {
+                autoLabel = 'BIRU';
+                autoClass = 'bg-blue-600 text-white border border-blue-700 shadow-md shadow-blue-200/50';
+                iconClass = 'fa-solid fa-trophy text-yellow-300';
+            } else if (sMerah > sBiru) {
+                autoLabel = 'MERAH';
+                autoClass = 'bg-red-600 text-white border border-red-700 shadow-md shadow-red-200/50';
+                iconClass = 'fa-solid fa-trophy text-yellow-300';
+            }
+
+            autoText.innerText = autoLabel;
+            document.getElementById('sudutPemenangAutoIcon').className = iconClass;
+            autoEl.className = `rounded px-4 py-2 text-[13px] font-extrabold shadow-sm flex items-center justify-center gap-2 max-w-[200px] w-full transition-all duration-300 ${autoClass}`;
+
+            autoEl.classList.remove('hidden');
+            manualEl.classList.add('hidden');
+            hintEl.classList.add('hidden');
+        } else if (jenis === '') {
+            // Belum pilih apa-apa
+            autoEl.classList.add('hidden');
+            manualEl.classList.remove('hidden');
+            manualEl.value = '';
+            hintEl.classList.add('hidden');
+        } else {
+            // Kemenangan non-angka: WAJIB pilih manual
+            autoEl.classList.add('hidden');
+            manualEl.classList.remove('hidden');
+            manualEl.value = ''; // reset pilihan
+            hintEl.classList.remove('hidden');
+        }
     }
 
     function formatTimer(totalSeconds) {
@@ -319,6 +381,21 @@
     let previousTimeRemaining = null;
     let previousRound = null;
 
+    let localTimeRemaining = 0;
+    let localTimerStatus = 'stopped';
+    let localTimerInterval = null;
+
+    function startLocalTimer() {
+        if (!localTimerInterval) {
+            localTimerInterval = setInterval(() => {
+                if (localTimerStatus === 'playing' && localTimeRemaining > 0) {
+                    localTimeRemaining--;
+                    document.getElementById('displayTimer').innerText = formatTimer(localTimeRemaining);
+                }
+            }, 1000);
+        }
+    }
+
     function updateOperatorUI() {
         fetch('/operator/monitor-display/data?_t=' + new Date().getTime())
             .then(res => res.json())
@@ -333,8 +410,14 @@
                     if (res.match && res.match.round) {
                         document.getElementById('displayRound').innerText = 'ROUND ' + res.match.round;
 
-                        // Tampilkan timer
-                        document.getElementById('displayTimer').innerText = formatTimer(Math.round(res.match.time_remaining || 0));
+                        // Tampilkan timer lokal
+                        let serverTime = Math.round(res.match.time_remaining || 0);
+                        localTimerStatus = res.match.timer_status;
+                        
+                        // BUG FIX: Hapus threshold drift > 2 detik, paksa update dari server
+                        localTimeRemaining = serverTime;
+                        document.getElementById('displayTimer').innerText = formatTimer(localTimeRemaining);
+                        startLocalTimer();
 
                         // Tampilkan teks berjalan jika pertandingan sedang berlangsung (timer jalan)
                         let statusContainer = document.getElementById('matchStatusContainer');
@@ -369,22 +452,48 @@
             });
     }
 
-    setInterval(updateOperatorUI, 1000);
+    if (typeof window.Echo !== 'undefined') {
+        window.Echo.channel('match.' + matchId)
+            .listen('MatchUpdated', (e) => {
+                updateOperatorUI();
+            });
+    }
+
     updateOperatorUI();
 
     function submitFinalisasi() {
-        const sudut = document.getElementById('hidSudut').value;
         const jenis = document.getElementById('jenisKemenangan').value;
 
-        if (!sudut || !jenis) {
-            alert('Harap pastikan Sudut Pemenang dan Jenis Kemenangan terpilih.');
+        if (!jenis) {
+            alert('Harap pilih Jenis Kemenangan terlebih dahulu.');
             return;
         }
 
-        document.getElementById('hidJenis').value = jenis;
+        let sudut = '';
+        if (jenis === 'angka') {
+            // Pemenang dihitung otomatis server-side, tapi kita kirimkan skor yang lebih tinggi
+            // sebagai hint — backend akan mengabaikan ini dan menghitung dari DB.
+            const sBiru  = window._finalisasiSkorBiru  || 0;
+            const sMerah = window._finalisasiSkorMerah || 0;
+            if (sBiru > sMerah)        sudut = 'biru';
+            else if (sMerah > sBiru)   sudut = 'merah';
+            else {
+                alert('Skor seri! Tidak bisa difinalisasi dengan kemenangan Angka. Pilih jenis kemenangan lain atau lakukan pertandingan lanjutan.');
+                return;
+            }
+        } else {
+            sudut = document.getElementById('sudutPemenangManual').value;
+            if (!sudut) {
+                alert('Harap pilih Sudut Pemenang secara manual untuk jenis kemenangan "' + jenis + '".');
+                return;
+            }
+        }
 
-        // Submit the parent form
-        document.getElementById('hidSudut').closest('form').submit();
+        document.getElementById('hidSudut').value   = sudut;
+        document.getElementById('hidJenis').value   = jenis;
+        document.getElementById('hidCatatan').value = document.getElementById('catatanFinalisasi').value;
+
+        document.getElementById('formFinalisasi').submit();
     }
 
     // Close modal when clicking backdrop

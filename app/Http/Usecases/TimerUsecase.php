@@ -15,11 +15,13 @@ class TimerUsecase extends Usecase
     {
         $cacheKey = $this->getCacheKey($id_pertandingan);
         
-        $state = Cache::get($cacheKey, [
+        $oldState = Cache::get($cacheKey, [
             'round' => 1,
             'time_remaining' => 120,
             'status' => 'stopped'
         ]);
+
+        $state = $oldState;
 
         if (isset($data['round'])) {
             $round = (int) $data['round'];
@@ -48,9 +50,13 @@ class TimerUsecase extends Usecase
             }
         }
 
+        // BUG FIX: Selalu broadcast setiap kali Role Timer melakukan sync (tiap 1 detik)
+        // Agar Role Timer benar-benar menjadi acuan mutlak dan waktu tidak tertinggal (drift).
+        $shouldBroadcast = true;
+
         Cache::put($cacheKey, $state);
 
-        return ['success' => true, 'state' => $state, 'code' => 200];
+        return ['success' => true, 'state' => $state, 'should_broadcast' => $shouldBroadcast, 'code' => 200];
     }
 
     public function getState(int $id_pertandingan)

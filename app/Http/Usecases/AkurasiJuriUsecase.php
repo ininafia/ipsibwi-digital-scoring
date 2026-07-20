@@ -255,57 +255,68 @@ class AkurasiJuriUsecase extends Usecase
             foreach ($akurasiRecords as $row) {
                 if (!isset($groupedByMatch[$row->match_id])) {
                     $groupedByMatch[$row->match_id] = [
-                        'match_id' => $row->match_id,
-                        'partai' => $row->partai,
-                        'gelanggang' => $row->gelanggang,
-                        'kelas' => $row->kelas,
-                        'golongan' => $row->golongan,
+                        'match_id'         => $row->match_id,
+                        'partai'           => $row->partai,
+                        'gelanggang'       => $row->gelanggang,
+                        'kelas'            => $row->kelas,
+                        'golongan'         => $row->golongan,
                         'tanggal_dihitung' => $row->tanggal_dihitung,
-                        'juris' => []
+                        'juris'            => []
                     ];
                 }
 
-                // Kalkulasi per babak
+                // BUG-5 FIX: Pre-load data per babak menggunakan GROUP BY
+                // agar tidak terjadi N+1 query (6 query per juri per match sebelumnya)
+                $eventsByRound = DB::table('score_events')
+                    ->where('match_id', $row->match_id)
+                    ->where('judge_id', $row->id_petugas_pertandingan)
+                    ->where('status', '!=', 'deleted')
+                    ->selectRaw('round, COUNT(*) as total_input')
+                    ->groupBy('round')
+                    ->pluck('total_input', 'round');
+
+                $votesByRound = DB::table('score_award_votes')
+                    ->where('judge_id', $row->id_petugas_pertandingan)
+                    ->whereExists(function ($q) use ($row) {
+                        $q->select(DB::raw(1))
+                          ->from('score_awards')
+                          ->whereColumn('score_awards.id', 'score_award_votes.award_id')
+                          ->where('score_awards.match_id', $row->match_id);
+                    })
+                    ->join('score_awards', 'score_award_votes.award_id', '=', 'score_awards.id')
+                    ->selectRaw('score_awards.round, COUNT(*) as total_sah')
+                    ->groupBy('score_awards.round')
+                    ->pluck('total_sah', 'round');
+
                 $babakData = [];
                 for ($roundNum = 1; $roundNum <= 3; $roundNum++) {
-                    $total_input_babak = DB::table('score_events')
-                        ->where('match_id', $row->match_id)
-                        ->where('judge_id', $row->id_petugas_pertandingan)
-                        ->where('round', $roundNum)
-                        ->count();
-
-                    $total_sah_babak = DB::table('score_award_votes')
-                        ->where('judge_id', $row->id_petugas_pertandingan)
-                        ->whereExists(function ($query) use ($row, $roundNum) {
-                            $query->select(DB::raw(1))
-                                ->from('score_awards')
-                                ->whereColumn('score_awards.id', 'score_award_votes.award_id')
-                                ->where('score_awards.match_id', $row->match_id)
-                                ->where('score_awards.round', $roundNum);
-                        })
-                        ->count();
-
+                    $total_input_babak    = (int) ($eventsByRound[$roundNum] ?? 0);
+                    $total_sah_babak      = (int) ($votesByRound[$roundNum] ?? 0);
                     $total_tidak_sah_babak = max(0, $total_input_babak - $total_sah_babak);
-                    $akurasi_babak = $total_input_babak > 0 ? round(($total_sah_babak / $total_input_babak) * 100, 1) : 0;
+                    $akurasi_babak        = $total_input_babak > 0
+                        ? round(($total_sah_babak / $total_input_babak) * 100, 1)
+                        : 0;
 
                     $babakData["babak_$roundNum"] = [
-                        'input' => $total_input_babak,
-                        'sah' => $total_sah_babak,
+                        'input'     => $total_input_babak,
+                        'sah'       => $total_sah_babak,
                         'tidak_sah' => $total_tidak_sah_babak,
-                        'akurasi' => $akurasi_babak
+                        'akurasi'   => $akurasi_babak
                     ];
                 }
 
                 $groupedByMatch[$row->match_id]['juris'][] = [
-                    'id_petugas' => $row->id_petugas_pertandingan,
-                    'nama_juri' => $row->nama_juri,
-                    'posisi' => $row->posisi,
-                    'total_input' => $row->total_input,
-                    'total_nilai_sah' => $row->total_nilai_sah,
+                    'id_petugas'            => $row->id_petugas_pertandingan,
+                    'nama_juri'             => $row->nama_juri,
+                    'posisi'                => $row->posisi,
+                    'total_input'           => $row->total_input,
+                    'total_nilai_sah'       => $row->total_nilai_sah,
                     'total_nilai_tidak_sah' => $row->total_nilai_tidak_sah,
-                    'persentase_akurasi' => $row->total_input > 0 ? round(($row->total_nilai_sah / $row->total_input) * 100, 1) : 0,
+                    'persentase_akurasi'    => $row->total_input > 0
+                        ? round(($row->total_nilai_sah / $row->total_input) * 100, 1)
+                        : 0,
                     'event_akurasi' => $juriEventAccuracies[$row->id_petugas_global] ?? 0,
-                    'rounds' => $babakData
+                    'rounds'        => $babakData
                 ];
                 
                 $total_all_akurasi += $row->persentase_akurasi;

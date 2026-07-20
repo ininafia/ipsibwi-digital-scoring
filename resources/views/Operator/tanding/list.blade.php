@@ -313,7 +313,8 @@
                             colspan="6"
                             class="border border-gray-300 py-10 text-center text-gray-400 italic">
 
-                            Data pertandingan belum tersedia
+                            <div class="mb-1">Data pertandingan belum tersedia</div>
+                            <div class="text-sm">Silahkan tambah jadwal untuk mengelola data</div>
 
                         </td>
 

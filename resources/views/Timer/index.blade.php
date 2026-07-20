@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Timer Dashboard</title>
 
-    @vite('resources/css/app.css')
+    @vite(['resources/css/app.css', 'resources/js/app.js'])
 
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
@@ -63,6 +63,9 @@
             }, 3000);
         }
 
+        // ID pertandingan aktif dikirim dari blade (PHP) ke JavaScript
+        const MATCH_ID = {{ $match->id ?? 'null' }};
+
         document.addEventListener('DOMContentLoaded', () => {
             let currentRound = 1;
             let timeRemaining = 120; // 2 minutes in seconds
@@ -108,17 +111,36 @@
                 }
             }
 
-            function syncState() {
-                axios.post('/timer/sync', {
-                    round: currentRound,
-                    time_remaining: timeRemaining,
-                    status: status,
-                    _token: '{{ csrf_token() }}'
-                }).catch(err => console.error(err));
+            let isSyncing = false;
+            let pendingSync = false;
+
+            async function syncState() {
+                if (isSyncing) {
+                    pendingSync = true;
+                    return;
+                }
+                isSyncing = true;
+                try {
+                    await axios.post('/timer/sync', {
+                        id_pertandingan: MATCH_ID,
+                        round: currentRound,
+                        time_remaining: timeRemaining,
+                        status: status,
+                        _token: '{{ csrf_token() }}'
+                    });
+                } catch(err) {
+                    console.error(err);
+                } finally {
+                    isSyncing = false;
+                    if (pendingSync) {
+                        pendingSync = false;
+                        syncState();
+                    }
+                }
             }
 
             function fetchState() {
-                axios.get('/timer/state?_t=' + new Date().getTime()).then(res => {
+                axios.get('/timer/state?id_pertandingan=' + MATCH_ID + '&_t=' + new Date().getTime()).then(res => {
                     const data = res.data;
                     currentRound = data.round || 1;
                     timeRemaining = data.time_remaining !== undefined ? data.time_remaining : 120;
@@ -207,6 +229,13 @@
 
             // Initial fetch
             fetchState();
+
+            if (typeof window.Echo !== 'undefined') {
+                window.Echo.channel('system')
+                    .listen('SystemStateChanged', (e) => {
+                        window.location.reload();
+                    });
+            }
         });
     </script>
 </body>
