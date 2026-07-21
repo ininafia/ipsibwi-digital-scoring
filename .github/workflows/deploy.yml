@@ -1,0 +1,14 @@
+name: Deploy to VPS
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  deploy:
+    runs-on: self-hosted
+
+    steps:
+      - name: Execute local deployment script
+        run: |
+          sudo /srv/actions-runner/deploy.sh
