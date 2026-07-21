@@ -26,6 +26,18 @@ class PenilaianAtletUsecase extends Usecase
         // }
     }
 
+    private function validateDewanAssignment(int $id_pertandingan): void
+    {
+        $dewanAssigned = DB::table('petugas_pertandingan')
+            ->where('id_pertandingan', $id_pertandingan)
+            ->where('id_role', 3)
+            ->exists();
+
+        if (!$dewanAssigned) {
+            throw new Exception('Dewan belum ditugaskan pada pertandingan ini');
+        }
+    }
+
     private function logRiwayatHukuman(int $id_pertandingan, string $sudut, string $jenis, string $action): void
     {
         $timerState = \Illuminate\Support\Facades\Cache::get('current_timer_state_' . $id_pertandingan, ['round' => 1]);
@@ -55,6 +67,7 @@ class PenilaianAtletUsecase extends Usecase
 
         try {
             $this->validateTimerState($id_pertandingan);
+            $this->validateDewanAssignment($id_pertandingan);
 
             $skorField = 'skor_' . $sudut;
             $jatuhanField = 'jatuhan_' . $sudut;
@@ -108,6 +121,7 @@ class PenilaianAtletUsecase extends Usecase
 
         try {
             $this->validateTimerState($id_pertandingan);
+            $this->validateDewanAssignment($id_pertandingan);
 
             $skorField = 'skor_' . $sudut;
             $jatuhanField = 'jatuhan_' . $sudut;
@@ -156,6 +170,7 @@ class PenilaianAtletUsecase extends Usecase
 
         try {
             $this->validateTimerState($id_pertandingan);
+            $this->validateDewanAssignment($id_pertandingan);
 
             $binaanField = 'binaan_' . $sudut;
             $skorRecord = DB::table('skor_pertandingan')
@@ -210,6 +225,7 @@ class PenilaianAtletUsecase extends Usecase
 
         try {
             $this->validateTimerState($id_pertandingan);
+            $this->validateDewanAssignment($id_pertandingan);
 
             $teguranField = 'teguran_' . $sudut;
             $skorField = 'skor_' . $sudut;
@@ -273,6 +289,7 @@ class PenilaianAtletUsecase extends Usecase
 
         try {
             $this->validateTimerState($id_pertandingan);
+            $this->validateDewanAssignment($id_pertandingan);
 
             $peringatanField = 'peringatan_' . $sudut;
             $skorField = 'skor_' . $sudut;
@@ -338,6 +355,7 @@ class PenilaianAtletUsecase extends Usecase
 
         try {
             $this->validateTimerState($id_pertandingan);
+            $this->validateDewanAssignment($id_pertandingan);
 
             $binaanField = 'binaan_' . $sudut;
             $teguranField = 'teguran_' . $sudut;
@@ -385,6 +403,7 @@ class PenilaianAtletUsecase extends Usecase
 
         try {
             $this->validateTimerState($id_pertandingan);
+            $this->validateDewanAssignment($id_pertandingan);
 
             $teguranField = 'teguran_' . $sudut;
             $peringatanField = 'peringatan_' . $sudut;
@@ -437,6 +456,7 @@ class PenilaianAtletUsecase extends Usecase
 
         try {
             $this->validateTimerState($id_pertandingan);
+            $this->validateDewanAssignment($id_pertandingan);
 
             $peringatanField = 'peringatan_' . $sudut;
             $skorField = 'skor_' . $sudut;

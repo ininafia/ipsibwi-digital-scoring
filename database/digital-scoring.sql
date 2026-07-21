@@ -267,7 +267,8 @@ CREATE TABLE score_events (
     INDEX idx_score_events_status (status),
     INDEX idx_score_events_window_id (window_id),
     INDEX idx_score_events_lock (match_id, round, athlete, status),
-    INDEX idx_score_events_technique (match_id, round, athlete, technique, status)
+    INDEX idx_score_events_technique (match_id, round, athlete, technique, status),
+    UNIQUE KEY unique_judge_per_window (window_id, judge_id)
 ) ENGINE=InnoDB;
 
 
