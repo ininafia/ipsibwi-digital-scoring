@@ -38,14 +38,11 @@ class PenilaianAtletUsecase extends Usecase
         }
     }
 
-    private function logRiwayatHukuman(int $id_pertandingan, string $sudut, string $jenis, string $action): void
+    private function logRiwayatHukuman(int $id_pertandingan, int $id_babak, string $sudut, string $jenis, string $action): void
     {
-        $timerState = \Illuminate\Support\Facades\Cache::get('current_timer_state_' . $id_pertandingan, ['round' => 1]);
-        $idBabak = $timerState['round'] ?? 1;
-        
         DB::table('riwayat_hukuman')->insert([
             'id_pertandingan' => $id_pertandingan,
-            'id_babak'        => $idBabak,
+            'id_babak'        => $id_babak,
             'sudut'           => $sudut,
             'jenis_hukuman'   => $jenis,
             'action'          => $action,
@@ -55,7 +52,7 @@ class PenilaianAtletUsecase extends Usecase
         ]);
     }
 
-    public function addJatuhan(int $id_pertandingan, string $sudut): array
+    public function addJatuhan(int $id_pertandingan, int $id_babak, string $sudut): array
     {
         $funcName = $this->className . ".addJatuhan";
 
@@ -97,7 +94,7 @@ class PenilaianAtletUsecase extends Usecase
                 ]);
             }
 
-                        $this->logRiwayatHukuman($id_pertandingan, $sudut, 'jatuhan', 'add');
+            $this->logRiwayatHukuman($id_pertandingan, $id_babak, $sudut, 'jatuhan', 'add');
             DB::commit();
             return Response::buildSuccess(
                 message: "Jatuhan berhasil ditambahkan"
@@ -109,7 +106,7 @@ class PenilaianAtletUsecase extends Usecase
         }
     }
 
-    public function delJatuhan(int $id_pertandingan, string $sudut): array
+    public function delJatuhan(int $id_pertandingan, int $id_babak, string $sudut): array
     {
         $funcName = $this->className . ".delJatuhan";
 
@@ -140,13 +137,15 @@ class PenilaianAtletUsecase extends Usecase
                             'updated_at' => now(),
                         ]);
                 } else {
+                    DB::rollback();
                     return Response::buildErrorService("Tidak ada jatuhan yang bisa dihapus untuk sudut {$sudut}");
                 }
             } else {
+                DB::rollback();
                 return Response::buildErrorService("Belum ada skor tercatat untuk pertandingan ini");
             }
 
-                        $this->logRiwayatHukuman($id_pertandingan, $sudut, 'jatuhan', 'delete');
+            $this->logRiwayatHukuman($id_pertandingan, $id_babak, $sudut, 'jatuhan', 'delete');
             DB::commit();
             return Response::buildSuccess(
                 message: "Jatuhan berhasil dihapus"
@@ -158,7 +157,7 @@ class PenilaianAtletUsecase extends Usecase
         }
     }
 
-    public function addBinaan(int $id_pertandingan, string $sudut): array
+    public function addBinaan(int $id_pertandingan, int $id_babak, string $sudut): array
     {
         $funcName = $this->className . ".addBinaan";
 
@@ -181,6 +180,7 @@ class PenilaianAtletUsecase extends Usecase
             if ($skorRecord) {
                 $currentBinaan = $skorRecord->{$binaanField};
                 if ($currentBinaan >= 2) {
+                    DB::rollback();
                     return Response::buildErrorService("Binaan maksimal 2 kali untuk sudut {$sudut}");
                 }
                 
@@ -201,7 +201,7 @@ class PenilaianAtletUsecase extends Usecase
                 ]);
             }
 
-                        $this->logRiwayatHukuman($id_pertandingan, $sudut, 'binaan', 'add');
+            $this->logRiwayatHukuman($id_pertandingan, $id_babak, $sudut, 'binaan', 'add');
             DB::commit();
             return Response::buildSuccess(
                 message: "Binaan berhasil ditambahkan"
@@ -213,7 +213,7 @@ class PenilaianAtletUsecase extends Usecase
         }
     }
 
-    public function addTeguran(int $id_pertandingan, string $sudut): array
+    public function addTeguran(int $id_pertandingan, int $id_babak, string $sudut): array
     {
         $funcName = $this->className . ".addTeguran";
 
@@ -238,6 +238,7 @@ class PenilaianAtletUsecase extends Usecase
                 $currentTeguran = $skorRecord->{$teguranField};
 
                 if ($currentTeguran >= 2) {
+                    DB::rollback();
                     return Response::buildErrorService("Teguran maksimal 2 kali untuk sudut {$sudut}");
                 }
 
@@ -265,7 +266,7 @@ class PenilaianAtletUsecase extends Usecase
                 ]);
             }
 
-                        $this->logRiwayatHukuman($id_pertandingan, $sudut, 'teguran', 'add');
+            $this->logRiwayatHukuman($id_pertandingan, $id_babak, $sudut, 'teguran', 'add');
             DB::commit();
             return Response::buildSuccess(
                 message: "Teguran berhasil ditambahkan"
@@ -277,7 +278,7 @@ class PenilaianAtletUsecase extends Usecase
         }
     }
 
-    public function addPeringatan(int $id_pertandingan, string $sudut): array
+    public function addPeringatan(int $id_pertandingan, int $id_babak, string $sudut): array
     {
         $funcName = $this->className . ".addPeringatan";
 
@@ -302,6 +303,7 @@ class PenilaianAtletUsecase extends Usecase
                 $currentPeringatan = $skorRecord->{$peringatanField};
 
                 if ($currentPeringatan >= 2) {
+                    DB::rollback();
                     return Response::buildErrorService("Peringatan maksimal 2 kali untuk sudut {$sudut}");
                 }
 
@@ -331,7 +333,7 @@ class PenilaianAtletUsecase extends Usecase
                 ]);
             }
 
-                        $this->logRiwayatHukuman($id_pertandingan, $sudut, 'peringatan', 'add');
+            $this->logRiwayatHukuman($id_pertandingan, $id_babak, $sudut, 'peringatan', 'add');
             DB::commit();
             return Response::buildSuccess(
                 message: "Peringatan berhasil ditambahkan"
@@ -343,7 +345,7 @@ class PenilaianAtletUsecase extends Usecase
         }
     }
 
-    public function delBinaan(int $id_pertandingan, string $sudut): array
+    public function delBinaan(int $id_pertandingan, int $id_babak, string $sudut): array
     {
         $funcName = $this->className . ".delBinaan";
 
@@ -373,13 +375,15 @@ class PenilaianAtletUsecase extends Usecase
                             'updated_at' => now(),
                         ]);
                 } else {
+                    DB::rollback();
                     return Response::buildErrorService("Tidak ada Binaan yang bisa dihapus untuk sudut {$sudut}");
                 }
             } else {
+                DB::rollback();
                 return Response::buildErrorService("Belum ada skor tercatat untuk pertandingan ini");
             }
 
-                        $this->logRiwayatHukuman($id_pertandingan, $sudut, 'binaan', 'delete');
+            $this->logRiwayatHukuman($id_pertandingan, $id_babak, $sudut, 'binaan', 'delete');
             DB::commit();
             return Response::buildSuccess(
                 message: "Binaan berhasil dihapus"
@@ -391,7 +395,7 @@ class PenilaianAtletUsecase extends Usecase
         }
     }
 
-    public function delTeguran(int $id_pertandingan, string $sudut): array
+    public function delTeguran(int $id_pertandingan, int $id_babak, string $sudut): array
     {
         $funcName = $this->className . ".delTeguran";
 
@@ -426,13 +430,15 @@ class PenilaianAtletUsecase extends Usecase
                             'updated_at' => now(),
                         ]);
                 } else {
+                    DB::rollback();
                     return Response::buildErrorService("Tidak ada Teguran yang bisa dihapus untuk sudut {$sudut}");
                 }
             } else {
+                DB::rollback();
                 return Response::buildErrorService("Belum ada skor tercatat untuk pertandingan ini");
             }
 
-                        $this->logRiwayatHukuman($id_pertandingan, $sudut, 'teguran', 'delete');
+            $this->logRiwayatHukuman($id_pertandingan, $id_babak, $sudut, 'teguran', 'delete');
             DB::commit();
             return Response::buildSuccess(
                 message: "Teguran berhasil dihapus"
@@ -444,7 +450,7 @@ class PenilaianAtletUsecase extends Usecase
         }
     }
 
-    public function delPeringatan(int $id_pertandingan, string $sudut): array
+    public function delPeringatan(int $id_pertandingan, int $id_babak, string $sudut): array
     {
         $funcName = $this->className . ".delPeringatan";
 
@@ -478,13 +484,15 @@ class PenilaianAtletUsecase extends Usecase
                             'updated_at' => now(),
                         ]);
                 } else {
+                    DB::rollback();
                     return Response::buildErrorService("Tidak ada Peringatan yang bisa dihapus untuk sudut {$sudut}");
                 }
             } else {
+                DB::rollback();
                 return Response::buildErrorService("Belum ada skor tercatat untuk pertandingan ini");
             }
 
-                        $this->logRiwayatHukuman($id_pertandingan, $sudut, 'peringatan', 'delete');
+            $this->logRiwayatHukuman($id_pertandingan, $id_babak, $sudut, 'peringatan', 'delete');
             DB::commit();
             return Response::buildSuccess(
                 message: "Peringatan berhasil dihapus"

@@ -138,6 +138,7 @@
             },
             body: JSON.stringify({
                 id_pertandingan: currentMatchId,
+                id_babak: round,
                 sudut: sudut
             })
         })

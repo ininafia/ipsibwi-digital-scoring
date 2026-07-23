@@ -109,6 +109,7 @@ class JuriUsecase extends Usecase
                     $activeWindows = DB::table('score_windows')
                         ->where('match_id', $idPertandingan)
                         ->where('round_id', $idBabak)
+                        ->where('athlete', $athlete)
                         ->where('status', 'open')
                         ->where('technique', $technique)
                         ->lockForUpdate()
@@ -139,6 +140,7 @@ class JuriUsecase extends Usecase
                         $targetWindowId = DB::table('score_windows')->insertGetId([
                             'match_id'     => $idPertandingan,
                             'round_id'     => $idBabak,
+                            'athlete'      => $athlete,
                             'athlete_red'  => $match->sudut_merah,
                             'athlete_blue' => $match->sudut_biru,
                             'technique'    => $technique,
@@ -232,19 +234,20 @@ class JuriUsecase extends Usecase
                 $techCounts = [];
                 $seenJudges = [];
                 foreach ($inputs as $input) {
-                    if (!isset($seenJudges[$input->technique])) {
-                        $seenJudges[$input->technique] = [];
+                    $key = $input->athlete . '_' . $input->technique;
+                    if (!isset($seenJudges[$key])) {
+                        $seenJudges[$key] = [];
                     }
-                    if (!in_array($input->judge_id, $seenJudges[$input->technique])) {
-                        $seenJudges[$input->technique][] = $input->judge_id;
-                        $techCounts[$input->technique] = ($techCounts[$input->technique] ?? 0) + 1;
+                    if (!in_array($input->judge_id, $seenJudges[$key])) {
+                        $seenJudges[$key][] = $input->judge_id;
+                        $techCounts[$key] = ($techCounts[$key] ?? 0) + 1;
                     }
                 }
 
                 $winningTechnique = null;
-                foreach ($techCounts as $tech => $count) {
+                foreach ($techCounts as $key => $count) {
                     if ($count >= 2) {
-                        $winningTechnique = $tech;
+                        $winningTechnique = explode('_', $key)[1];
                         break;
                     }
                 }
@@ -399,15 +402,17 @@ class JuriUsecase extends Usecase
         $idBabak        = $request->input('id_babak');
         $juriPosition   = session('juri_position');
         $sudut          = $request->input('sudut');
+        $idKategoriNilai = (int) $request->input('id_kategori_nilai');
 
-        if (!$idPertandingan || !$idBabak || !$juriPosition || !in_array($sudut, ['merah', 'biru'], true)) {
+        if (!$idPertandingan || !$idBabak || !$juriPosition || !in_array($sudut, ['merah', 'biru'], true) || !isset(self::TECHNIQUE_MAP[$idKategoriNilai])) {
             return Response::buildErrorService('Parameter tidak valid');
         }
 
         $athlete = $sudut === 'merah' ? 'red' : 'blue';
+        $technique = self::TECHNIQUE_MAP[$idKategoriNilai];
 
         try {
-            return DB::transaction(function () use ($idPertandingan, $idBabak, $juriPosition, $athlete) {
+            return DB::transaction(function () use ($idPertandingan, $idBabak, $juriPosition, $athlete, $technique) {
                 $petugasPertandingan = DB::table('petugas_pertandingan')
                     ->where('posisi', $juriPosition)
                     ->where('id_pertandingan', $idPertandingan)
@@ -422,6 +427,7 @@ class JuriUsecase extends Usecase
                     ->where('round', $idBabak)
                     ->where('judge_id', $petugasPertandingan->id)
                     ->where('athlete', $athlete)
+                    ->where('technique', $technique)
                     ->where('status', 'pending')
                     ->orderBy('created_at', 'desc')
                     ->lockForUpdate()

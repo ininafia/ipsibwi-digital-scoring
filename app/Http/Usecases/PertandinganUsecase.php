@@ -269,6 +269,39 @@ class PertandinganUsecase extends Usecase
                 );
             }
 
+            // Validasi timer dan syarat finalisasi
+            $timerState = \Illuminate\Support\Facades\Cache::get('current_timer_state_' . $id, [
+                'round' => 1,
+                'time_remaining' => 120,
+                'status' => 'stopped',
+            ]);
+
+            if ($jenisKemenangan === 'angka') {
+                if (
+                    (int) $timerState['round'] !== 3 ||
+                    (int) $timerState['time_remaining'] > 0 ||
+                    $timerState['status'] !== 'stopped'
+                ) {
+                    DB::rollback();
+                    return Response::buildErrorService(
+                        'Kemenangan angka hanya dapat difinalisasi setelah ronde 3 selesai dan timer berhenti.'
+                    );
+                }
+            } else {
+                if (empty($resultData['sudut_pemenang'])) {
+                    DB::rollback();
+                    return Response::buildErrorService('Sudut pemenang wajib diisi untuk jenis kemenangan ini.');
+                }
+                if (empty($catatanFinalisasi)) {
+                    DB::rollback();
+                    return Response::buildErrorService('Catatan finalisasi atau alasan wajib diisi untuk jenis kemenangan ini.');
+                }
+                if (empty($resultData['role_pengesah']) && empty($resultData['pengesah'])) {
+                    DB::rollback();
+                    return Response::buildErrorService('Role yang mengesahkan wajib ada untuk jenis kemenangan ini.');
+                }
+            }
+
             // 5. Ambil skor dari database (BUKAN dari input client)
             $scoreRecord = DB::table('skor_pertandingan')->where('id_pertandingan', $id)->first();
             $skorBiru = $scoreRecord ? (int) $scoreRecord->skor_biru : 0;

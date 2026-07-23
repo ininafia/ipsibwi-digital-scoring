@@ -221,6 +221,7 @@ CREATE TABLE score_windows (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     match_id INT NOT NULL,
     round_id INT NOT NULL,
+    athlete ENUM('red', 'blue') NOT NULL COMMENT 'Sudut atlet',
     -- Nama atlet sesuai sudut, diambil dari pertandingan saat window dibuka
     athlete_red VARCHAR(100) NULL COMMENT 'Nama atlet sudut merah',
     athlete_blue VARCHAR(100) NULL COMMENT 'Nama atlet sudut biru',
@@ -233,7 +234,7 @@ CREATE TABLE score_windows (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (match_id) REFERENCES pertandingan(id),
     FOREIGN KEY (round_id) REFERENCES babak(id),
-    INDEX idx_score_windows_active (match_id, round_id, technique, status),
+    INDEX idx_score_windows_active_full (match_id, round_id, athlete, technique, status),
     INDEX idx_score_windows_opened_at (opened_at)
 ) ENGINE=InnoDB;
 

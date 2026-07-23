@@ -121,4 +121,3 @@
                                 <span class="text-sm font-semibold text-gray-700">= Tidak Sah</span>
                             </div>
                         </div>
-                    </div>

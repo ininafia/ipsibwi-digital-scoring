@@ -40,10 +40,11 @@ class PenilaianAtletController extends Controller
     {
         $request->validate([
             'id_pertandingan' => 'required|integer',
+            'id_babak' => 'required|integer',
             'sudut' => 'required|in:biru,merah'
         ]);
 
-        $res = $penilaianAtletUsecase->addJatuhan($request->id_pertandingan, $request->sudut);
+        $res = $penilaianAtletUsecase->addJatuhan($request->id_pertandingan, $request->id_babak, $request->sudut);
         if (!$res['success']) {
             return response()->json(['success' => false, 'message' => $res['message']], 400);
         }
@@ -56,10 +57,11 @@ class PenilaianAtletController extends Controller
     {
         $request->validate([
             'id_pertandingan' => 'required|integer',
+            'id_babak' => 'required|integer',
             'sudut' => 'required|in:biru,merah'
         ]);
 
-        $res = $penilaianAtletUsecase->delJatuhan($request->id_pertandingan, $request->sudut);
+        $res = $penilaianAtletUsecase->delJatuhan($request->id_pertandingan, $request->id_babak, $request->sudut);
         if (!$res['success']) {
             return response()->json(['success' => false, 'message' => $res['message']], 400);
         }
@@ -72,10 +74,11 @@ class PenilaianAtletController extends Controller
     {
         $request->validate([
             'id_pertandingan' => 'required|integer',
+            'id_babak' => 'required|integer',
             'sudut' => 'required|in:biru,merah'
         ]);
 
-        $res = $penilaianAtletUsecase->addBinaan($request->id_pertandingan, $request->sudut);
+        $res = $penilaianAtletUsecase->addBinaan($request->id_pertandingan, $request->id_babak, $request->sudut);
         if (!$res['success']) {
             return response()->json(['success' => false, 'message' => $res['message']], 400);
         }
@@ -88,10 +91,11 @@ class PenilaianAtletController extends Controller
     {
         $request->validate([
             'id_pertandingan' => 'required|integer',
+            'id_babak' => 'required|integer',
             'sudut' => 'required|in:biru,merah'
         ]);
 
-        $res = $penilaianAtletUsecase->addTeguran($request->id_pertandingan, $request->sudut);
+        $res = $penilaianAtletUsecase->addTeguran($request->id_pertandingan, $request->id_babak, $request->sudut);
         if (!$res['success']) {
             return response()->json(['success' => false, 'message' => $res['message']], 400);
         }
@@ -104,10 +108,11 @@ class PenilaianAtletController extends Controller
     {
         $request->validate([
             'id_pertandingan' => 'required|integer',
+            'id_babak' => 'required|integer',
             'sudut' => 'required|in:biru,merah'
         ]);
 
-        $res = $penilaianAtletUsecase->addPeringatan($request->id_pertandingan, $request->sudut);
+        $res = $penilaianAtletUsecase->addPeringatan($request->id_pertandingan, $request->id_babak, $request->sudut);
         if (!$res['success']) {
             return response()->json(['success' => false, 'message' => $res['message']], 400);
         }
@@ -120,10 +125,11 @@ class PenilaianAtletController extends Controller
     {
         $request->validate([
             'id_pertandingan' => 'required|integer',
+            'id_babak' => 'required|integer',
             'sudut' => 'required|in:biru,merah'
         ]);
 
-        $res = $penilaianAtletUsecase->delBinaan($request->id_pertandingan, $request->sudut);
+        $res = $penilaianAtletUsecase->delBinaan($request->id_pertandingan, $request->id_babak, $request->sudut);
         if (!$res['success']) {
             return response()->json(['success' => false, 'message' => $res['message']], 400);
         }
@@ -136,10 +142,11 @@ class PenilaianAtletController extends Controller
     {
         $request->validate([
             'id_pertandingan' => 'required|integer',
+            'id_babak' => 'required|integer',
             'sudut' => 'required|in:biru,merah'
         ]);
 
-        $res = $penilaianAtletUsecase->delTeguran($request->id_pertandingan, $request->sudut);
+        $res = $penilaianAtletUsecase->delTeguran($request->id_pertandingan, $request->id_babak, $request->sudut);
         if (!$res['success']) {
             return response()->json(['success' => false, 'message' => $res['message']], 400);
         }
@@ -152,10 +159,11 @@ class PenilaianAtletController extends Controller
     {
         $request->validate([
             'id_pertandingan' => 'required|integer',
+            'id_babak' => 'required|integer',
             'sudut' => 'required|in:biru,merah'
         ]);
 
-        $res = $penilaianAtletUsecase->delPeringatan($request->id_pertandingan, $request->sudut);
+        $res = $penilaianAtletUsecase->delPeringatan($request->id_pertandingan, $request->id_babak, $request->sudut);
         if (!$res['success']) {
             return response()->json(['success' => false, 'message' => $res['message']], 400);
         }

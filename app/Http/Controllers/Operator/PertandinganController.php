@@ -64,13 +64,13 @@ class PertandinganController extends Controller
                 );
         }
 
-        // 2. Ubah status menjadi 'playing'
-        $this->usecase->updateStatus($id, 'playing');
-
-        // Reset timer cache
-        \Illuminate\Support\Facades\Cache::forget('current_timer_state_' . $id);
-
-        event(new \App\Events\MatchUpdated($id));
+        // Reset timer cache hanya jika pertandingan baru dimulai
+        if ($result['data']['status'] !== 'playing') {
+            // 2. Ubah status menjadi 'playing'
+            $this->usecase->updateStatus($id, 'playing');
+            \Illuminate\Support\Facades\Cache::forget('current_timer_state_' . $id);
+            event(new \App\Events\MatchUpdated($id));
+        }
 
         // 3. Tampilkan halaman play dengan data pertandingan
         return view('Operator.pertandingan.play', [
