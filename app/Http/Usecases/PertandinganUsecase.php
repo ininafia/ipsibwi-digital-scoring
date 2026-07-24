@@ -224,6 +224,12 @@ class PertandinganUsecase extends Usecase
         }
 
         $catatanFinalisasi = $resultData['catatan_finalisasi'] ?? null;
+        if (empty($resultData['role_pengesah'])) {
+            $resultData['role_pengesah'] = session('role');
+        }
+        if (empty($resultData['pengesah'])) {
+            $resultData['pengesah'] = session('user_id');
+        }
 
         // BUG-1 FIX: Resolve expired events DI LUAR transaksi utama.
         // Memanggil resolveExpiredEvents() di dalam beginTransaction() menyebabkan

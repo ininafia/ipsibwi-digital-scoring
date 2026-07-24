@@ -51,7 +51,7 @@ class TimerController extends Controller
             if (!$match) return response()->json(['error' => 'No active match'], 404);
             $matchId = $match->id;
         } else {
-            // BUG-6 FIX: Validasi bahwa id_pertandingan yang dikirim timer
+            // Validasi bahwa id_pertandingan yang dikirim timer
             // memang statusnya 'playing' agar timer tidak manipulasi pertandingan lain
             $match = \Illuminate\Support\Facades\DB::table('pertandingan')
                 ->where('id', $matchId)

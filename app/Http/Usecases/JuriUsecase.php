@@ -112,6 +112,7 @@ class JuriUsecase extends Usecase
                         ->where('athlete', $athlete)
                         ->where('status', 'open')
                         ->where('technique', $technique)
+                        ->orderByDesc('opened_at')
                         ->lockForUpdate()
                         ->get();
 
@@ -166,7 +167,9 @@ class JuriUsecase extends Usecase
 
                     $inputCount = DB::table('score_events')
                         ->where('window_id', $targetWindowId)
-                        ->count();
+                        ->where('status', 'pending')
+                        ->distinct('judge_id')
+                        ->count('judge_id');
 
                     // Jika minimal 2 dari 3 juri sepakat, selesaikan
                     // (Karena filternya sudah per teknik, maka semua input di window ini adalah teknik yg sama)
@@ -442,6 +445,24 @@ class JuriUsecase extends Usecase
                             'deleted_at' => now(),
                             'deleted_reason' => 'Dihapus manual oleh juri'
                         ]);
+
+                    // Jika tidak ada lagi input pending di window tersebut, tutup/expire window
+                    if (!empty($lastInput->window_id)) {
+                        $remainingPending = DB::table('score_events')
+                            ->where('window_id', $lastInput->window_id)
+                            ->where('status', 'pending')
+                            ->count();
+
+                        if ($remainingPending === 0) {
+                            DB::table('score_windows')
+                                ->where('id', $lastInput->window_id)
+                                ->update([
+                                    'status'   => 'expired',
+                                    'opened'   => 0,
+                                    'close_at' => microtime(true),
+                                ]);
+                        }
+                    }
 
                     $juriName = match ($petugasPertandingan->posisi) {
                         'juri_1' => 'JURI 1',

@@ -50,28 +50,13 @@ class AuthController extends Controller
 
         /*
         |--------------------------------------------------------------------------
-        | USER TIDAK DITEMUKAN
+        | VALIDASI KREDENSIAL (USER / PASSWORD)
         |--------------------------------------------------------------------------
         */
-        if (!$user) {
-
+        if (!$user || !Hash::check($credentials['password'], $user->password)) {
             return back()
                 ->withErrors([
-                    'username' => 'Username tidak ditemukan'
-                ])
-                ->withInput();
-        }
-
-        /*
-        |--------------------------------------------------------------------------
-        | PASSWORD SALAH
-        |--------------------------------------------------------------------------
-        */
-        if (!Hash::check($credentials['password'], $user->password)) {
-
-            return back()
-                ->withErrors([
-                    'password' => 'Password salah'
+                    'login' => 'Maaf username atau password salah'
                 ])
                 ->withInput();
         }

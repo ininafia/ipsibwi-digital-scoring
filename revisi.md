@@ -1,109 +1,112 @@
-Di schema score_windows, kolom yang ada hanya:
+Di app/Http/Usecases/PertandinganUsecase.php
+Backend mewajibkan salah satu dari:
+$resultData['role_pengesah']
+$resultData['pengesah']
 
-match_id
-round_id
-athlete_red
-athlete_blue
-technique
-opened
-opened_at
-status
+Tetapi controller app/Http/Controllers/Operator/PertandinganController.php hanya mengirim
+'jenis_kemenangan'
+'sudut_pemenang'
+'catatan_finalisasi'
 
+Di form finalisasi resources/views/Operator/pertandingan/play.blade.php juga tidak ada input role_pengesah atau pengesah.
 
-Tidak ada kolom seperti:
+Dampaknya untuk kemenangan selain angka, misalnya disk, undur_diri, wmp, teknik, atau mutlak, sistem bisa menolak finalisasi meskipun operator sudah memilih pemenang dan mengisi catatan.
+Saran perbaikan: kirim otomatis role pengesah dari session atau tetapkan dari backend.
+Contoh di controller:
 
-athlete ENUM('red', 'blue')
+$resultData = [
+    'jenis_kemenangan'   => $request->input('jenis_kemenangan'),
+    'sudut_pemenang'     => $request->input('sudut_pemenang'),
+    'catatan_finalisasi' => $request->input('catatan_finalisasi'),
+    'role_pengesah'      => session('role'),
+    'pengesah'           => session('user_id'),
+];
 
-Akibatnya, di JuriUsecase::inputScore(), pencarian window aktif hanya berdasarkan:
+Atau jika pengesahan harus oleh Ketua/Dewan, buat input eksplisit di form dan validasi role-nya.
+score_windows masih rawan ambigu jika satu juri menekan dua kali sebelum juri lain merespons. kode app/Http/Usecases/JuriUsecase.php sudah membuat window baru jika juri yang sama sudah pernah input pada window aktif. Masalahnya, query active window belum punya urutan:
+$activeWindows = DB::table('score_windows')
+    ->where(...)
+    ->lockForUpdate()
+    ->get();
 
-match_id
-round_id
-status = open
-technique
-
-Saran: 
-Tambahkan di migrasi
-ALTER TABLE score_windows
-ADD COLUMN athlete ENUM('red', 'blue') NOT NULL AFTER round_id;
-
-ALTER TABLE score_windows
-ADD INDEX idx_score_windows_active_full
-(match_id, round_id, athlete, technique, status);
-
-Kemudian pada juriusecase inputscore()
+Jika ada dua window terbuka untuk sudut dan teknik yang sama, sistem bisa memilih window lama lebih dulu, tergantung urutan database.
+Saran : ubah ke
 $activeWindows = DB::table('score_windows')
     ->where('match_id', $idPertandingan)
     ->where('round_id', $idBabak)
     ->where('athlete', $athlete)
     ->where('status', 'open')
     ->where('technique', $technique)
+    ->orderByDesc('opened_at')
     ->lockForUpdate()
     ->get();
 
-Saat insert window baru, simpan juga 'athlete' => $athlete,
-Dan di resolveGroup(), konsensus sebaiknya dihitung berdasarkan pasangan athlete + technique. bukan technique saja.
-Finalisasi pertandingan tidak lagi validasi timer dan ronde
+Jika juri menghapus input, window lama tetap open
+Di app/Http/Usecases/JuriUsecase.php  Di deleteScore(), event diubah menjadi deleted.
 
-Untuk jenis_kemenangan = angka, tambahkan validasi:
+Tetapi score_windows terkait tidak ditutup atau dibatalkan.
 
-$timerState = Cache::get('current_timer_state_' . $id, [
-    'round' => 1,
-    'time_remaining' => 120,
-    'status' => 'stopped',
-]);
+Dampaknya bisa berbahaya:
 
-if ($jenisKemenangan === 'angka') {
-    if (
-        (int) $timerState['round'] !== 3 ||
-        (int) $timerState['time_remaining'] > 0 ||
-        $timerState['status'] !== 'stopped'
-    ) {
-        DB::rollback();
-        return Response::buildErrorService(
-            'Kemenangan angka hanya dapat difinalisasi setelah ronde 3 selesai dan timer berhenti.'
-        );
-    }
+Juri 1 input tendangan biru.
+Juri 1 hapus input tersebut.
+Window masih open.
+Juri 2 input tendangan biru.
+Juri 2 bisa masuk ke window lama yang sebenarnya sudah tidak valid.
+
+Lebih berbahaya lagi, inputCount JuriUsecase.php menghitung semua event di window tanpa filter status:
+
+$inputCount = DB::table('score_events')
+    ->where('window_id', $targetWindowId)
+    ->count();
+
+
+Artinya event deleted juga bisa ikut terhitung.
+
+Saran perbaikan
+Pertama, hitung hanya input pending dari juri berbeda:
+$inputCount = DB::table('score_events')
+    ->where('window_id', $targetWindowId)
+    ->where('status', 'pending')
+    ->distinct('judge_id')
+    ->count('judge_id');
+
+Kedua, saat delete score, jika tidak ada lagi event pending di window tersebut, tutup window:
+
+$remainingPending = DB::table('score_events')
+    ->where('window_id', $lastInput->window_id)
+    ->where('status', 'pending')
+    ->count();
+
+if ($remainingPending === 0) {
+    DB::table('score_windows')
+        ->where('id', $lastInput->window_id)
+        ->update([
+            'status' => 'expired',
+            'opened' => 0,
+            'close_at' => microtime(true),
+        ]);
 }
+Di app/Http/Usecases/PenilaianAtletUsecase.php Method validateDewanAssignment() hanya mengecek apakah ada dewan pada pertandingan:
 
-Untuk disk, undur_diri, teknik, mutlak, atau wmp, boleh selesai sebelum ronde 3, tetapi harus wajib ada:
+->where('id_pertandingan', $id_pertandingan)
+->where('id_role', 3)
+->exists();
 
-sudut_pemenang
-catatan_finalisasi / alasan
-role yang mengesahkan
+Belum mengecek apakah akun dewan yang sedang login adalah dewan yang ditugaskan.
 
-Beberapa method di PenilaianAtletUsecase.php sudah memakai DB::beginTransaction(), tetapi masih ada return langsung di tengah transaksi tanpa DB::rollback().
+Dampak: jika ada banyak akun dewan, dewan A bisa memberi hukuman pada pertandingan yang seharusnya ditangani dewan B, selama tahu id_pertandingan.
 
-Contoh:
+Saran: setelah ada data_petugas.id_user, ubah validasi menjadi:
 
-return Response::buildErrorService("Tidak ada jatuhan yang bisa dihapus...");
-
-di
-app/Http/Usecases/PenilaianAtletUsecase.php baris
-
-Masalah serupa ada di:
-
-addBinaan()      
-addTeguran()     
-addPeringatan()  
-delBinaan()    
-delTeguran()  
-delPeringatan()  
-Dampak
-
-Transaksi bisa menggantung atau koneksi berada pada state transaksi yang tidak bersih. Dalam kondisi request paralel, ini bisa mengganggu update skor/hukuman.
-Di deleteScore(), pencarian input terakhir hanya berdasarkan:
-
-match_id
-round
-judge_id
-athlete
-status = pending
-
-di
-app/Http/Usecases/JuriUsecase.php baris
-
-Tidak ada filter technique.Kalau juri baru saja menekan beberapa tombol untuk sudut yang sama, misalnya pukulan lalu tendangan, tombol hapus bisa menghapus pending terakhir tanpa user tahu teknik mana yang dihapus.
-
-
-
-
+$dewanAssigned = DB::table('petugas_pertandingan')
+    ->join('data_petugas', 'petugas_pertandingan.id_petugas', '=', 'data_petugas.id')
+    ->where('petugas_pertandingan.id_pertandingan', $id_pertandingan)
+    ->where('petugas_pertandingan.id_role', 3)
+    ->where('data_petugas.id_user', session('user_id'))
+    ->exists();
+Timer sudah hanya bisa mengubah pertandingan yang statusnya playing.
+Namun jika ada banyak gelanggang/pertandingan paralel, akun timer dengan role 4 masih bisa mengirim id_pertandingan lain yang juga sedang playing.
+Saran: sama seperti juri/dewan, timer perlu diikat ke assignment petugas
+riwayat_hukuman baru punya foreign key ke pertandingan, belum ke babak dan user
+Login masih membedakan Username tidak ditemukan dan Password salah. Saran pesan error hanya : Maaf username atau password salah

@@ -84,6 +84,8 @@ class PertandinganController extends Controller
             'jenis_kemenangan'   => $request->input('jenis_kemenangan'),
             'sudut_pemenang'     => $request->input('sudut_pemenang'),
             'catatan_finalisasi' => $request->input('catatan_finalisasi'),
+            'role_pengesah'      => session('role'),
+            'pengesah'           => session('user_id'),
         ];
         
         $result = $this->usecase->finalizeMatch($id, $resultData);
