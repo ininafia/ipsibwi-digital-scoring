@@ -94,6 +94,7 @@
             function getPdfBoxColor($awardId, $athlete, $sah) {
                 if (!$sah) return '';
                 if (!$awardId) return $athlete == 'blue' ? 'background-color:#0000d0;color:white;' : 'background-color:#df0000;color:white;';
+                $awardId = (string) $awardId;
                 $colors = ['background-color:#ff3b8f;color:white;', 'background-color:#ffcc00;color:black;', 'background-color:#2d2d2d;color:white;', 'background-color:#8b3dff;color:white;', 'background-color:#10b981;color:white;', 'background-color:#f97316;color:white;', 'background-color:#0ea5e9;color:white;', 'background-color:#eab308;color:white;', 'background-color:#ec4899;color:white;', 'background-color:#84cc16;color:white;'];
                 $hash = 0;
                 for ($i = 0; $i < strlen($awardId); $i++) $hash = ord($awardId[$i]) + (($hash << 5) - $hash);
@@ -120,7 +121,8 @@
                 if (empty($awards)) return '';
                 $html = '<div style="text-align: left;">';
                 foreach ($awards as $awd) {
-                    $html .= '<span style="display:inline-block; min-width:14px; text-align:center; padding:1px 2px; font-weight:bold; font-size:10px; border-radius:2px; margin-right:2px; ' . getPdfBoxColor($awd['award_id'], $athlete, true) . '">' . $awd['value'] . '</span>';
+                    $colorKey = $awd['window_id'] ?? $awd['award_id'];
+                    $html .= '<span style="display:inline-block; min-width:14px; text-align:center; padding:1px 2px; font-weight:bold; font-size:10px; border-radius:2px; margin-right:2px; ' . getPdfBoxColor($colorKey, $athlete, true) . '">' . $awd['value'] . '</span>';
                 }
                 $html .= '</div>';
                 return $html;

@@ -483,7 +483,7 @@ class JuriUsecase extends Usecase
                     ]);
 
                     error_log("=== [ACTION] $juriName menghapus nilai pending untuk sudut $sudutName ===");
-                    return Response::buildSuccess(null, 200, 'Berhasil menghapus nilai pending');
+                    return Response::buildSuccess([], 200, 'Berhasil menghapus nilai pending');
                 }
 
                 return Response::buildErrorService('Tidak ada nilai pending untuk dihapus');

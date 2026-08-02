@@ -7,6 +7,7 @@
 function getBoxColor($awardId, $athlete, $sah) {
     if (!$sah) return '';
     if (!$awardId) return $athlete == 'blue' ? 'bg-[#0000d0] text-white' : 'bg-[#df0000] text-white';
+    $awardId = (string) $awardId;
     $colors = ['bg-[#ff3b8f] text-white', 'bg-[#ffcc00] text-black', 'bg-[#2d2d2d] text-white', 'bg-[#8b3dff] text-white', 'bg-[#10b981] text-white', 'bg-[#f97316] text-white', 'bg-[#0ea5e9] text-white', 'bg-[#eab308] text-white', 'bg-[#ec4899] text-white', 'bg-[#84cc16] text-white'];
     $hash = 0;
     for ($i = 0; $i < strlen($awardId); $i++) $hash = ord($awardId[$i]) + (($hash << 5) - $hash);
@@ -29,7 +30,8 @@ function renderAwards($awards, $athlete) {
     if (empty($awards)) return '';
     $html = '<div class="flex flex-wrap gap-1 justify-start items-center p-1">';
     foreach ($awards as $awd) {
-        $html .= '<span class="inline-flex items-center justify-center min-w-[20px] h-5 px-1 text-xs font-bold rounded-sm ' . getBoxColor($awd['award_id'], $athlete, true) . '">' . $awd['value'] . '</span>';
+        $colorKey = $awd['window_id'] ?? $awd['award_id'];
+        $html .= '<span class="inline-flex items-center justify-center min-w-[20px] h-5 px-1 text-xs font-bold rounded-sm ' . getBoxColor($colorKey, $athlete, true) . '">' . $awd['value'] . '</span>';
     }
     $html .= '</div>';
     return $html;

@@ -111,34 +111,39 @@
             setText('timer-value', formatTimer(localTimeRemaining));
         }
 
-        const awardColors = [
-            'bg-[#ff3b8f] text-white', // pink
-            'bg-[#ffcc00] text-black', // yellow
-            'bg-[#2d2d2d] text-white', // black
-            'bg-[#8b3dff] text-white', // purple
-            'bg-[#10b981] text-white', // green
-            'bg-[#f97316] text-white', // orange
-            'bg-[#0ea5e9] text-white', // light blue
-            'bg-[#eab308] text-white', // dark yellow
-            'bg-[#ec4899] text-white', // alternate pink
-            'bg-[#84cc16] text-white'  // lime
+        // Warna-warni yang sangat berbeda satu sama lain untuk membedakan nilai sah
+        const sahColorPalette = [
+            { bg: '#e74c3c', text: '#fff' },  // merah terang
+            { bg: '#2ecc71', text: '#fff' },  // hijau
+            { bg: '#3498db', text: '#fff' },  // biru
+            { bg: '#f39c12', text: '#000' },  // kuning/oranye
+            { bg: '#9b59b6', text: '#fff' },  // ungu
+            { bg: '#1abc9c', text: '#fff' },  // teal
+            { bg: '#e91e63', text: '#fff' },  // pink
+            { bg: '#ff6f00', text: '#fff' },  // oranye tua
+            { bg: '#00bcd4', text: '#fff' },  // cyan
+            { bg: '#8bc34a', text: '#000' },  // hijau muda
+            { bg: '#795548', text: '#fff' },  // cokelat
+            { bg: '#607d8b', text: '#fff' },  // abu-biru
         ];
 
-        function getColorForAward(awardId) {
-            if (!awardId) return 'bg-gray-400 text-white';
-            let hash = 0;
-            for (let i = 0; i < awardId.length; i++) {
-                hash = awardId.charCodeAt(i) + ((hash << 5) - hash);
+        // Map untuk menyimpan warna per window_id / award_id secara berurutan
+        const colorAssignment = {};
+        let colorIndex = 0;
+
+        function getAssignedColor(id) {
+            if (!id) return sahColorPalette[0];
+            if (!colorAssignment[id]) {
+                colorAssignment[id] = sahColorPalette[colorIndex % sahColorPalette.length];
+                colorIndex++;
             }
-            const index = Math.abs(hash) % awardColors.length;
-            return awardColors[index];
+            return colorAssignment[id];
         }
 
         function renderEventBoxes(cellId, eventHistory, juriPos, round, athlete) {
             const cell = document.getElementById(cellId);
             if (!cell) return;
 
-            // Check if event_history data exists
             if (!eventHistory || !eventHistory[juriPos] || !eventHistory[juriPos][round]) {
                 cell.innerHTML = '';
                 return;
@@ -153,11 +158,9 @@
             let html = '<div class="evt-container">';
             events.forEach(evt => {
                 if (evt.sah) {
-                    // Sah: colored box based on window_id
-                    const colorClass = evt.window_id ? getColorForAward(evt.window_id) : (athlete === 'blue' ? 'evt-sah-blue' : 'evt-sah-red');
-                    html += `<span class="evt-box ${colorClass}">${evt.value}</span>`;
+                    const color = evt.window_id ? getAssignedColor(evt.window_id) : { bg: (athlete === 'blue' ? '#0000cc' : '#cc0000'), text: '#fff' };
+                    html += `<span class="evt-box" style="background:${color.bg};color:${color.text}">${evt.value}</span>`;
                 } else {
-                    // Tidak sah: strikethrough style
                     html += `<span class="evt-box evt-tidak-sah">${evt.value}</span>`;
                 }
             });
@@ -182,8 +185,9 @@
 
             let html = '<div class="evt-container">';
             events.forEach(evt => {
-                const colorClass = evt.award_id ? getColorForAward(evt.award_id) : (athlete === 'blue' ? 'evt-sah-blue' : 'evt-sah-red');
-                html += `<span class="evt-box ${colorClass}">${evt.value}</span>`;
+                const colorKey = evt.window_id || evt.award_id;
+                const color = colorKey ? getAssignedColor(colorKey) : { bg: (athlete === 'blue' ? '#0000cc' : '#cc0000'), text: '#fff' };
+                html += `<span class="evt-box" style="background:${color.bg};color:${color.text}">${evt.value}</span>`;
             });
             html += '</div>';
             cell.innerHTML = html;
@@ -383,7 +387,7 @@
 
                     let currentTimerStatus = data.timer.status;
                     if (previousTimerStatus === 'playing' && (currentTimerStatus === 'stopped' || currentTimerStatus === 'paused')) {
-                        showTimerNotification("Waktu Babak Berhenti!");
+                        showTimerNotification("Waktu Babak Di Jeda!");
                     }
                     previousTimerStatus = currentTimerStatus;
 

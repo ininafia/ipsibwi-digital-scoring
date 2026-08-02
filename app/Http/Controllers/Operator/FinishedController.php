@@ -135,7 +135,8 @@ class FinishedController extends Controller
         foreach ($awards as $awd) {
             $awardHistory[$awd->round][$awd->athlete][] = [
                 'value'     => $awd->score_value,
-                'award_id'  => (string) $awd->id,  // ID dari score_awards, masih valid
+                'award_id'  => (string) $awd->id,
+                'window_id' => $awd->window_id,
             ];
         }
 

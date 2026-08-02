@@ -212,7 +212,7 @@
 
                         let currentTimerStatus = res.match.timer_status;
                         if (previousTimerStatus === 'playing' && (currentTimerStatus === 'stopped' || currentTimerStatus === 'paused')) {
-                            showToast("Waktu Babak Berhenti!");
+                            showToast("Waktu Babak Di Jeda!");
                         }
                         previousTimerStatus = currentTimerStatus;
 

@@ -20,26 +20,36 @@
     }
     /* Event history boxes */
     .evt-box {
-        display: inline-block;
-        min-width: 18px;
-        height: 18px;
-        line-height: 18px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 20px;
+        height: 20px;
+        line-height: 20px;
         font-size: 11px;
         font-weight: bold;
         text-align: center;
         margin: 1px;
-        border-radius: 2px;
+        border-radius: 3px;
         color: white;
+        box-shadow: 0 1px 2px rgba(0,0,0,0.2);
     }
     .evt-sah-blue { background-color: #0000cc; }
     .evt-sah-red { background-color: #cc0000; }
     .evt-sah-yellow { background-color: #daa520; color: black; }
-    .evt-tidak-sah { background-color: transparent; color: #666; font-style: italic; text-decoration: line-through; }
+    .evt-tidak-sah {
+        background-color: #f5f5f5;
+        color: #999;
+        font-style: italic;
+        text-decoration: line-through;
+        border: 1px dashed #ccc;
+        box-shadow: none;
+    }
     .evt-container {
         display: flex;
         flex-wrap: wrap;
         align-items: center;
-        gap: 1px;
+        gap: 2px;
         padding: 1px 2px;
     }
 </style>

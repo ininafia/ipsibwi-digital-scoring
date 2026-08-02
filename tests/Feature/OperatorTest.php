@@ -10,7 +10,6 @@ use App\Models\User;
 
 class OperatorTest extends TestCase
 {
-    // Gunakan DatabaseTransactions agar semua perubahan DB di-rollback setelah test selesai
     use DatabaseTransactions;
 
     protected $operatorUser;
@@ -27,7 +26,7 @@ class OperatorTest extends TestCase
             'is_active' => 1,
         ]);
         
-        // Simulasikan session login
+        // Simulasikan session login sebagai Operator
         session([
             'user_id' => $this->operatorUser->id,
             'role' => $this->operatorUser->access_type,
@@ -36,182 +35,261 @@ class OperatorTest extends TestCase
         ]);
     }
 
-    // TC_OP_001: Akses Dashboard Operator
-    public function test_operator_can_access_dashboard()
+    /**
+     * Helper untuk membuat data pertandingan dummy
+     */
+    private function createDummyMatch(string $status = 'waiting'): int
+    {
+        return DB::table('pertandingan')->insertGetId([
+            'nomor' => 1,
+            'partai' => rand(1000, 999999),
+            'gelanggang' => 'A',
+            'kelas' => 'A',
+            'golongan' => 'dewasa',
+            'jenis_kelamin' => 'putra',
+            'sudut_merah' => 'Atlet Merah Test',
+            'kontingen_merah' => 'Kontingen Merah',
+            'sudut_biru' => 'Atlet Biru Test',
+            'kontingen_biru' => 'Kontingen Biru',
+            'status' => $status,
+            'created_by' => $this->operatorUser->id,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+    }
+
+    /**
+     * TC-OP-01: Akses Dashboard Operator
+     * Expected Result: Halaman dashboard berhasil dimuat (HTTP 200)
+     */
+    public function test_tc_op_01_akses_dashboard_operator()
     {
         $response = $this->get('/operator/tanding/dashboard');
         $response->assertStatus(200);
     }
 
-    // TC_OP_002: Menampilkan Data Monitor
-    public function test_operator_can_get_monitor_data()
+    /**
+     * TC-OP-02: Menampilkan Data Monitor
+     * Expected Result: Menerima response JSON berisi data pertandingan
+     */
+    public function test_tc_op_02_menampilkan_data_monitor()
     {
         $response = $this->get('/operator/monitor-display/data');
         $response->assertStatus(200)
                  ->assertJsonStructure([
-                     'status',
-                     'message',
-                     'data'
+                     'success'
                  ]);
     }
 
-    // TC_OP_003: Membuat Jadwal Pertandingan
-    public function test_operator_can_create_jadwal()
+    /**
+     * TC-OP-03: Membuat Jadwal Pertandingan
+     * Expected Result: Data jadwal tersimpan, redirect ke halaman list jadwal
+     */
+    public function test_tc_op_03_membuat_jadwal_pertandingan()
     {
-        // Setup data dummy untuk referensi
-        $partaiId = DB::table('partai')->insertGetId([
-            'nama_partai' => 'Partai Test ' . uniqid(),
-            'kategori' => 'Tanding',
-            'kelas' => 'A'
-        ]);
+        $partaiNumber = rand(1000, 999999);
+        $data = [
+            'nomor' => 1,
+            'partai' => $partaiNumber,
+            'gelanggang' => 'A',
+            'kelas' => 'A',
+            'golongan' => 'dewasa',
+            'jenis_kelamin' => 'putra',
+            'sudut_merah' => 'Atlet Merah Baru',
+            'kontingen_merah' => 'Kontingen Merah',
+            'sudut_biru' => 'Atlet Biru Baru',
+            'kontingen_biru' => 'Kontingen Biru',
+        ];
 
-        $sudutMerahId = DB::table('atlet')->insertGetId(['nama' => 'Atlet Merah Test']);
-        $sudutBiruId = DB::table('atlet')->insertGetId(['nama' => 'Atlet Biru Test']);
+        $response = $this->post('/operator/tanding/jadwal', $data);
 
-        $response = $this->post('/operator/tanding/jadwal', [
-            'id_partai' => $partaiId,
-            'sudut_merah' => $sudutMerahId,
-            'sudut_biru' => $sudutBiruId,
-        ]);
-
-        $response->assertStatus(200); // Controller biasanya meresponse JSON sukses untuk AJAX atau redirect
+        $response->assertStatus(302);
+        $response->assertRedirect(route('operator.tanding.index'));
 
         $this->assertDatabaseHas('pertandingan', [
-            'id_partai' => $partaiId,
-            'sudut_merah' => $sudutMerahId,
-            'sudut_biru' => $sudutBiruId
+            'partai' => $partaiNumber,
+            'sudut_merah' => 'Atlet Merah Baru',
+            'sudut_biru' => 'Atlet Biru Baru',
         ]);
     }
 
-    // TC_OP_004: Mengubah Jadwal Pertandingan
-    public function test_operator_can_update_jadwal()
+    /**
+     * TC-OP-04: Mengubah Jadwal Pertandingan
+     * Expected Result: Data jadwal terupdate di database
+     */
+    public function test_tc_op_04_mengubah_jadwal_pertandingan()
     {
-        $partaiId = DB::table('partai')->insertGetId([
-            'nama_partai' => 'Partai Test',
-            'kategori' => 'Tanding',
-            'kelas' => 'A'
-        ]);
-        $sudutMerahId = DB::table('atlet')->insertGetId(['nama' => 'Atlet Merah Test']);
-        $sudutBiruId = DB::table('atlet')->insertGetId(['nama' => 'Atlet Biru Test']);
+        $matchId = $this->createDummyMatch('waiting');
+        $partaiNumber = rand(1000, 999999);
 
-        $pertandinganId = DB::table('pertandingan')->insertGetId([
-            'id_partai' => $partaiId,
-            'sudut_merah' => $sudutMerahId,
-            'sudut_biru' => $sudutBiruId,
-            'status' => 'waiting'
-        ]);
+        $updateData = [
+            'nomor' => 2,
+            'partai' => $partaiNumber,
+            'gelanggang' => 'B',
+            'kelas' => 'B',
+            'golongan' => 'remaja',
+            'jenis_kelamin' => 'putra',
+            'sudut_merah' => 'Atlet Merah Updated',
+            'kontingen_merah' => 'Kontingen Merah Updated',
+            'sudut_biru' => 'Atlet Biru Updated',
+            'kontingen_biru' => 'Kontingen Biru Updated',
+        ];
 
-        $sudutBiruBaruId = DB::table('atlet')->insertGetId(['nama' => 'Atlet Biru Baru']);
+        $response = $this->put("/operator/tanding/jadwal/{$matchId}/update", $updateData);
 
-        $response = $this->put("/operator/tanding/jadwal/{$pertandinganId}/update", [
-            'id_partai' => $partaiId,
-            'sudut_merah' => $sudutMerahId,
-            'sudut_biru' => $sudutBiruBaruId, // Data diupdate
-        ]);
-
-        $response->assertStatus(200);
+        $response->assertStatus(302);
 
         $this->assertDatabaseHas('pertandingan', [
-            'id' => $pertandinganId,
-            'sudut_biru' => $sudutBiruBaruId
+            'id' => $matchId,
+            'sudut_merah' => 'Atlet Merah Updated',
+            'sudut_biru' => 'Atlet Biru Updated',
         ]);
     }
 
-    // TC_OP_005: Menghapus Jadwal Pertandingan
-    public function test_operator_can_delete_jadwal()
+    /**
+     * TC-OP-05: Menghapus Jadwal Pertandingan
+     * Expected Result: Data jadwal terhapus dari database
+     */
+    public function test_tc_op_05_menghapus_jadwal_pertandingan()
     {
-        $pertandinganId = DB::table('pertandingan')->insertGetId([
-            'id_partai' => 1,
-            'sudut_merah' => 1,
-            'sudut_biru' => 2,
-            'status' => 'waiting'
-        ]);
+        $matchId = $this->createDummyMatch('waiting');
 
-        $response = $this->delete("/operator/tanding/jadwal/{$pertandinganId}");
-        $response->assertStatus(200);
+        $response = $this->delete("/operator/tanding/jadwal/{$matchId}");
+        $response->assertStatus(302);
 
         $this->assertDatabaseMissing('pertandingan', [
-            'id' => $pertandinganId
+            'id' => $matchId,
+            'deleted_at' => null,
         ]);
     }
 
-    // TC_OP_006: Mengubah Status Daftar Tunggu
-    public function test_operator_can_update_waiting_list_status()
+    /**
+     * TC-OP-06: Mengubah Status Daftar Tunggu
+     * Expected Result: Status berubah, response sukses
+     */
+    public function test_tc_op_06_mengubah_status_daftar_tunggu()
     {
-        $pertandinganId = DB::table('pertandingan')->insertGetId([
-            'id_partai' => 1,
-            'sudut_merah' => 1,
-            'sudut_biru' => 2,
-            'status' => 'waiting'
-        ]);
+        $matchId = $this->createDummyMatch('waiting');
 
-        $response = $this->patch("/operator/tanding/waiting-list/{$pertandinganId}/status", [
+        $response = $this->patch("/operator/tanding/waiting-list/{$matchId}/status", [
             'status' => 'playing'
         ]);
 
-        $response->assertStatus(200);
-        
+        $response->assertStatus(200)
+                 ->assertJson([
+                     'success' => true
+                 ]);
+
         $this->assertDatabaseHas('pertandingan', [
-            'id' => $pertandinganId,
+            'id' => $matchId,
             'status' => 'playing'
         ]);
     }
 
-    // TC_OP_007: Memulai Pertandingan (Play)
-    public function test_operator_can_play_match()
+    /**
+     * TC-OP-07: Memulai Pertandingan (Play)
+     * Expected Result: Menginisiasi skor, timer, dan status playing
+     */
+    public function test_tc_op_07_memulai_pertandingan_play()
     {
-        $pertandinganId = DB::table('pertandingan')->insertGetId([
-            'id_partai' => 1,
-            'sudut_merah' => 1,
-            'sudut_biru' => 2,
-            'status' => 'waiting'
-        ]);
+        $matchId = $this->createDummyMatch('waiting');
 
-        // Mock cache untuk timer (biasanya set cache)
-        $response = $this->get("/operator/pertandingan/{$pertandinganId}/play");
+        $response = $this->get("/operator/pertandingan/{$matchId}/play");
         
-        // Harapannya ini redirect atau load view operator-display
         $response->assertStatus(200);
+
+        $this->assertDatabaseHas('pertandingan', [
+            'id' => $matchId,
+            'status' => 'playing'
+        ]);
     }
 
-    // TC_OP_010: Mereset Password Akun
-    public function test_operator_can_reset_password()
+    /**
+     * TC-OP-08: Finalisasi Pertandingan
+     * Expected Result: Status pertandingan menjadi finished, pemenang ditentukan
+     */
+    public function test_tc_op_08_finalisasi_pertandingan()
     {
-        $user = User::create([
-            'username' => 'juri_reset_test',
+        $matchId = $this->createDummyMatch('playing');
+
+        $response = $this->post("/operator/tanding/{$matchId}/finalisasi", [
+            'jenis_kemenangan' => 'teknik',
+            'sudut_pemenang' => 'merah',
+            'catatan_finalisasi' => 'Menang Teknik R2'
+        ]);
+
+        $response->assertStatus(302);
+
+        $this->assertDatabaseHas('pertandingan', [
+            'id' => $matchId,
+            'status' => 'finished',
+            'winner_corner' => 'merah',
+            'winning_method' => 'teknik'
+        ]);
+    }
+
+    /**
+     * TC-OP-09: Export PDF Pertandingan
+     * Expected Result: Mengunduh file PDF hasil pertandingan
+     */
+    public function test_tc_op_09_export_pdf_pertandingan()
+    {
+        $matchId = $this->createDummyMatch('finished');
+
+        $response = $this->get("/operator/tanding/finished/{$matchId}/export-pdf");
+
+        $response->assertStatus(200);
+        $response->assertHeader('content-type', 'application/pdf');
+    }
+
+    /**
+     * TC-OP-10: Mereset Password Akun
+     * Expected Result: Password pengguna berubah menjadi password baru
+     */
+    public function test_tc_op_10_mereset_password_akun()
+    {
+        $targetUser = User::create([
+            'username' => 'juri_reset_' . uniqid(),
             'password' => Hash::make('oldpassword'),
             'access_type' => 5,
+            'is_active' => 1,
         ]);
 
         $response = $this->post('/operator/akun/reset-password', [
-            'id' => $user->id,
-            'password' => 'newpassword123'
+            'user_id' => $targetUser->id,
+            'new_password' => 'newpassword123'
         ]);
 
-        $response->assertStatus(200);
-        
-        $updatedUser = User::find($user->id);
+        $response->assertStatus(302);
+
+        $updatedUser = User::find($targetUser->id);
         $this->assertTrue(Hash::check('newpassword123', $updatedUser->password));
     }
 
-    // TC_OP_011: Tambah Data Petugas
-    public function test_operator_can_store_petugas()
+    /**
+     * TC-OP-11: Tambah Data Petugas
+     * Expected Result: Data petugas baru ditambahkan ke database
+     */
+    public function test_tc_op_11_tambah_data_petugas()
     {
         $response = $this->post('/operator/petugas/store', [
             'nama' => 'Juri Testing OP',
             'tugas' => 'Juri'
         ]);
 
-        $response->assertStatus(200);
-        
+        $response->assertStatus(302);
+
         $this->assertDatabaseHas('data_petugas', [
             'nama' => 'Juri Testing OP',
             'tugas' => 'Juri'
         ]);
     }
 
-    // TC_OP_012: Edit Data Petugas
-    public function test_operator_can_update_petugas()
+    /**
+     * TC-OP-12: Edit Data Petugas
+     * Expected Result: Data petugas berubah sesuai input
+     */
+    public function test_tc_op_12_edit_data_petugas()
     {
         $petugasId = DB::table('data_petugas')->insertGetId([
             'nama' => 'Old Name',
@@ -219,32 +297,38 @@ class OperatorTest extends TestCase
         ]);
 
         $response = $this->put("/operator/petugas/{$petugasId}/update", [
-            'nama' => 'New Name',
+            'nama' => 'New Name Updated',
             'tugas' => 'Wasit'
         ]);
 
-        $response->assertStatus(200);
-        
+        $response->assertStatus(302);
+
         $this->assertDatabaseHas('data_petugas', [
             'id' => $petugasId,
-            'nama' => 'New Name'
+            'nama' => 'New Name Updated'
         ]);
     }
 
-    // TC_OP_013: Hapus Data Petugas
-    public function test_operator_can_delete_petugas()
+    /**
+     * TC-OP-13: Hapus Data Petugas
+     * Expected Result: Petugas terhapus dari database
+     */
+    public function test_tc_op_13_hapus_data_petugas()
     {
         $petugasId = DB::table('data_petugas')->insertGetId([
-            'nama' => 'Delete Me',
+            'nama' => 'Petugas Delete Me',
             'tugas' => 'Juri'
         ]);
 
         $response = $this->delete("/operator/petugas/{$petugasId}");
 
-        $response->assertStatus(200);
-        
-        $this->assertDatabaseMissing('data_petugas', [
-            'id' => $petugasId
+        $response->assertStatus(302);
+
+        $this->assertDatabaseHas('data_petugas', [
+            'id' => $petugasId,
         ]);
+        
+        $petugas = DB::table('data_petugas')->where('id', $petugasId)->first();
+        $this->assertNotNull($petugas->deleted_at);
     }
 }

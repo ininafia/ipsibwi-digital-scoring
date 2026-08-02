@@ -138,7 +138,7 @@
 
                         let currentTimerStatus = matchData.timer_status;
                         if (previousTimerStatus === 'playing' && (currentTimerStatus === 'stopped' || currentTimerStatus === 'paused')) {
-                            showTimerNotification("Waktu Babak Berhenti!");
+                            showTimerNotification("Waktu Babak Di Jeda!");
                         }
                         previousTimerStatus = currentTimerStatus;
 

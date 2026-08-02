@@ -84,8 +84,8 @@ class AkurasiJuriController extends Controller
         // Reset array keys
         $akurasiData = array_values($akurasiData);
         $partai = $akurasiData[0]['partai'];
-
-        $pdf = Pdf::loadView('Ketua.Persentase-juri.pdf', compact('akurasiData', 'partai'));
+        $type = 'partai';
+        $pdf = Pdf::loadView('Ketua.Persentase-juri.pdf', compact('akurasiData', 'partai', 'type'));
         $pdf->setPaper('a4', 'landscape');
         
         return $pdf->download('Laporan_Akurasi_Juri_Partai_'.$partai.'.pdf');
