@@ -58,6 +58,9 @@ Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard
 // Monitor Display Data (Global AJAX)
 Route::get('/operator/monitor-display/data', [MonitorDisplayController::class, 'getData'])->name('operator.monitor-display.data');
 
+// Timer State (Global AJAX - untuk sinkronisasi timer di semua role)
+Route::get('/timer/state/poll', [TimerController::class, 'getState'])->name('timer.state.poll');
+
 
 // ==========================================
 // ROLE 4: TIMER

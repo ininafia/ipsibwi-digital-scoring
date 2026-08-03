@@ -107,9 +107,9 @@
                 $html = '<div style="text-align: left;">';
                 foreach ($events as $evt) {
                     if ($evt['sah']) {
-                        $html .= '<span style="display:inline-block; min-width:14px; text-align:center; padding:1px 2px; font-weight:bold; font-size:10px; border-radius:2px; margin-right:2px; ' . getPdfBoxColor($evt['window_id'], $athlete, true) . '">' . $evt['value'] . '</span>';
+                        $html .= '<span style="display:inline-block; min-width:14px; text-align:center; padding:1px 2px; font-weight:bold; font-size:10px; border-radius:2px; margin-right:2px; margin-bottom:2px; ' . getPdfBoxColor($evt['window_id'], $athlete, true) . '">' . $evt['value'] . '</span>';
                     } else {
-                        $html .= '<span style="display:inline-block; min-width:14px; text-align:center; padding:1px 2px; font-weight:bold; font-size:10px; color:#666; text-decoration:line-through; margin-right:2px;">' . $evt['value'] . '</span>';
+                        $html .= '<span style="display:inline-block; min-width:14px; text-align:center; padding:1px 2px; font-weight:bold; font-size:10px; color:#666; text-decoration:line-through; margin-right:2px; margin-bottom:2px;">' . $evt['value'] . '</span>';
                     }
                 }
                 $html .= '</div>';
@@ -122,7 +122,7 @@
                 $html = '<div style="text-align: left;">';
                 foreach ($awards as $awd) {
                     $colorKey = $awd['window_id'] ?? $awd['award_id'];
-                    $html .= '<span style="display:inline-block; min-width:14px; text-align:center; padding:1px 2px; font-weight:bold; font-size:10px; border-radius:2px; margin-right:2px; ' . getPdfBoxColor($colorKey, $athlete, true) . '">' . $awd['value'] . '</span>';
+                    $html .= '<span style="display:inline-block; min-width:14px; text-align:center; padding:1px 2px; font-weight:bold; font-size:10px; border-radius:2px; margin-right:2px; margin-bottom:2px; ' . getPdfBoxColor($colorKey, $athlete, true) . '">' . $awd['value'] . '</span>';
                 }
                 $html .= '</div>';
                 return $html;

@@ -286,6 +286,25 @@
                         window.Echo.channel('match.' + currentMatchId)
                             .listen('MatchUpdated', (e) => {
                                 updateMonitor();
+                            })
+                            .listen('TimerStateUpdated', (e) => {
+                                let serverTime = Math.round(e.time_remaining || 0);
+                                syncLocalTimer(serverTime, e.status);
+
+                                let currentTimerStatus = e.status;
+                                if (previousTimerStatus === 'playing' && (currentTimerStatus === 'stopped' || currentTimerStatus === 'paused')) {
+                                    showTimerNotification("Waktu Babak Di Jeda!");
+                                }
+                                previousTimerStatus = currentTimerStatus;
+
+                                let newRound = e.round || 1;
+                                if (previousRound !== null && newRound > previousRound) {
+                                    showTimerNotification("Waktu Babak " + previousRound + " telah habis!");
+                                } else if (previousRound !== null && newRound === 3 && previousTimeRemaining > 0 && e.time_remaining === 0) {
+                                    showTimerNotification("Waktu Pertandingan telah selesai!");
+                                }
+                                previousRound = newRound;
+                                previousTimeRemaining = e.time_remaining;
                             });
                         subscribedMatchId = currentMatchId;
                     }
@@ -417,6 +436,30 @@
         }
         
         updateMonitor();
+
+        // === TIMER POLLING FALLBACK ===
+        setInterval(() => {
+            if (!currentMatchId) return;
+            fetch('/timer/state/poll?id_pertandingan=' + currentMatchId + '&_t=' + Date.now())
+                .then(res => res.json())
+                .then(data => {
+                    if (data.error) return;
+                    let serverTime = Math.round(data.time_remaining || 0);
+                    let serverStatus = data.status || 'stopped';
+
+                    if (serverStatus !== localTimerStatus || 
+                        Math.abs(serverTime - localTimeRemaining) > 1) {
+                        syncLocalTimer(serverTime, serverStatus);
+
+                        if (previousTimerStatus === 'playing' && (serverStatus === 'stopped' || serverStatus === 'paused')) {
+                            showTimerNotification("Waktu Babak Di Jeda!");
+                        }
+                        previousTimerStatus = serverStatus;
+                        previousTimeRemaining = data.time_remaining;
+                    }
+                })
+                .catch(() => {});
+        }, 2000);
     </script>
 
 </body>

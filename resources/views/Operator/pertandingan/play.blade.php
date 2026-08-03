@@ -456,10 +456,78 @@
         window.Echo.channel('match.' + matchId)
             .listen('MatchUpdated', (e) => {
                 updateOperatorUI();
+            })
+            .listen('TimerStateUpdated', (e) => {
+                let serverTime = Math.round(e.time_remaining || 0);
+                localTimeRemaining = serverTime;
+                localTimerStatus = e.status;
+                document.getElementById('displayTimer').innerText = formatTimer(localTimeRemaining);
+                startLocalTimer();
+
+                document.getElementById('displayRound').innerText = 'ROUND ' + (e.round || 1);
+
+                let statusContainer = document.getElementById('matchStatusContainer');
+                if (e.status === 'playing') {
+                    statusContainer.style.visibility = 'visible';
+                } else {
+                    statusContainer.style.visibility = 'hidden';
+                }
+
+                let currentTimerStatus = e.status;
+                if (previousTimerStatus === 'playing' && (currentTimerStatus === 'stopped' || currentTimerStatus === 'paused')) {
+                    showTimerNotification("Waktu Babak Di Jeda!");
+                }
+                previousTimerStatus = currentTimerStatus;
+
+                let currentRound = e.round || 1;
+                if (previousRound !== null && currentRound > previousRound) {
+                    showTimerNotification("Waktu Babak " + previousRound + " telah habis!");
+                } else if (previousRound !== null && currentRound === 3 && previousTimeRemaining > 0 && e.time_remaining === 0) {
+                    showTimerNotification("Waktu Pertandingan telah selesai!");
+                }
+                previousRound = currentRound;
+                previousTimeRemaining = e.time_remaining;
             });
     }
 
     updateOperatorUI();
+
+    // === TIMER POLLING FALLBACK ===
+    setInterval(() => {
+        if (!matchId) return;
+        fetch('/timer/state/poll?id_pertandingan=' + matchId + '&_t=' + Date.now())
+            .then(res => res.json())
+            .then(data => {
+                if (data.error) return;
+                let serverTime = Math.round(data.time_remaining || 0);
+                let serverStatus = data.status || 'stopped';
+
+                if (serverStatus !== localTimerStatus || 
+                    Math.abs(serverTime - localTimeRemaining) > 1) {
+                    localTimeRemaining = serverTime;
+                    localTimerStatus = serverStatus;
+                    document.getElementById('displayTimer').innerText = formatTimer(localTimeRemaining);
+                    startLocalTimer();
+
+                    let statusContainer = document.getElementById('matchStatusContainer');
+                    if (serverStatus === 'playing') {
+                        statusContainer.style.visibility = 'visible';
+                    } else {
+                        statusContainer.style.visibility = 'hidden';
+                    }
+
+                    if (previousTimerStatus === 'playing' && (serverStatus === 'stopped' || serverStatus === 'paused')) {
+                        showTimerNotification("Waktu Babak Di Jeda!");
+                    }
+                    previousTimerStatus = serverStatus;
+                    previousTimeRemaining = data.time_remaining;
+                }
+
+                let serverRound = data.round || 1;
+                document.getElementById('displayRound').innerText = 'ROUND ' + serverRound;
+            })
+            .catch(() => {});
+    }, 2000);
 
     function submitFinalisasi() {
         const jenis = document.getElementById('jenisKemenangan').value;

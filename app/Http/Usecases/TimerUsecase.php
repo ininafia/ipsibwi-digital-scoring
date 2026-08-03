@@ -52,16 +52,14 @@ class TimerUsecase extends Usecase
 
         $shouldBroadcast = false;
         
+        // Selalu broadcast ketika status atau round berubah (play/pause/stop, ganti babak)
         if ($oldState['round'] !== $state['round'] || $oldState['status'] !== $state['status']) {
             $shouldBroadcast = true;
         }
 
-        // Sinkronisasi waktu setiap kelipatan 10 detik agar tidak drift
-        // atau jika ada perbedaan signifikan (tapi timer client cukup akurat)
-        if ($oldState['status'] === 'playing' && $state['status'] === 'playing') {
-            if ($state['time_remaining'] % 15 === 0) {
-                $shouldBroadcast = true;
-            }
+        // Sinkronisasi waktu setiap 5 detik agar tidak drift saat playing
+        if ($state['status'] === 'playing' && $state['time_remaining'] % 5 === 0) {
+            $shouldBroadcast = true;
         }
 
         Cache::put($cacheKey, $state);

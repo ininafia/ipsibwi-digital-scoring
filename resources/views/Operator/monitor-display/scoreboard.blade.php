@@ -306,10 +306,82 @@
         window.Echo.channel(currentEchoChannel)
             .listen('MatchUpdated', (e) => {
                 updateMonitorDisplay();
+            })
+            .listen('TimerStateUpdated', (e) => {
+                let serverTime = Math.round(e.time_remaining || 0);
+                syncLocalTimer(serverTime, e.status);
+
+                let currentTimerStatus = e.status;
+                if (previousTimerStatus === 'playing' && (currentTimerStatus === 'stopped' || currentTimerStatus === 'paused')) {
+                    showTimerNotification("Waktu Babak Berhenti!");
+                }
+                previousTimerStatus = currentTimerStatus;
+
+                let activeRound = e.round || 1;
+                if (previousRound !== null && activeRound > previousRound) {
+                    showTimerNotification("Waktu Babak " + previousRound + " telah habis!");
+                } else if (previousRound !== null && activeRound === 3 && previousTimeRemaining > 0 && e.time_remaining === 0) {
+                    showTimerNotification("Waktu Pertandingan telah selesai!");
+                }
+                previousRound = activeRound;
+                previousTimeRemaining = e.time_remaining;
+
+                // Update Round Boxes
+                for (let i = 1; i <= 3; i++) {
+                    const box = document.getElementById('box-round-' + i);
+                    if (box) {
+                        if (i == activeRound) {
+                            box.className = 'flex-[1] border-b-[2px] border-black flex items-center justify-center text-xl lg:text-2xl font-bold bg-green-500 text-white';
+                        } else {
+                            box.className = 'flex-[1] border-b-[2px] border-black flex items-center justify-center text-xl lg:text-2xl font-bold bg-white text-black';
+                        }
+                    }
+                }
             });
     }
 
     updateMonitorDisplay();
+
+    // === TIMER POLLING FALLBACK ===
+    let pollingMatchId = null;
+    setInterval(() => {
+        // Gunakan matchId dari channel subscription jika ada
+        let mId = currentEchoChannel ? currentEchoChannel.replace('match.', '') : null;
+        if (!mId) return;
+        pollingMatchId = mId;
+        fetch('/timer/state/poll?id_pertandingan=' + mId + '&_t=' + Date.now())
+            .then(res => res.json())
+            .then(data => {
+                if (data.error) return;
+                let serverTime = Math.round(data.time_remaining || 0);
+                let serverStatus = data.status || 'stopped';
+                let serverRound = data.round || 1;
+
+                if (serverStatus !== localTimerStatus || 
+                    Math.abs(serverTime - localTimeRemaining) > 1) {
+                    syncLocalTimer(serverTime, serverStatus);
+
+                    if (previousTimerStatus === 'playing' && (serverStatus === 'stopped' || serverStatus === 'paused')) {
+                        showTimerNotification("Waktu Babak Berhenti!");
+                    }
+                    previousTimerStatus = serverStatus;
+                    previousTimeRemaining = data.time_remaining;
+                }
+
+                // Update round boxes
+                for (let i = 1; i <= 3; i++) {
+                    const box = document.getElementById('box-round-' + i);
+                    if (box) {
+                        if (i == serverRound) {
+                            box.className = 'flex-[1] border-b-[2px] border-black flex items-center justify-center text-xl lg:text-2xl font-bold bg-green-500 text-white';
+                        } else {
+                            box.className = 'flex-[1] border-b-[2px] border-black flex items-center justify-center text-xl lg:text-2xl font-bold bg-white text-black';
+                        }
+                    }
+                }
+            })
+            .catch(() => {});
+    }, 2000);
 </script>
 
 </body>

@@ -192,7 +192,31 @@
                         if (typeof window.Echo !== 'undefined' && currentMatchId && subscribedMatchId !== currentMatchId) {
                             if (subscribedMatchId) window.Echo.leaveChannel('match.' + subscribedMatchId);
                             window.Echo.channel('match.' + currentMatchId)
-                                .listen('MatchUpdated', (e) => { updateJuriDisplay(); });
+                                .listen('MatchUpdated', (e) => { updateJuriDisplay(); })
+                                .listen('TimerStateUpdated', (e) => {
+                                    let serverTime = Math.round(e.time_remaining || 0);
+                                    syncLocalTimer(serverTime, e.status);
+
+                                    let currentTimerStatus = e.status;
+                                    if (previousTimerStatus === 'playing' && (currentTimerStatus === 'stopped' || currentTimerStatus === 'paused')) {
+                                        showToast("Waktu Babak Di Jeda!");
+                                    }
+                                    previousTimerStatus = currentTimerStatus;
+
+                                    currentRound = e.round || 1;
+
+                                    // Update Round indicator
+                                    for (let i = 1; i <= 3; i++) {
+                                        const box = document.getElementById('juri-round-' + i);
+                                        if (box) {
+                                            if (i == currentRound) {
+                                                box.className = 'h-10 bg-green-500 flex items-center justify-center text-lg font-bold text-white rounded';
+                                            } else {
+                                                box.className = 'h-10 bg-gray-400 flex items-center justify-center text-lg font-bold text-white rounded';
+                                            }
+                                        }
+                                    }
+                                });
                             subscribedMatchId = currentMatchId;
                         }
 
@@ -317,10 +341,105 @@
                 .listen('SystemStateChanged', (e) => {
                     window.location.reload();
                 });
-            // NOTE: subscribe 'match.*' dilakukan di dalam updateJuriDisplay() setelah ID diketahui
+
+            // Subscribe langsung ke match channel jika ID sudah diketahui dari PHP
+            if (currentMatchId) {
+                window.Echo.channel('match.' + currentMatchId)
+                    .listen('MatchUpdated', (e) => { updateJuriDisplay(); })
+                    .listen('TimerStateUpdated', (e) => {
+                        let serverTime = Math.round(e.time_remaining || 0);
+                        syncLocalTimer(serverTime, e.status);
+
+                        let currentTimerStatus = e.status;
+                        if (previousTimerStatus === 'playing' && (currentTimerStatus === 'stopped' || currentTimerStatus === 'paused')) {
+                            showToast("Waktu Babak Di Jeda!");
+                        }
+                        previousTimerStatus = currentTimerStatus;
+
+                        let currentTimeRem = e.time_remaining;
+                        let newRound = e.round || 1;
+
+                        if (previousRound !== null && newRound > previousRound) {
+                            showToast("Waktu Babak " + previousRound + " telah habis!");
+                        } else if (previousRound !== null && newRound === 3 && previousTimeRemaining > 0 && currentTimeRem === 0) {
+                            showToast("Waktu Pertandingan telah selesai!");
+                        }
+
+                        currentRound = newRound;
+                        previousRound = newRound;
+                        previousTimeRemaining = currentTimeRem;
+
+                        // Update Round indicator
+                        for (let i = 1; i <= 3; i++) {
+                            const box = document.getElementById('juri-round-' + i);
+                            if (box) {
+                                if (i == currentRound) {
+                                    box.className = 'h-10 bg-green-500 flex items-center justify-center text-lg font-bold text-white rounded';
+                                } else {
+                                    box.className = 'h-10 bg-gray-400 flex items-center justify-center text-lg font-bold text-white rounded';
+                                }
+                            }
+                        }
+                    });
+                subscribedMatchId = currentMatchId;
+            }
+            // NOTE: subscribe 'match.*' juga dilakukan di dalam updateJuriDisplay() setelah ID diketahui
         }
 
         updateJuriDisplay();
+
+        // === TIMER POLLING FALLBACK ===
+        // Poll timer state setiap 2 detik untuk menjamin sinkronisasi realtime
+        // Endpoint ini sangat ringan (hanya baca cache)
+        setInterval(() => {
+            if (!currentMatchId) return;
+            fetch('/timer/state/poll?id_pertandingan=' + currentMatchId + '&_t=' + Date.now())
+                .then(res => res.json())
+                .then(data => {
+                    if (data.error) return;
+
+                    let serverTime = Math.round(data.time_remaining || 0);
+                    let serverStatus = data.status || 'stopped';
+                    let serverRound = data.round || 1;
+
+                    // Hanya update jika ada perbedaan dari state lokal
+                    if (serverStatus !== localTimerStatus || 
+                        Math.abs(serverTime - localTimeRemaining) > 1 ||
+                        serverRound !== currentRound) {
+                        
+                        syncLocalTimer(serverTime, serverStatus);
+
+                        // Notifikasi perubahan status
+                        if (previousTimerStatus === 'playing' && (serverStatus === 'stopped' || serverStatus === 'paused')) {
+                            showToast("Waktu Babak Di Jeda!");
+                        }
+                        previousTimerStatus = serverStatus;
+
+                        if (previousRound !== null && serverRound > previousRound) {
+                            showToast("Waktu Babak " + previousRound + " telah habis!");
+                        } else if (previousRound !== null && serverRound === 3 && previousTimeRemaining > 0 && serverTime === 0) {
+                            showToast("Waktu Pertandingan telah selesai!");
+                        }
+
+                        currentRound = serverRound;
+                        previousRound = serverRound;
+                        previousTimeRemaining = serverTime;
+
+                        // Update Round indicator
+                        for (let i = 1; i <= 3; i++) {
+                            const box = document.getElementById('juri-round-' + i);
+                            if (box) {
+                                if (i == currentRound) {
+                                    box.className = 'h-10 bg-green-500 flex items-center justify-center text-lg font-bold text-white rounded';
+                                } else {
+                                    box.className = 'h-10 bg-gray-400 flex items-center justify-center text-lg font-bold text-white rounded';
+                                }
+                            }
+                        }
+                    }
+                })
+                .catch(() => {}); // Abaikan error polling
+        }, 2000);
     </script>
 </body>
 </html>

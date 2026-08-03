@@ -71,7 +71,13 @@ class TimerController extends Controller
         }
         
         if (!empty($result['should_broadcast'])) {
-            event(new \App\Events\MatchUpdated($matchId));
+            $state = $result['state'];
+            event(new \App\Events\TimerStateUpdated(
+                $matchId,
+                $state['round'],
+                $state['time_remaining'],
+                $state['status']
+            ));
         }
         
         return response()->json($result);

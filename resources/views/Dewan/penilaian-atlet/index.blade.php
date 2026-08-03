@@ -118,7 +118,32 @@
                         if (typeof window.Echo !== 'undefined' && currentMatchId && subscribedMatchId != currentMatchId) {
                             if (subscribedMatchId) window.Echo.leaveChannel('match.' + subscribedMatchId);
                             window.Echo.channel('match.' + currentMatchId)
-                                .listen('MatchUpdated', (e) => { updateDewanUI(); });
+                                .listen('MatchUpdated', (e) => { updateDewanUI(); })
+                                .listen('TimerStateUpdated', (e) => {
+                                    let serverTime = Math.round(e.time_remaining || 0);
+                                    syncLocalTimer(serverTime, e.status);
+
+                                    let currentTimerStatus = e.status;
+                                    if (previousTimerStatus === 'playing' && (currentTimerStatus === 'stopped' || currentTimerStatus === 'paused')) {
+                                        showTimerNotification("Waktu Babak Di Jeda!");
+                                    }
+                                    previousTimerStatus = currentTimerStatus;
+
+                                    currentRound = e.round || 1;
+                                    previousRound = currentRound;
+                                    previousTimeRemaining = e.time_remaining;
+
+                                    for (let i = 1; i <= 3; i++) {
+                                        let roundIndicator = document.getElementById('dewan-round-indicator-' + i);
+                                        if (roundIndicator) {
+                                            if (i == currentRound) {
+                                                roundIndicator.className = "w-36 bg-[#31b057] text-white font-bold flex items-center justify-center shadow transition-colors duration-300";
+                                            } else {
+                                                roundIndicator.className = "w-36 bg-[#c5c6cc] text-white font-bold flex items-center justify-center shadow transition-colors duration-300";
+                                            }
+                                        }
+                                    }
+                                });
                             subscribedMatchId = currentMatchId;
                         }
 
@@ -221,10 +246,89 @@
                 .listen('SystemStateChanged', (e) => {
                     window.location.reload();
                 });
-            // NOTE: subscribe 'match.*' dilakukan di dalam updateDewanUI() setelah ID diketahui
+
+            // Subscribe langsung ke match channel jika ID sudah diketahui dari PHP
+            if (currentMatchId) {
+                window.Echo.channel('match.' + currentMatchId)
+                    .listen('MatchUpdated', (e) => { updateDewanUI(); })
+                    .listen('TimerStateUpdated', (e) => {
+                        let serverTime = Math.round(e.time_remaining || 0);
+                        syncLocalTimer(serverTime, e.status);
+
+                        let currentTimerStatus = e.status;
+                        if (previousTimerStatus === 'playing' && (currentTimerStatus === 'stopped' || currentTimerStatus === 'paused')) {
+                            showTimerNotification("Waktu Babak Di Jeda!");
+                        }
+                        previousTimerStatus = currentTimerStatus;
+
+                        currentRound = e.round || 1;
+                        previousRound = currentRound;
+                        previousTimeRemaining = e.time_remaining;
+
+                        for (let i = 1; i <= 3; i++) {
+                            let roundIndicator = document.getElementById('dewan-round-indicator-' + i);
+                            if (roundIndicator) {
+                                if (i == currentRound) {
+                                    roundIndicator.className = "w-36 bg-[#31b057] text-white font-bold flex items-center justify-center shadow transition-colors duration-300";
+                                } else {
+                                    roundIndicator.className = "w-36 bg-[#c5c6cc] text-white font-bold flex items-center justify-center shadow transition-colors duration-300";
+                                }
+                            }
+                        }
+                    });
+                subscribedMatchId = currentMatchId;
+            }
+            // NOTE: subscribe 'match.*' juga dilakukan di dalam updateDewanUI() setelah ID diketahui
         }
         
         updateDewanUI();
+
+        // === TIMER POLLING FALLBACK ===
+        setInterval(() => {
+            if (!currentMatchId) return;
+            fetch('/timer/state/poll?id_pertandingan=' + currentMatchId + '&_t=' + Date.now())
+                .then(res => res.json())
+                .then(data => {
+                    if (data.error) return;
+                    let serverTime = Math.round(data.time_remaining || 0);
+                    let serverStatus = data.status || 'stopped';
+                    let serverRound = data.round || 1;
+
+                    if (serverStatus !== localTimerStatus || 
+                        Math.abs(serverTime - localTimeRemaining) > 1 ||
+                        serverRound !== currentRound) {
+                        
+                        syncLocalTimer(serverTime, serverStatus);
+
+                        if (previousTimerStatus === 'playing' && (serverStatus === 'stopped' || serverStatus === 'paused')) {
+                            showTimerNotification("Waktu Babak Di Jeda!");
+                        }
+                        previousTimerStatus = serverStatus;
+
+                        if (previousRound !== null && serverRound > previousRound) {
+                            showTimerNotification("Waktu Babak " + previousRound + " telah habis!");
+                        } else if (previousRound !== null && serverRound === 3 && previousTimeRemaining > 0 && serverTime === 0) {
+                            showTimerNotification("Waktu Pertandingan telah selesai!");
+                        }
+
+                        currentRound = serverRound;
+                        previousRound = serverRound;
+                        previousTimeRemaining = serverTime;
+
+                        for (let i = 1; i <= 3; i++) {
+                            let roundIndicator = document.getElementById('dewan-round-indicator-' + i);
+                            if (roundIndicator) {
+                                if (i == currentRound) {
+                                    roundIndicator.className = "w-36 bg-[#31b057] text-white font-bold flex items-center justify-center shadow transition-colors duration-300";
+                                } else {
+                                    roundIndicator.className = "w-36 bg-[#c5c6cc] text-white font-bold flex items-center justify-center shadow transition-colors duration-300";
+                                }
+                            }
+                        }
+                    }
+                })
+                .catch(() => {});
+        }, 2000);
     </script>
 </body>
 </html>
