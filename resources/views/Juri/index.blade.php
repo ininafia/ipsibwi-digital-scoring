@@ -200,13 +200,13 @@
                                     currentRound = e.round || 1;
 
                                     if (serverTime === 0 && previousTimeRemaining > 0) {
-                                        if (currentRound === 3) {
-                                            showToast("Waktu pertandingan selesai");
+                                        if (currentRound == 3) {
+                                            showToast("Waktu pertandingan telah habis");
                                         } else {
-                                            showToast("Waktu babak " + currentRound + " selesai");
+                                            showToast("Waktu babak " + currentRound + " telah habis");
                                         }
                                     } else if (previousTimerStatus === 'playing' && (currentTimerStatus === 'stopped' || currentTimerStatus === 'paused')) {
-                                        showToast("Waktu babak " + currentRound + " sedang di jeda");
+                                        showToast("Waktu babak " + currentRound + " di jeda");
                                     }
                                     previousTimerStatus = currentTimerStatus;
                                     previousTimeRemaining = serverTime;
@@ -241,18 +241,17 @@
                         }
 
                         let currentTimerStatus = res.match.timer_status;
-                        if (previousTimerStatus === 'playing' && (currentTimerStatus === 'stopped' || currentTimerStatus === 'paused')) {
-                            showToast("Waktu Babak Di Jeda!");
-                        }
-                        previousTimerStatus = currentTimerStatus;
-
                         let currentTimeRemaining = res.match.time_remaining;
                         currentRound = res.match.round || 1;
 
-                        if (previousRound !== null && currentRound > previousRound) {
-                            showToast("Waktu Babak " + previousRound + " telah habis!");
-                        } else if (previousRound !== null && currentRound === 3 && previousTimeRemaining > 0 && currentTimeRemaining === 0) {
-                            showToast("Waktu Pertandingan telah selesai!");
+                        if (currentTimeRemaining === 0 && previousTimeRemaining > 0) {
+                            if (currentRound == 3) {
+                                showToast("Waktu pertandingan telah habis");
+                            } else {
+                                showToast("Waktu babak " + currentRound + " telah habis");
+                            }
+                        } else if (previousTimerStatus === 'playing' && (currentTimerStatus === 'stopped' || currentTimerStatus === 'paused')) {
+                            showToast("Waktu babak " + currentRound + " di jeda");
                         }
                         previousRound = currentRound;
                         previousTimeRemaining = currentTimeRemaining;
@@ -357,18 +356,17 @@
                         syncLocalTimer(serverTime, e.status);
 
                         let currentTimerStatus = e.status;
-                        if (previousTimerStatus === 'playing' && (currentTimerStatus === 'stopped' || currentTimerStatus === 'paused')) {
-                            showToast("Waktu Babak Di Jeda!");
-                        }
-                        previousTimerStatus = currentTimerStatus;
-
-                        let currentTimeRem = e.time_remaining;
+                        let currentTimeRem = Math.round(e.time_remaining || 0);
                         let newRound = e.round || 1;
 
-                        if (previousRound !== null && newRound > previousRound) {
-                            showToast("Waktu Babak " + previousRound + " telah habis!");
-                        } else if (previousRound !== null && newRound === 3 && previousTimeRemaining > 0 && currentTimeRem === 0) {
-                            showToast("Waktu Pertandingan telah selesai!");
+                        if (currentTimeRem === 0 && previousTimeRemaining > 0) {
+                            if (newRound == 3) {
+                                showToast("Waktu pertandingan telah habis");
+                            } else {
+                                showToast("Waktu babak " + newRound + " telah habis");
+                            }
+                        } else if (previousTimerStatus === 'playing' && (currentTimerStatus === 'stopped' || currentTimerStatus === 'paused')) {
+                            showToast("Waktu babak " + newRound + " di jeda");
                         }
 
                         currentRound = newRound;
@@ -417,13 +415,13 @@
 
                         // Handle timer notification
                         if (serverTime === 0 && previousTimeRemaining > 0) {
-                            if (serverRound === 3) {
-                                showToast("Waktu pertandingan selesai");
+                            if (serverRound == 3) {
+                                showToast("Waktu pertandingan telah habis");
                             } else {
-                                showToast("Waktu babak " + serverRound + " selesai");
+                                showToast("Waktu babak " + serverRound + " telah habis");
                             }
                         } else if (previousTimerStatus === 'playing' && (serverStatus === 'stopped' || serverStatus === 'paused')) {
-                            showToast("Waktu babak " + serverRound + " sedang di jeda");
+                            showToast("Waktu babak " + serverRound + " di jeda");
                         }
                         
                         previousTimerStatus = serverStatus;

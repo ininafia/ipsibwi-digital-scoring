@@ -166,11 +166,11 @@
                     } else {
                         if (status === 'playing') {
                             if (currentRound < 3) {
-                                showTimerNotification("Waktu Babak " + currentRound + " telah habis!");
+                                showTimerNotification("Waktu babak " + currentRound + " telah habis");
                                 currentRound++;
                                 timeRemaining = 120;
                             } else {
-                                showTimerNotification("Waktu Pertandingan telah selesai!");
+                                showTimerNotification("Waktu pertandingan telah habis");
                                 timeRemaining = 0;
                             }
                         }
@@ -203,6 +203,7 @@
                 if (status === 'playing') {
                     // Pause it
                     status = 'paused';
+                    showTimerNotification("Waktu babak " + currentRound + " di jeda");
                     if (timerInterval) {
                         clearInterval(timerInterval);
                         timerInterval = null;
