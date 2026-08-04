@@ -149,6 +149,61 @@ class FinishedController extends Controller
             $awardsTotals[$award->athlete][$award->round][$award->technique] += $award->score_value;
         }
 
-        return compact('match', 'skor', 'awardsTotals', 'eventHistory', 'awardHistory', 'namaPetugas');
+        $penaltiesPerRound = [
+            1 => ['blue' => ['jatuhan' => [], 'hukuman' => [], 'binaan' => []], 'red' => ['jatuhan' => [], 'hukuman' => [], 'binaan' => []]],
+            2 => ['blue' => ['jatuhan' => [], 'hukuman' => [], 'binaan' => []], 'red' => ['jatuhan' => [], 'hukuman' => [], 'binaan' => []]],
+            3 => ['blue' => ['jatuhan' => [], 'hukuman' => [], 'binaan' => []], 'red' => ['jatuhan' => [], 'hukuman' => [], 'binaan' => []]],
+        ];
+
+        $riwayatHukuman = DB::table('riwayat_hukuman')
+            ->where('id_pertandingan', $id)
+            ->orderBy('id', 'asc')
+            ->get();
+
+        $globalCounts = [
+            'blue' => ['jatuhan' => 0, 'teguran' => 0, 'peringatan' => 0, 'binaan' => 0],
+            'red'  => ['jatuhan' => 0, 'teguran' => 0, 'peringatan' => 0, 'binaan' => 0],
+        ];
+
+        foreach ($riwayatHukuman as $rh) {
+            $sudut = $rh->sudut === 'biru' ? 'blue' : 'red';
+            $babak = $rh->id_babak;
+            $jenis = $rh->jenis_hukuman;
+            
+            if ($babak >= 1 && $babak <= 3) {
+                if ($rh->action === 'add') {
+                    $globalCounts[$sudut][$jenis]++;
+                    $currCount = $globalCounts[$sudut][$jenis];
+                    
+                    if ($jenis === 'teguran') {
+                        $val = ($currCount == 1) ? '-1' : '-2';
+                        $penaltiesPerRound[$babak][$sudut]['hukuman'][] = $val;
+                    } elseif ($jenis === 'peringatan') {
+                        $val = ($currCount == 1) ? '-5' : '-10';
+                        $penaltiesPerRound[$babak][$sudut]['hukuman'][] = $val;
+                    } elseif ($jenis === 'jatuhan') {
+                        $val = ($currCount == 1) ? '3' : '+3';
+                        $penaltiesPerRound[$babak][$sudut]['jatuhan'][] = $val;
+                    } elseif ($jenis === 'binaan') {
+                        $penaltiesPerRound[$babak][$sudut]['binaan'][] = (string)$currCount;
+                    }
+                } elseif ($rh->action === 'undo') {
+                    if ($jenis === 'teguran' || $jenis === 'peringatan') {
+                        if (count($penaltiesPerRound[$babak][$sudut]['hukuman']) > 0) {
+                            array_pop($penaltiesPerRound[$babak][$sudut]['hukuman']);
+                        }
+                    } else {
+                        if (count($penaltiesPerRound[$babak][$sudut][$jenis]) > 0) {
+                            array_pop($penaltiesPerRound[$babak][$sudut][$jenis]);
+                        }
+                    }
+                    if ($globalCounts[$sudut][$jenis] > 0) {
+                        $globalCounts[$sudut][$jenis]--;
+                    }
+                }
+            }
+        }
+
+        return compact('match', 'skor', 'awardsTotals', 'eventHistory', 'awardHistory', 'namaPetugas', 'penaltiesPerRound');
     }
 }

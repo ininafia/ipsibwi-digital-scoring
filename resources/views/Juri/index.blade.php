@@ -196,14 +196,20 @@
                                 .listen('TimerStateUpdated', (e) => {
                                     let serverTime = Math.round(e.time_remaining || 0);
                                     syncLocalTimer(serverTime, e.status);
-
                                     let currentTimerStatus = e.status;
-                                    if (previousTimerStatus === 'playing' && (currentTimerStatus === 'stopped' || currentTimerStatus === 'paused')) {
-                                        showToast("Waktu Babak Di Jeda!");
+                                    currentRound = e.round || 1;
+
+                                    if (serverTime === 0 && previousTimeRemaining > 0) {
+                                        if (currentRound === 3) {
+                                            showToast("Waktu pertandingan selesai");
+                                        } else {
+                                            showToast("Waktu babak " + currentRound + " selesai");
+                                        }
+                                    } else if (previousTimerStatus === 'playing' && (currentTimerStatus === 'stopped' || currentTimerStatus === 'paused')) {
+                                        showToast("Waktu babak " + currentRound + " sedang di jeda");
                                     }
                                     previousTimerStatus = currentTimerStatus;
-
-                                    currentRound = e.round || 1;
+                                    previousTimeRemaining = serverTime;
 
                                     // Update Round indicator
                                     for (let i = 1; i <= 3; i++) {
@@ -409,21 +415,21 @@
                         
                         syncLocalTimer(serverTime, serverStatus);
 
-                        // Notifikasi perubahan status
-                        if (previousTimerStatus === 'playing' && (serverStatus === 'stopped' || serverStatus === 'paused')) {
-                            showToast("Waktu Babak Di Jeda!");
+                        // Handle timer notification
+                        if (serverTime === 0 && previousTimeRemaining > 0) {
+                            if (serverRound === 3) {
+                                showToast("Waktu pertandingan selesai");
+                            } else {
+                                showToast("Waktu babak " + serverRound + " selesai");
+                            }
+                        } else if (previousTimerStatus === 'playing' && (serverStatus === 'stopped' || serverStatus === 'paused')) {
+                            showToast("Waktu babak " + serverRound + " sedang di jeda");
                         }
+                        
                         previousTimerStatus = serverStatus;
-
-                        if (previousRound !== null && serverRound > previousRound) {
-                            showToast("Waktu Babak " + previousRound + " telah habis!");
-                        } else if (previousRound !== null && serverRound === 3 && previousTimeRemaining > 0 && serverTime === 0) {
-                            showToast("Waktu Pertandingan telah selesai!");
-                        }
-
-                        currentRound = serverRound;
-                        previousRound = serverRound;
                         previousTimeRemaining = serverTime;
+                        previousRound = serverRound;
+                        currentRound = serverRound;
 
                         // Update Round indicator
                         for (let i = 1; i <= 3; i++) {

@@ -153,28 +153,28 @@ function renderAwards($awards, $athlete) {
             <!-- JATUHAN -->
             <tr>
                 <td class="{{ $narrowClass }}"></td>
-                <td class="{{ $wideClass }} font-bold text-black text-center">{{ $round == 3 ? ($skor->jatuhan_biru ?? 0) : '-' }}</td>
+                <td class="{{ $wideClass }} font-bold text-black text-center">{{ count($penaltiesPerRound[$round]['blue']['jatuhan']) > 0 ? implode(', ', $penaltiesPerRound[$round]['blue']['jatuhan']) : '-' }}</td>
                 <td class="{{ $labelClass }}">JATUHAN</td>
                 <td class="{{ $labelClass }}">JATUHAN</td>
-                <td class="{{ $wideClass }} font-bold text-black text-center">{{ $round == 3 ? ($skor->jatuhan_merah ?? 0) : '-' }}</td>
+                <td class="{{ $wideClass }} font-bold text-black text-center">{{ count($penaltiesPerRound[$round]['red']['jatuhan']) > 0 ? implode(', ', $penaltiesPerRound[$round]['red']['jatuhan']) : '-' }}</td>
                 <td class="{{ $narrowClass }}"></td>
             </tr>
             <!-- HUKUMAN -->
             <tr>
                 <td class="{{ $narrowClass }}"></td>
-                <td class="{{ $wideClass }} font-bold text-black text-center">{{ $round == 3 ? (($skor->teguran_biru ?? 0) + ($skor->peringatan_biru ?? 0)) : '-' }}</td>
+                <td class="{{ $wideClass }} font-bold text-black text-center">{{ count($penaltiesPerRound[$round]['blue']['hukuman']) > 0 ? implode(', ', $penaltiesPerRound[$round]['blue']['hukuman']) : '-' }}</td>
                 <td class="{{ $labelClass }}">HUKUMAN</td>
                 <td class="{{ $labelClass }}">HUKUMAN</td>
-                <td class="{{ $wideClass }} font-bold text-black text-center">{{ $round == 3 ? (($skor->teguran_merah ?? 0) + ($skor->peringatan_merah ?? 0)) : '-' }}</td>
+                <td class="{{ $wideClass }} font-bold text-black text-center">{{ count($penaltiesPerRound[$round]['red']['hukuman']) > 0 ? implode(', ', $penaltiesPerRound[$round]['red']['hukuman']) : '-' }}</td>
                 <td class="{{ $narrowClass }}"></td>
             </tr>
             <!-- BINAAN -->
             <tr>
                 <td class="{{ $narrowClass }}"></td>
-                <td class="{{ $wideClass }} font-bold text-black text-center">{{ $round == 3 ? ($skor->binaan_biru ?? 0) : '-' }}</td>
+                <td class="{{ $wideClass }} font-bold text-black text-center">{{ count($penaltiesPerRound[$round]['blue']['binaan']) > 0 ? implode(', ', $penaltiesPerRound[$round]['blue']['binaan']) : '-' }}</td>
                 <td class="{{ $labelClass }}">BINAAN</td>
                 <td class="{{ $labelClass }}">BINAAN</td>
-                <td class="{{ $wideClass }} font-bold text-black text-center">{{ $round == 3 ? ($skor->binaan_merah ?? 0) : '-' }}</td>
+                <td class="{{ $wideClass }} font-bold text-black text-center">{{ count($penaltiesPerRound[$round]['red']['binaan']) > 0 ? implode(', ', $penaltiesPerRound[$round]['red']['binaan']) : '-' }}</td>
                 <td class="{{ $narrowClass }}"></td>
             </tr>
         </tbody>
