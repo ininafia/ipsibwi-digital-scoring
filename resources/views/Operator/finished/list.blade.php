@@ -4,10 +4,8 @@
     $finishedList = $result['data']['list'] ?? [];
 @endphp
 
-<div class="overflow-x-auto w-full">
-
-    <div class="overflow-x-auto">
-        <table class="w-full text-sm text-center border-collapse border border-gray-300 bg-white">
+<div class="overflow-x-auto min-w-0 w-full rounded-lg border border-gray-300">
+    <table class="w-full min-w-[800px] text-sm text-center border-collapse bg-white">
 
             <thead>
                 <tr>

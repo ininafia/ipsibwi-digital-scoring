@@ -50,16 +50,16 @@
     @endif
 
     {{-- MAIN --}}
-    <main class="flex-1 flex flex-col">
+    <main class="flex-1 min-w-0 flex flex-col">
 
         {{-- TOPBAR --}}
         <header
-            class="h-[78px] bg-[#f8f8f8] border-b border-gray-200 flex items-center px-6">
+            class="h-[78px] bg-[#f8f8f8] border-b border-gray-200 flex items-center px-4 sm:px-6 shrink-0">
 
             {{-- TOGGLE SIDEBAR --}}
             <button
                 @click="open = !open"
-                class="text-[#a8e8ff] text-[30px]">
+                class="text-[#a8e8ff] hover:text-[#57d2ff] text-[28px] sm:text-[30px] transition">
 
                 <i class="fa-solid fa-bars"></i>
 
@@ -68,7 +68,7 @@
         </header>
 
         {{-- CONTENT --}}
-        <section class="flex-1 px-6 pt-6 pb-4 overflow-y-auto flex flex-col">
+        <section class="flex-1 min-w-0 px-3 sm:px-6 pt-4 sm:pt-6 pb-4 overflow-y-auto flex flex-col">
 
             @yield('content')
 

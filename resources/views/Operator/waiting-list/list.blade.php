@@ -2,30 +2,30 @@
 
 @section('content')
 
-<div class="bg-white shadow-md min-h-[540px] border border-gray-200 p-8">
+<div class="bg-white shadow-md min-h-[540px] border border-gray-200 p-4 sm:p-8 rounded-xl min-w-0 w-full overflow-hidden">
 
     {{-- TAB --}}
-    <div class="flex justify-center gap-16 mb-10">
+    <div class="flex items-center justify-start sm:justify-center gap-4 sm:gap-12 md:gap-16 border-b border-gray-200 mb-6 overflow-x-auto whitespace-nowrap">
 
         <button
-            class="font-bold text-[16px] border-b-[3px] border-sky-400 pb-3 px-8">
+            class="font-bold text-sm sm:text-[16px] border-b-[3px] border-sky-400 pb-3 px-4 sm:px-8">
             WAITING LIST
         </button>
 
         <button
-            class="font-bold text-[16px] text-black pb-3">
+            class="font-bold text-sm sm:text-[16px] text-black pb-3 px-4 sm:px-8">
             FINISHED
         </button>
 
         <button
-            class="font-bold text-[16px] text-black pb-3">
+            class="font-bold text-sm sm:text-[16px] text-black pb-3 px-4 sm:px-8">
             THE FINAL RESULT
         </button>
 
     </div>
 
     {{-- TOP ACTION --}}
-    <div class="flex items-center justify-between mb-5">
+    <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-5">
 
         {{-- ENTRIES --}}
         <div class="flex items-center gap-3">
@@ -42,7 +42,7 @@
         </div>
 
         {{-- SEARCH --}}
-        <div class="relative">
+        <div class="relative w-full sm:w-auto">
 
             <i
                 class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-gray-300">
@@ -51,16 +51,16 @@
             <input
                 type="text"
                 placeholder="Search"
-                class="w-[190px] h-[40px] rounded-xl border border-black bg-transparent pl-11 pr-4 outline-none italic text-gray-500">
+                class="w-full sm:w-[190px] h-[40px] rounded-xl border border-black bg-transparent pl-11 pr-4 outline-none italic text-gray-500">
 
         </div>
 
     </div>
 
     {{-- TABLE --}}
-    <div class="overflow-hidden border border-black">
+    <div class="overflow-x-auto min-w-0 w-full border border-black rounded-lg">
 
-        <table class="w-full border-collapse">
+        <table class="w-full min-w-[750px] border-collapse">
 
             {{-- HEAD --}}
             <thead>

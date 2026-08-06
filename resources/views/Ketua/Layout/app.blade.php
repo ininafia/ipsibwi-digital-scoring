@@ -31,13 +31,13 @@
     @yield('sidebar')
 
     <!-- MAIN -->
-    <main class="flex-1">
+    <main class="flex-1 min-w-0">
 
         <!-- NAVBAR -->
         @include('Ketua.dashboard-ketua.navbar')
 
         <!-- CONTENT -->
-        <section class="px-6 pt-10">
+        <section class="px-3 sm:px-6 pt-6 sm:pt-10 min-w-0">
 
             @yield('content')
 

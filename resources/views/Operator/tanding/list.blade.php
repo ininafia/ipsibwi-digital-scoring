@@ -2,7 +2,7 @@
 
 @section('content')
 
-<div class="bg-white shadow-md border border-gray-200 p-6 rounded-xl flex-1 flex flex-col">
+<div class="bg-white shadow-md border border-gray-200 p-4 sm:p-6 rounded-xl flex-1 flex flex-col min-w-0 w-full overflow-hidden">
 
     @if(session('error'))
         <div x-data="{ show: true }" x-show="show" x-init="setTimeout(() => show = false, 3000)" x-transition.duration.500ms  class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4" role="alert">
@@ -17,26 +17,26 @@
     @endif
 
     {{-- TAB --}}
-    <div class="flex justify-center gap-16 border-b border-gray-200 mb-6">
+    <div class="flex items-center justify-start sm:justify-center gap-4 sm:gap-12 md:gap-16 border-b border-gray-200 mb-6 overflow-x-auto whitespace-nowrap">
 
         <button
             id="tab-waiting"
             onclick="switchTab('waiting')"
-            class="tab-btn {{ $tab == 'waiting' ? 'border-sky-400 text-sky-500' : 'border-transparent text-gray-700' }} font-bold text-[15px] pb-3 px-4 border-b-[3px]">
+            class="tab-btn {{ $tab == 'waiting' ? 'border-sky-400 text-sky-500' : 'border-transparent text-gray-700' }} font-bold text-sm sm:text-[15px] pb-3 px-2 sm:px-4 border-b-[3px] transition">
             WAITING LIST
         </button>
 
         <button
             id="tab-finished"
             onclick="switchTab('finished')"
-            class="tab-btn {{ $tab == 'finished' ? 'border-sky-400 text-sky-500' : 'border-transparent text-gray-700' }} font-bold text-[15px] pb-3 px-4 border-b-[3px]">
+            class="tab-btn {{ $tab == 'finished' ? 'border-sky-400 text-sky-500' : 'border-transparent text-gray-700' }} font-bold text-sm sm:text-[15px] pb-3 px-2 sm:px-4 border-b-[3px] transition">
             FINISHED
         </button>
 
         <button
             id="tab-final"
             onclick="switchTab('final')"
-            class="tab-btn {{ $tab == 'final' ? 'border-sky-400 text-sky-500' : 'border-transparent text-gray-700' }} font-bold text-[15px] pb-3 px-4 border-b-[3px]">
+            class="tab-btn {{ $tab == 'final' ? 'border-sky-400 text-sky-500' : 'border-transparent text-gray-700' }} font-bold text-sm sm:text-[15px] pb-3 px-2 sm:px-4 border-b-[3px] transition">
             THE FINAL RESULT
         </button>
 
@@ -103,9 +103,9 @@
             Halaman The Final Result belum tersedia.
         </div>
     @else
-        <div class="overflow-x-auto">
+        <div class="overflow-x-auto min-w-0 w-full rounded-lg border border-gray-300">
             <table
-                class="w-full border border-gray-300 text-sm"
+                class="w-full min-w-[750px] text-sm"
                 id="jadwalTable">
 
                 <thead>
