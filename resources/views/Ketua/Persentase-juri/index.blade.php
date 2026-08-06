@@ -7,43 +7,43 @@
 @endsection
 
 @section('content')
-<div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6" x-data="{ activeTab: 'babak' }">
-    <div class="flex justify-between items-center mb-4 print:hidden">
+<div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 sm:p-6" x-data="{ activeTab: 'babak' }">
+    <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-6 print:hidden">
         <div>
             <h2 class="text-xl font-bold text-gray-800">Riwayat Akurasi Juri</h2>
             <p class="text-sm text-gray-500 mt-1">Rekapitulasi data akurasi penilaian juri pada seluruh pertandingan.</p>
         </div>
-        <div class="flex items-center gap-3">
-            <a :href="'{{ route('ketua.akurasi.export.all') }}?type=' + activeTab" target="_blank" class="bg-[#4fcfff] hover:bg-[#3dbfe8] text-white font-medium py-1.5 px-3 rounded-md text-xs transition-all shadow-sm flex items-center gap-1.5 whitespace-nowrap">
+        <div class="flex flex-wrap items-center gap-3">
+            <a :href="'{{ route('ketua.akurasi.export.all') }}?type=' + activeTab" target="_blank" class="bg-[#4fcfff] hover:bg-[#3dbfe8] text-white font-medium py-2 px-4 rounded-md text-xs transition-all shadow-sm flex items-center gap-1.5 whitespace-nowrap">
                 <i class="fa-solid fa-file-pdf"></i>
                 <span>Export PDF <span x-text="activeTab === 'babak' ? 'Babak' : (activeTab === 'partai' ? 'Partai' : 'Event')"></span></span>
             </a>
-            <div class="relative" x-show="activeTab !== 'event'">
+            <div class="relative w-64" x-show="activeTab !== 'event'">
                 <i class="fa-solid fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
-                <input type="text" id="searchInput" placeholder="Cari Partai / Juri..." class="pl-10 pr-4 py-2 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-[#4fcfff] focus:border-transparent outline-none w-64 transition-all">
+                <input type="text" id="searchInput" placeholder="Cari Partai / Juri..." class="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-[#4fcfff] focus:border-transparent outline-none transition-all">
             </div>
-            <div class="relative" x-show="activeTab === 'event'">
+            <div class="relative w-64" x-show="activeTab === 'event'">
                 <i class="fa-solid fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
-                <input type="text" id="searchEventInput" placeholder="Cari Nama Juri..." class="pl-10 pr-4 py-2 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-[#4fcfff] focus:border-transparent outline-none w-64 transition-all">
+                <input type="text" id="searchEventInput" placeholder="Cari Nama Juri..." class="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-[#4fcfff] focus:border-transparent outline-none transition-all">
             </div>
         </div>
     </div>
 
     <!-- TABS MENU -->
-    <div class="flex border-b border-gray-200 mb-6 print:hidden">
+    <div class="flex border-b border-gray-200 mb-6 print:hidden overflow-x-auto whitespace-nowrap">
         <button @click="activeTab = 'babak'" 
                 :class="activeTab === 'babak' ? 'border-[#4fcfff] text-[#4fcfff]' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'"
-                class="px-6 py-3 font-semibold text-sm border-b-2 transition-colors">
+                class="px-4 sm:px-6 py-3 font-semibold text-xs sm:text-sm border-b-2 transition-colors">
             Akurasi Per Babak
         </button>
         <button @click="activeTab = 'partai'" 
                 :class="activeTab === 'partai' ? 'border-[#4fcfff] text-[#4fcfff]' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'"
-                class="px-6 py-3 font-semibold text-sm border-b-2 transition-colors">
+                class="px-4 sm:px-6 py-3 font-semibold text-xs sm:text-sm border-b-2 transition-colors">
             Akurasi Per Partai
         </button>
         <button @click="activeTab = 'event'" 
                 :class="activeTab === 'event' ? 'border-[#4fcfff] text-[#4fcfff]' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'"
-                class="px-6 py-3 font-semibold text-sm border-b-2 transition-colors">
+                class="px-4 sm:px-6 py-3 font-semibold text-xs sm:text-sm border-b-2 transition-colors">
             Total Keseluruhan Event
         </button>
     </div>
@@ -131,9 +131,9 @@
                                                         <i class="fa-solid fa-check text-green-500 text-[10px]"></i>
                                                         <span class="text-xs font-semibold text-gray-600">{{ $b1['sah'] }}</span>
                                                     </div>
-                                                    <div class="flex items-center gap-1.5" title="Total Input">
-                                                        <i class="fa-solid fa-bullseye text-gray-400 text-[10px]"></i>
-                                                        <span class="text-xs font-semibold text-gray-600">{{ $b1['input'] }}</span>
+                                                    <div class="flex items-center gap-1.5" title="Total Sah Semua Juri">
+                                                        <i class="fa-solid fa-users text-gray-400 text-[10px]"></i>
+                                                        <span class="text-xs font-semibold text-gray-600">{{ $b1['total_sah_semua_juri'] }}</span>
                                                     </div>
                                                 </div>
                                             </td>
@@ -150,9 +150,9 @@
                                                         <i class="fa-solid fa-check text-green-500 text-[10px]"></i>
                                                         <span class="text-xs font-semibold text-gray-600">{{ $b2['sah'] }}</span>
                                                     </div>
-                                                    <div class="flex items-center gap-1.5" title="Total Input">
-                                                        <i class="fa-solid fa-bullseye text-gray-400 text-[10px]"></i>
-                                                        <span class="text-xs font-semibold text-gray-600">{{ $b2['input'] }}</span>
+                                                    <div class="flex items-center gap-1.5" title="Total Sah Semua Juri">
+                                                        <i class="fa-solid fa-users text-gray-400 text-[10px]"></i>
+                                                        <span class="text-xs font-semibold text-gray-600">{{ $b2['total_sah_semua_juri'] }}</span>
                                                     </div>
                                                 </div>
                                             </td>
@@ -169,9 +169,9 @@
                                                         <i class="fa-solid fa-check text-green-500 text-[10px]"></i>
                                                         <span class="text-xs font-semibold text-gray-600">{{ $b3['sah'] }}</span>
                                                     </div>
-                                                    <div class="flex items-center gap-1.5" title="Total Input">
-                                                        <i class="fa-solid fa-bullseye text-gray-400 text-[10px]"></i>
-                                                        <span class="text-xs font-semibold text-gray-600">{{ $b3['input'] }}</span>
+                                                    <div class="flex items-center gap-1.5" title="Total Sah Semua Juri">
+                                                        <i class="fa-solid fa-users text-gray-400 text-[10px]"></i>
+                                                        <span class="text-xs font-semibold text-gray-600">{{ $b3['total_sah_semua_juri'] }}</span>
                                                     </div>
                                                 </div>
                                             </td>
@@ -184,9 +184,9 @@
                                                         <i class="fa-solid fa-check text-green-500 text-[10px]"></i>
                                                         <span class="text-xs font-semibold text-gray-600">{{ $juri['total_nilai_sah'] }}</span>
                                                     </div>
-                                                    <div class="flex items-center gap-1.5" title="Total Input">
-                                                        <i class="fa-solid fa-bullseye text-gray-400 text-[10px]"></i>
-                                                        <span class="text-xs font-semibold text-gray-600">{{ $juri['total_input'] }}</span>
+                                                    <div class="flex items-center gap-1.5" title="Total Sah Semua Juri">
+                                                        <i class="fa-solid fa-users text-gray-400 text-[10px]"></i>
+                                                        <span class="text-xs font-semibold text-gray-600">{{ $juri['total_sah_semua_juri'] }}</span>
                                                     </div>
                                                 </div>
                                             </td>
@@ -221,8 +221,8 @@
                     <thead>
                         <tr class="border-b border-gray-100">
                             <th class="py-4 px-6 font-medium text-gray-500 text-sm w-1/3">Petugas Juri</th>
-                            <th class="py-4 px-6 font-medium text-gray-500 text-sm text-center">Total Input Event</th>
-                            <th class="py-4 px-6 font-medium text-gray-500 text-sm text-center">Total Sah Event</th>
+                            <th class="py-4 px-6 font-medium text-gray-500 text-sm text-center">Total Sah Juri Ini</th>
+                            <th class="py-4 px-6 font-medium text-gray-500 text-sm text-center">Total Sah Semua Juri (Event)</th>
                             <th class="py-4 px-6 font-medium text-[#4fcfff] text-sm text-center">Akurasi Event</th>
                         </tr>
                     </thead>
@@ -236,8 +236,8 @@
                             @endphp
                             <tr class="hover:bg-gray-50/50 event-juri-item">
                                 <td class="py-3 px-4 font-semibold text-gray-800 text-base juri-name-event">{{ $juri['nama_juri'] }}</td>
-                                <td class="py-3 px-4 text-center font-medium text-gray-600 text-sm">{{ $juri['total_input'] }}</td>
                                 <td class="py-3 px-4 text-center font-medium text-green-600 text-sm">{{ $juri['total_sah'] }}</td>
+                                <td class="py-3 px-4 text-center font-medium text-gray-600 text-sm"><i class="fa-solid fa-users text-gray-400 text-[10px] mr-1"></i>{{ $juri['total_sah_semua_juri_event'] }}</td>
                                 <td class="py-3 px-4 text-center border-l border-gray-200">
                                     <div class="font-bold text-lg {{ $evtAccColor }}">{{ number_format($evtAcc, 1) }}%</div>
                                 </td>

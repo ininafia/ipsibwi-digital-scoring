@@ -1,11 +1,25 @@
 <style>
     .monitor-table th, .monitor-table td {
         border: 2px solid black;
-        padding: 2px;
+        padding: 1px 2px;
         text-align: center;
         font-weight: bold;
-        font-size: 12px;
+        font-size: 11px;
         color: black;
+    }
+    @media (max-width: 1024px) {
+        .monitor-table th, .monitor-table td {
+            font-size: 9px;
+            padding: 1px;
+            border-width: 1.5px;
+        }
+    }
+    @media (max-width: 640px) {
+        .monitor-table th, .monitor-table td {
+            font-size: 8px;
+            padding: 0.5px;
+            border-width: 1px;
+        }
     }
     .monitor-table {
         border-collapse: collapse;
@@ -13,26 +27,36 @@
         height: 100%;
     }
     .thick-border-bottom td {
-        border-bottom: 4px solid black !important;
+        border-bottom: 3px solid black !important;
     }
     .main-border-wrap {
-        border: 4px solid black;
+        border: 3px solid black;
     }
     /* Event history boxes */
     .evt-box {
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        min-width: 20px;
-        height: 20px;
-        line-height: 20px;
-        font-size: 11px;
+        min-width: 15px;
+        height: 15px;
+        line-height: 15px;
+        font-size: 8px;
         font-weight: bold;
         text-align: center;
-        margin: 1px;
-        border-radius: 3px;
+        margin: 0.5px;
+        border-radius: 2px;
         color: white;
-        box-shadow: 0 1px 2px rgba(0,0,0,0.2);
+        box-shadow: 0 1px 1px rgba(0,0,0,0.2);
+    }
+    @media (min-width: 768px) {
+        .evt-box {
+            min-width: 20px;
+            height: 20px;
+            line-height: 20px;
+            font-size: 11px;
+            margin: 1px;
+            border-radius: 3px;
+        }
     }
     .evt-sah-blue { background-color: #0000cc; }
     .evt-sah-red { background-color: #cc0000; }
@@ -49,8 +73,9 @@
         display: flex;
         flex-wrap: wrap;
         align-items: center;
-        gap: 2px;
-        padding: 1px 2px;
+        justify-content: center;
+        gap: 1px;
+        padding: 1px;
     }
 </style>
 

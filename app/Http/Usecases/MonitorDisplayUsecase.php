@@ -23,12 +23,9 @@ class MonitorDisplayUsecase extends Usecase
             ->where('id_pertandingan', $match->id)
             ->first();
             
-        // Fetch Timer State from Cache
-        $timerState = Cache::get('current_timer_state_' . $match->id, [
-            'round' => 1,
-            'time_remaining' => 120,
-            'status' => 'stopped'
-        ]);
+        // Fetch Timer State from TimerUsecase to get accurate elapsed time
+        $timerUsecase = new \App\Http\Usecases\TimerUsecase();
+        $timerState = $timerUsecase->getState($match->id);
 
         // Fetch Pending Votes
         $pendingVotes = DB::table('score_events')

@@ -35,8 +35,7 @@ class PetugasUsecase extends Usecase
                 ->orderBy('id', 'desc')
                 ->get([
                     'id',
-                    'nama',
-                    'tugas'
+                    'nama'
                 ]);
 
             return Response::buildSuccess(
@@ -71,8 +70,7 @@ class PetugasUsecase extends Usecase
                 ->where('id', $id)
                 ->first([
                     'id',
-                    'nama',
-                    'tugas'
+                    'nama'
                 ]);
 
             if (!$data) {
@@ -107,19 +105,11 @@ class PetugasUsecase extends Usecase
         $funcName = $this->className . ".create";
 
         $validator = Validator::make($data->all(), [
-
             'nama'  => 'required|string|max:100',
-
-            'tugas' => ['required', \Illuminate\Validation\Rule::in(['Ketua Pertandingan', 'Delegasi Teknik', 'Dewan', 'Wasit', 'Juri'])],
-
         ]);
 
         $customAttributes = [
-
             'nama'  => 'Nama Petugas',
-
-            'tugas' => 'Tugas',
-
         ];
 
         $validator->setAttributeNames($customAttributes);
@@ -132,7 +122,6 @@ class PetugasUsecase extends Usecase
 
             DB::table('data_petugas')->insert([
                 'nama'  => trim($data['nama']),
-                'tugas' => trim($data['tugas']),
             ]);
 
             DB::commit();
@@ -161,19 +150,11 @@ class PetugasUsecase extends Usecase
         $funcName = $this->className . ".update";
 
         $validator = Validator::make($data->all(), [
-
             'nama'  => 'required|string|max:100',
-
-            'tugas' => ['required', \Illuminate\Validation\Rule::in(['Ketua Pertandingan', 'Delegasi Teknik', 'Dewan', 'Wasit', 'Juri'])],
-
         ]);
 
         $customAttributes = [
-
             'nama'  => 'Nama Petugas',
-
-            'tugas' => 'Tugas',
-
         ];
 
         $validator->setAttributeNames($customAttributes);
@@ -193,8 +174,7 @@ class PetugasUsecase extends Usecase
             $updatedPetugas = DB::table('data_petugas')
                 ->where('id', $id)
                 ->update([
-                    'nama'  => trim($data['nama']),
-                    'tugas' => trim($data['tugas'])
+                    'nama'  => trim($data['nama'])
                 ]);
 
             if ($updatedPetugas === false) {
@@ -230,17 +210,24 @@ class PetugasUsecase extends Usecase
         $funcName = $this->className . ".getDropdownData";
 
         try {
-            // Fetch pertandingan
+            // Fetch id pertandingan yang sudah ditugaskan
+            $assignedMatchIds = DB::table('petugas_pertandingan')
+                ->select('id_pertandingan')
+                ->distinct()
+                ->pluck('id_pertandingan');
+
+            // Fetch pertandingan yang belum ditugaskan
             $pertandingan = DB::table('pertandingan')
                 ->whereNull('deleted_at')
                 ->whereIn('status', ['waiting', 'playing'])
+                ->whereNotIn('id', $assignedMatchIds)
                 ->orderBy('partai', 'asc')
                 ->get(['id', 'partai', 'gelanggang']);
 
             // Fetch data_petugas
             $petugas = DB::table('data_petugas')
                 ->whereNull('deleted_at')
-                ->get(['id', 'nama', 'tugas']);
+                ->get(['id', 'nama']);
 
             return Response::buildSuccess([
                 'pertandingan' => collect($pertandingan)->toArray(),
@@ -365,37 +352,7 @@ class PetugasUsecase extends Usecase
                 return Response::buildErrorService('Terdapat duplikasi petugas. Satu orang tidak boleh merangkap jabatan di pertandingan yang sama.');
             }
 
-            // Validasi tugas sesuai tabel data_petugas
-            if (!empty($allPetugasIds)) {
-                $masterPetugas = DB::table('data_petugas')->whereIn('id', $allPetugasIds)->get()->keyBy('id');
-                
-                $expectedRoleTasks = [
-                    2 => 'Ketua Pertandingan',
-                    7 => 'Delegasi Teknik',
-                    3 => 'Dewan',
-                    6 => 'Wasit',
-                    5 => 'Juri'
-                ];
-
-                foreach ($assignments as $roleId => $petugasId) {
-                    $expectedTask = $expectedRoleTasks[$roleId] ?? null;
-                    if (!$expectedTask) continue;
-                    
-                    if (is_array($petugasId)) {
-                        foreach ($petugasId as $jId) {
-                            if ($jId && isset($masterPetugas[$jId]) && $masterPetugas[$jId]->tugas !== $expectedTask) {
-                                DB::rollback();
-                                return Response::buildErrorService("Petugas '{$masterPetugas[$jId]->nama}' tidak memiliki tugas sebagai {$expectedTask}.");
-                            }
-                        }
-                    } else if ($petugasId) {
-                        if (isset($masterPetugas[$petugasId]) && $masterPetugas[$petugasId]->tugas !== $expectedTask) {
-                            DB::rollback();
-                            return Response::buildErrorService("Petugas '{$masterPetugas[$petugasId]->nama}' tidak memiliki tugas sebagai {$expectedTask}.");
-                        }
-                    }
-                }
-            }
+            // Tugas assignment validation is removed
 
             // Optional: delete existing assignments for this pertandingan
             DB::table('petugas_pertandingan')

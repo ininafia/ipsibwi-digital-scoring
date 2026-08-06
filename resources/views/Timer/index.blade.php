@@ -156,19 +156,32 @@
                 }).catch(err => console.error(err));
             }
 
+            let targetEndTime = null;
+
             function startInterval() {
                 if (timerInterval) return;
+                targetEndTime = Date.now() + (timeRemaining * 1000);
                 timerInterval = setInterval(() => {
-                    if (timeRemaining > 0) {
-                        timeRemaining--;
+                    if (status !== 'playing') return;
+                    
+                    let newTime = Math.ceil((targetEndTime - Date.now()) / 1000);
+                    if (newTime < 0) newTime = 0;
+                    
+                    if (newTime !== timeRemaining) {
+                        timeRemaining = newTime;
                         updateDisplay();
-                        syncState(); 
-                    } else {
+                        // Dihapus: syncState(); agar tidak spam request setiap detik. 
+                        // Klien lain akan hitung mundur sendiri.
+                    }
+
+                    if (timeRemaining <= 0) {
                         if (status === 'playing') {
                             if (currentRound < 3) {
                                 showTimerNotification("Waktu babak " + currentRound + " telah habis");
                                 currentRound++;
                                 timeRemaining = 120;
+                                // Reset end time for next round if it automatically starts (though usually it pauses)
+                                targetEndTime = Date.now() + (timeRemaining * 1000);
                             } else {
                                 showTimerNotification("Waktu pertandingan telah habis");
                                 timeRemaining = 0;
@@ -178,9 +191,9 @@
                         clearInterval(timerInterval);
                         timerInterval = null;
                         updateDisplay();
-                        syncState();
+                        syncState(); // Sinkron ketika mencapai 0 (event penting)
                     }
-                }, 1000);
+                }, 200); // Check more frequently, but update only when seconds change
             }
 
             // Bind Round Buttons

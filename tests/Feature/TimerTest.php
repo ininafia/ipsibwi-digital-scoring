@@ -234,16 +234,16 @@ class TimerTest extends TestCase
                      'should_broadcast' => true
                  ]);
 
-        Event::assertDispatched(MatchUpdated::class, function ($event) use ($matchId) {
+        Event::assertDispatched(\App\Events\TimerStateUpdated::class, function ($event) use ($matchId) {
             return $event->matchId == $matchId;
         });
     }
 
     /**
-     * TC-TMR-09: Sinkronisasi Timer: Berjalan normal tanpa kelipatan 15 detik
-     * Expected Result: Cache diperbarui. JSON mengembalikan 'should_broadcast' => false
+     * TC-TMR-09: Sinkronisasi Timer: Berjalan normal (sekarang selalu broadcast tiap detik)
+     * Expected Result: Cache diperbarui. JSON mengembalikan 'should_broadcast' => true
      */
-    public function test_tc_tmr_09_sinkronisasi_timer_berjalan_normal_tanpa_kelipatan_15_detik()
+    public function test_tc_tmr_09_sinkronisasi_timer_berjalan_normal()
     {
         $matchId = $this->createDummyMatch('playing');
         Cache::put('current_timer_state_' . $matchId, [
@@ -261,7 +261,7 @@ class TimerTest extends TestCase
         $response->assertStatus(200)
                  ->assertJson([
                      'success' => true,
-                     'should_broadcast' => false
+                     'should_broadcast' => true
                  ]);
 
         $cachedState = Cache::get('current_timer_state_' . $matchId);

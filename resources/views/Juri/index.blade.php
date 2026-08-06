@@ -15,9 +15,9 @@
     @include('Juri.header')
 
     {{-- CONTENT --}}
-    <main class="p-2 flex-1 flex flex-col overflow-x-auto">
+    <main class="p-2 sm:p-3 flex-1 flex flex-col justify-center overflow-hidden">
 
-        <div class="bg-gray-100 border border-gray-300 rounded-xl shadow-md p-3 min-w-[768px] flex-1 flex flex-col justify-between">
+        <div class="bg-gray-100 border border-gray-300 rounded-xl shadow-md p-3 sm:p-4 w-full flex flex-col gap-3 sm:gap-4 my-auto overflow-hidden">
 
             {{-- PESERTA --}}
             @include('Juri.peserta')
@@ -71,6 +71,8 @@
         let localTimerInterval = null;
         let localTimeRemaining = 0;
 
+        let targetEndTime = null;
+
         // Selalu reset interval dari waktu server agar tidak drift
         function syncLocalTimer(serverTime, timerStatus) {
             localTimeRemaining = serverTime;
@@ -84,16 +86,21 @@
 
             // Jalankan interval baru jika sedang playing
             if (timerStatus === 'playing' && localTimeRemaining > 0) {
+                targetEndTime = Date.now() + (localTimeRemaining * 1000);
                 localTimerInterval = setInterval(() => {
-                    if (localTimeRemaining > 0) {
-                        localTimeRemaining--;
+                    let newTime = Math.ceil((targetEndTime - Date.now()) / 1000);
+                    if (newTime < 0) newTime = 0;
+                    if (newTime !== localTimeRemaining) {
+                        localTimeRemaining = newTime;
                         let timerVal = document.getElementById('timer-value');
                         if (timerVal) timerVal.innerText = formatTimer(localTimeRemaining);
-                    } else {
-                        clearInterval(localTimerInterval);
-                        localTimerInterval = null;
+                        
+                        if (localTimeRemaining <= 0) {
+                            clearInterval(localTimerInterval);
+                            localTimerInterval = null;
+                        }
                     }
-                }, 1000);
+                }, 200);
             }
 
             // Update display sekarang juga
@@ -111,6 +118,17 @@
 
             if (isSubmittingScore) return;
             isSubmittingScore = true;
+
+            // OPTIMISTIC UPDATE
+            let box = document.getElementById(`score-${sudut}-${currentRound}`);
+            if (box) {
+                let displayValue = nilai == 1 ? '1' : '2';
+                if (box.children.length > 0) displayValue = '+' + displayValue;
+                const span = document.createElement('span');
+                span.className = 'text-gray-600 font-bold opacity-80 animate-pulse';
+                span.innerText = displayValue;
+                box.appendChild(span);
+            }
 
             fetch('{{ route('juri.input-score') }}', {
                 method: 'POST',
@@ -132,14 +150,16 @@
                 if(!data.success) {
                     console.error('addScore error:', data.message);
                     showToast('Gagal menambah nilai: ' + data.message);
+                    updateJuriScores(); // revert optimistic update
                 } else {
-                    updateJuriDisplay();
+                    updateJuriScores();
                 }
             })
             .catch(err => {
                 isSubmittingScore = false;
                 console.error(err);
                 showToast('Terjadi kesalahan koneksi.');
+                updateJuriScores();
             });
         }
 
@@ -151,6 +171,14 @@
 
             if (isSubmittingScore) return;
             isSubmittingScore = true;
+
+            // OPTIMISTIC UPDATE
+            let box = document.getElementById(`score-${sudut}-${currentRound}`);
+            let hiddenElement = null;
+            if (box && box.lastElementChild) {
+                hiddenElement = box.lastElementChild;
+                hiddenElement.classList.add('hidden');
+            }
 
             fetch('{{ route('juri.delete-score') }}', {
                 method: 'POST',
@@ -170,14 +198,18 @@
                 if(!data.success) {
                     console.error('deleteScore error:', data.message);
                     showToast('Gagal menghapus nilai: ' + data.message);
+                    if (hiddenElement) hiddenElement.classList.remove('hidden'); // revert
+                    updateJuriScores();
                 } else {
-                    updateJuriDisplay();
+                    updateJuriScores();
                 }
             })
             .catch(err => {
                 isSubmittingScore = false;
                 console.error(err);
                 showToast('Terjadi kesalahan koneksi.');
+                if (hiddenElement) hiddenElement.classList.remove('hidden'); // revert
+                updateJuriScores();
             });
         }
         function updateJuriDisplay() {
@@ -192,7 +224,7 @@
                         if (typeof window.Echo !== 'undefined' && currentMatchId && subscribedMatchId !== currentMatchId) {
                             if (subscribedMatchId) window.Echo.leaveChannel('match.' + subscribedMatchId);
                             window.Echo.channel('match.' + currentMatchId)
-                                .listen('MatchUpdated', (e) => { updateJuriDisplay(); })
+                                .listen('MatchUpdated', (e) => { updateJuriScores(); })
                                 .listen('TimerStateUpdated', (e) => {
                                     let serverTime = Math.round(e.time_remaining || 0);
                                     syncLocalTimer(serverTime, e.status);
@@ -270,54 +302,7 @@
                         }
 
                         // Fetch history using the updated match ID
-                        fetch('{{ route('juri.history') }}?id_pertandingan=' + currentMatchId + '&id_babak=' + currentRound)
-                            .then(res => res.json())
-                            .then(res => {
-                                if(res.success && res.data) {
-                                    const scores = res.data.history;
-                                    const juri = res.data.juri;
-
-                                    // Update Nama Juri & Posisi Juri di panel
-                                    document.getElementById('juri-nama-petugas').innerText = juri.nama;
-                                    document.getElementById('juri-nama-posisi').innerText = juri.posisi;
-                                    
-                                    const renderScores = (sudut, arr, roundId) => {
-                                        const box = document.getElementById(`score-${sudut}-${roundId}`);
-                                        if(!box) return;
-                                        box.innerHTML = ''; // clear
-                                        
-                                        arr.forEach((s, idx) => {
-                                            console.log('Processing score:', s);
-                                            if (s.status !== 'pending' && s.is_sah !== true) {
-                                                console.log('Skipping score due to status/sah condition');
-                                                return;
-                                            }
-
-                                            let displayValue = s.nilai == 1 ? '1' : '2';
-                                            if(idx > 0) displayValue = '+' + displayValue;
-                                            const span = document.createElement('span');
-                                            
-                                            if (s.status === 'pending') {
-                                                span.className = 'text-gray-600 font-bold opacity-80 animate-pulse'; // Pending indicator
-                                            } else {
-                                                span.className = sudut === 'biru' ? 'text-blue-800' : 'text-red-700';
-                                            }
-                                            
-                                            span.innerText = displayValue;
-                                            box.appendChild(span);
-                                        });
-                                    };
-
-                                    for(let r = 1; r <= 3; r++) {
-                                        const roundScores = scores.filter(s => s.id_babak == r);
-                                        const blueScores = roundScores.filter(s => s.sudut === 'biru');
-                                        const redScores = roundScores.filter(s => s.sudut === 'merah');
-                                        renderScores('biru', blueScores, r);
-                                        renderScores('merah', redScores, r);
-                                    }
-                                }
-                            })
-                            .catch(console.error);
+                        updateJuriScores();
                     } else {
                         // Clear match ID and UI if no active match
                         currentMatchId = '';
@@ -341,6 +326,56 @@
                 .catch(console.error);
         }
 
+        function updateJuriScores() {
+            if (!currentMatchId) return;
+            fetch('{{ route('juri.history') }}?id_pertandingan=' + currentMatchId + '&id_babak=' + currentRound)
+                .then(res => res.json())
+                .then(res => {
+                    if(res.success && res.data) {
+                        const scores = res.data.history;
+                        const juri = res.data.juri;
+
+                        // Update Nama Juri & Posisi Juri di panel
+                        document.getElementById('juri-nama-petugas').innerText = juri.nama;
+                        document.getElementById('juri-nama-posisi').innerText = juri.posisi;
+                        
+                        const renderScores = (sudut, arr, roundId) => {
+                            const box = document.getElementById(`score-${sudut}-${roundId}`);
+                            if(!box) return;
+                            box.innerHTML = ''; // clear
+                            
+                            arr.forEach((s, idx) => {
+                                if (s.status !== 'pending' && s.is_sah !== true) {
+                                    return;
+                                }
+
+                                let displayValue = s.nilai == 1 ? '1' : '2';
+                                if(idx > 0) displayValue = '+' + displayValue;
+                                const span = document.createElement('span');
+                                
+                                if (s.status === 'pending') {
+                                    span.className = 'text-gray-600 font-bold opacity-80 animate-pulse'; // Pending indicator
+                                } else {
+                                    span.className = sudut === 'biru' ? 'text-blue-800' : 'text-red-700';
+                                }
+                                
+                                span.innerText = displayValue;
+                                box.appendChild(span);
+                            });
+                        };
+
+                        for(let r = 1; r <= 3; r++) {
+                            const roundScores = scores.filter(s => s.id_babak == r);
+                            const blueScores = roundScores.filter(s => s.sudut === 'biru');
+                            const redScores = roundScores.filter(s => s.sudut === 'merah');
+                            renderScores('biru', blueScores, r);
+                            renderScores('merah', redScores, r);
+                        }
+                    }
+                })
+                .catch(console.error);
+        }
+
         if (typeof window.Echo !== 'undefined') {
             window.Echo.channel('system')
                 .listen('SystemStateChanged', (e) => {
@@ -350,7 +385,7 @@
             // Subscribe langsung ke match channel jika ID sudah diketahui dari PHP
             if (currentMatchId) {
                 window.Echo.channel('match.' + currentMatchId)
-                    .listen('MatchUpdated', (e) => { updateJuriDisplay(); })
+                    .listen('MatchUpdated', (e) => { updateJuriScores(); })
                     .listen('TimerStateUpdated', (e) => {
                         let serverTime = Math.round(e.time_remaining || 0);
                         syncLocalTimer(serverTime, e.status);

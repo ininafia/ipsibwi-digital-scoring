@@ -21,26 +21,26 @@
 </div>
 
 <!-- Konten Utama (Scoreboard) -->
-<div class="flex-1 flex items-center justify-center py-2 px-2 w-full">
-    <div class="w-full max-w-[1300px] bg-white border border-gray-300 shadow-md p-2 lg:p-4">
+<div class="flex-1 flex items-center justify-center p-1 sm:p-2 lg:p-4 w-full">
+    <div class="w-full max-w-[1300px] bg-white border border-gray-300 shadow-md p-1.5 sm:p-3 lg:p-4 my-auto">
         
         @include('Operator.monitor-display.header')
 
         <!-- Kontainer Grid Utama dengan border tebal seperti gambar -->
-        <div class="border-[2px] border-black flex h-[300px] lg:h-[350px]">
+        <div class="border-[2px] border-black flex h-[280px] sm:h-[360px] md:h-[420px] lg:h-[480px]">
 
             <!-- Kiri: Pelanggaran Sudut Biru -->
-            <div class="w-[12%] border-r-[2px] border-black">
+            <div class="w-[14%] sm:w-[13%] lg:w-[12%] border-r-[2px] border-black">
                 @include('Operator.monitor-display.foul-points', ['sudut' => 'biru'])
             </div>
 
             <!-- Tengah: Kotak Skor Utama & Nilai Juri -->
-            <div class="w-[76%] flex flex-col">
+            <div class="w-[72%] sm:w-[74%] lg:w-[76%] flex flex-col">
                 @include('Operator.monitor-display.score-box')
             </div>
 
             <!-- Kanan: Pelanggaran Sudut Merah -->
-            <div class="w-[12%] border-l-[2px] border-black">
+            <div class="w-[14%] sm:w-[13%] lg:w-[12%] border-l-[2px] border-black">
                 @include('Operator.monitor-display.foul-points', ['sudut' => 'merah'])
             </div>
 
@@ -75,6 +75,8 @@
     let localTimerStatus = 'stopped';
     let localTimerInterval = null;
 
+    let targetEndTime = null;
+
     // Selalu reset interval dari waktu server agar tidak drift
     function syncLocalTimer(serverTime, timerStatus) {
         localTimeRemaining = serverTime;
@@ -86,17 +88,21 @@
         }
 
         if (timerStatus === 'playing' && localTimeRemaining > 0) {
+            targetEndTime = Date.now() + (localTimeRemaining * 1000);
             localTimerInterval = setInterval(() => {
-                if (localTimeRemaining > 0) {
-                    localTimeRemaining--;
+                let newTime = Math.ceil((targetEndTime - Date.now()) / 1000);
+                if (newTime < 0) newTime = 0;
+                if (newTime !== localTimeRemaining) {
+                    localTimeRemaining = newTime;
                     const minutes = Math.floor(localTimeRemaining / 60);
                     const seconds = localTimeRemaining % 60;
                     document.getElementById('monitor-timer').innerText = `${String(minutes).padStart(2, '0')} : ${String(seconds).padStart(2, '0')}`;
-                } else {
-                    clearInterval(localTimerInterval);
-                    localTimerInterval = null;
+                    if (localTimeRemaining <= 0) {
+                        clearInterval(localTimerInterval);
+                        localTimerInterval = null;
+                    }
                 }
-            }, 1000);
+            }, 200);
         }
 
         const minutes = Math.floor(localTimeRemaining / 60);

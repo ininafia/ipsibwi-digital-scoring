@@ -53,36 +53,6 @@
                     class="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-sky-300 outline-none">
             </div>
 
-            {{-- TUGAS --}}
-            <div>
-                <label class="block text-sky-500 font-semibold text-sm mb-2">
-                    Tugas
-                </label>
-                <select
-                    name="tugas"
-                    class="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-sky-300 outline-none">
-                    
-                    <option value="">
-                        Pilih tugas
-                    </option>
-
-                    @foreach([
-                        'Ketua Pertandingan',
-                        'Delegasi Teknik',
-                        'Dewan',
-                        'Wasit',
-                        'Juri'
-                    ] as $tugas)
-                    <option
-                        value="{{ $tugas }}"
-                        {{ old('tugas') == $tugas ? 'selected' : '' }}>
-                        {{ $tugas }}
-                    </option>
-                    @endforeach
-
-                </select>
-            </div>
-
         </div>
 
         {{-- BUTTON --}}

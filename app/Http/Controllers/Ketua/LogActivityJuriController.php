@@ -112,10 +112,18 @@ class LogActivityJuriController extends Controller
             }
         }
 
-        // Sort grouped logs
+        // Sort grouped logs by partai
         uasort($groupedLogsBabak, function($a, $b) {
             return (int)$a['match_info']['partai'] <=> (int)$b['match_info']['partai'];
         });
+
+        // Sort babak within each group by babak_ke
+        foreach ($groupedLogsBabak as $key => &$group) {
+            uasort($group['babak'], function($a, $b) {
+                return (int)$a['babak_ke'] <=> (int)$b['babak_ke'];
+            });
+        }
+        unset($group);
 
         return view('Ketua.Log-juri.index', compact('groupedLogsBabak', 'availableMatches', 'availableRounds', 'partaiFilter', 'babakFilter'));
     }

@@ -201,7 +201,7 @@ function renderAwards($awards, $athlete) {
                     <td class="w-[10%] {{ $wtClass }} text-black font-bold">Nama</td>
                     <td class="w-[16%] {{ $wtClass }} uppercase">{{ strtolower($match->winner_corner) == 'biru' ? $match->sudut_biru : (strtolower($match->winner_corner) == 'merah' ? $match->sudut_merah : '-') }}</td>
                     <td colspan="3" class="border border-black {{ $emptyBg }}"></td>
-                    <td rowspan="6" class="w-[10%] border border-black bg-white align-top relative">
+                    <td rowspan="7" class="w-[10%] border border-black bg-white align-top relative">
                         <div class="pt-4 pb-8 h-full text-center">
                             <div class="font-bold text-black text-[13px] tracking-wide leading-snug">Ketua<br>Pertandingan</div>
                             <div class="absolute bottom-2 left-0 right-0 text-center">
@@ -209,7 +209,7 @@ function renderAwards($awards, $athlete) {
                             </div>
                         </div>
                     </td>
-                    <td rowspan="6" class="w-[10%] border border-black bg-white align-top relative">
+                    <td rowspan="7" class="w-[10%] border border-black bg-white align-top relative">
                         <div class="pt-4 pb-8 h-full text-center">
                             <div class="font-bold text-black text-[13px] tracking-wide leading-snug whitespace-nowrap">Dewan Wasit<br>Juri</div>
                             <div class="absolute bottom-2 left-0 right-0 text-center">
@@ -217,7 +217,7 @@ function renderAwards($awards, $athlete) {
                             </div>
                         </div>
                     </td>
-                    <td rowspan="6" class="w-[10%] border border-black bg-white align-top relative">
+                    <td rowspan="7" class="w-[10%] border border-black bg-white align-top relative">
                         <div class="pt-4 pb-8 h-full text-center">
                             <div class="font-bold text-black text-[13px] tracking-wide leading-snug">Juri<br>1</div>
                             <div class="absolute bottom-2 left-0 right-0 text-center">
@@ -225,7 +225,7 @@ function renderAwards($awards, $athlete) {
                             </div>
                         </div>
                     </td>
-                    <td rowspan="6" class="w-[10%] border border-black bg-white align-top relative">
+                    <td rowspan="7" class="w-[10%] border border-black bg-white align-top relative">
                         <div class="pt-4 pb-8 h-full text-center">
                             <div class="font-bold text-black text-[13px] tracking-wide leading-snug">Juri<br>2</div>
                             <div class="absolute bottom-2 left-0 right-0 text-center">
@@ -233,7 +233,7 @@ function renderAwards($awards, $athlete) {
                             </div>
                         </div>
                     </td>
-                    <td rowspan="6" class="w-[10%] border border-black bg-white align-top relative">
+                    <td rowspan="7" class="w-[10%] border border-black bg-white align-top relative">
                         <div class="pt-4 pb-8 h-full text-center">
                             <div class="font-bold text-black text-[13px] tracking-wide leading-snug">Juri<br>3</div>
                             <div class="absolute bottom-2 left-0 right-0 text-center">
@@ -245,9 +245,9 @@ function renderAwards($awards, $athlete) {
                 <tr>
                     <td class="{{ $wtClass }} text-black font-bold">Kontingen</td>
                     <td class="{{ $wtClass }} uppercase">{{ strtolower($match->winner_corner) == 'biru' ? $match->kontingen_biru : (strtolower($match->winner_corner) == 'merah' ? $match->kontingen_merah : '-') }}</td>
-                    <td rowspan="4" class="border border-black text-white text-5xl text-center font-bold w-[10%] align-middle bg-[#0000d0]">{{ $skor->skor_biru ?? 0 }}</td>
-                    <td rowspan="4" class="{{ $wtClass }} text-center w-[4%] text-black font-bold bg-gray-50">vs</td>
-                    <td rowspan="4" class="border border-black text-white text-5xl text-center font-bold w-[10%] align-middle bg-[#df0000]">{{ $skor->skor_merah ?? 0 }}</td>
+                    <td rowspan="5" class="border border-black text-white text-5xl text-center font-bold w-[10%] align-middle bg-[#0000d0]">{{ $skor->skor_biru ?? 0 }}</td>
+                    <td rowspan="5" class="{{ $wtClass }} text-center w-[4%] text-black font-bold bg-gray-50">vs</td>
+                    <td rowspan="5" class="border border-black text-white text-5xl text-center font-bold w-[10%] align-middle bg-[#df0000]">{{ $skor->skor_merah ?? 0 }}</td>
                 </tr>
                 <tr>
                     <td class="{{ $wtClass }} text-black font-bold">Kelas</td>
@@ -264,6 +264,10 @@ function renderAwards($awards, $athlete) {
                     <td class="{{ $wtClass }}">
                         <span class="inline-block px-2 py-0.5 text-xs font-bold text-white bg-slate-800 uppercase">{{ $match->winning_method ?? '-' }}</span>
                     </td>
+                </tr>
+                <tr>
+                    <td class="{{ $wtClass }} text-black font-bold">Catatan</td>
+                    <td class="{{ $wtClass }}">{{ $match->catatan_finalisasi ?? '-' }}</td>
                 </tr>
                 <tr>
                     <td class="{{ $wtClass }} text-black font-bold">Time Stemp</td>

@@ -58,21 +58,10 @@ DROP TABLE IF EXISTS data_petugas;
 CREATE TABLE data_petugas (
   id INT AUTO_INCREMENT PRIMARY KEY,
   nama VARCHAR(100) NOT NULL,
-  tugas VARCHAR(50) NOT NULL,
   deleted_at TIMESTAMP NULL DEFAULT NULL
 ) ENGINE=InnoDB;
 
--- default data_petugas (sesuaikan dengan default users id)
--- Asumsi id users: 1=operator, 2=ketua, 3=dewan, 4=timer, 5=juri1, 6=juri2, 7=juri3, 8=wasit, 9=dt
-INSERT INTO data_petugas (nama, tugas)
-VALUES
-('Ketua Test', 'Ketua Pertandingan'),
-('Dewan Test', 'Dewan'),
-('Juri 1 Test', 'Juri'),
-('Juri 2 Test', 'Juri'),
-('Juri 3 Test', 'Juri'),
-('Wasit Test', 'Wasit'),
-('DT Test', 'Delegasi Teknik');
+
 
 
 -- =========================================

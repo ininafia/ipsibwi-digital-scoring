@@ -40,12 +40,12 @@
     @endif
 
     @php
-        // Filter petugas berdasarkan role (tugas)
-        $ketuaList    = array_filter($petugasList, fn($p) => $p->tugas === 'Ketua Pertandingan');
-        $dewanList    = array_filter($petugasList, fn($p) => $p->tugas === 'Dewan');
-        $wasitList    = array_filter($petugasList, fn($p) => $p->tugas === 'Wasit');
-        $juriList     = array_filter($petugasList, fn($p) => $p->tugas === 'Juri');
-        $delegasiList = array_filter($petugasList, fn($p) => $p->tugas === 'Delegasi Teknik');
+        // Semua petugas bisa ditugaskan ke role manapun
+        $ketuaList    = $petugasList;
+        $dewanList    = $petugasList;
+        $wasitList    = $petugasList;
+        $juriList     = $petugasList;
+        $delegasiList = $petugasList;
     @endphp
 
     <div class="bg-white rounded-md shadow-sm p-8 max-w-6xl mb-4">

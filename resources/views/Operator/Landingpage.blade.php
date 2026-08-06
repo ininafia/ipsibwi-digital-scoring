@@ -13,23 +13,27 @@
 
 <body class="bg-white text-black font-[Poppins]">
 
-<div class="w-[95%] mx-auto">
+<div class="w-[95%] max-w-[1280px] mx-auto">
 
     {{-- NAVBAR --}}
-    <nav class="h-[100px] flex items-center justify-between">
+    <nav class="py-4 md:h-[100px] flex flex-col sm:flex-row items-center justify-between gap-4">
 
-        <div>
-            <img src="{{ asset('images/logos/LOGO IPSI.png') }}" alt="Logo IPSI" class="w-[70px]">
+        <div class="flex items-center justify-between w-full sm:w-auto">
+            <img src="{{ asset('images/logos/LOGO IPSI.png') }}" alt="Logo IPSI" class="w-[50px] sm:w-[70px]">
+            <a href="{{ url('/login') }}"
+               class="sm:hidden bg-[#75BFF0] text-white px-6 py-1.5 rounded-full text-base font-medium">
+                Login
+            </a>
         </div>
 
-        <ul class="flex gap-[55px] text-[21px] font-medium">
+        <ul class="flex items-center gap-6 sm:gap-[55px] text-base sm:text-[21px] font-medium">
             <li><a href="{{ url('/') }}" class="hover:text-sky-500">Home</a></li>
             <li><a href="#kategori" class="hover:text-sky-500">Kategori</a></li>
         </ul>
 
         {{-- LOGIN BUTTON --}}
         <a href="{{ url('/login') }}"
-           class="bg-[#75BFF0] text-white px-[42px] py-[8px] rounded-full text-[20px] font-medium">
+           class="hidden sm:inline-block bg-[#75BFF0] text-white px-[42px] py-[8px] rounded-full text-[20px] font-medium hover:bg-sky-500 transition">
             Login
         </a>
 
@@ -37,15 +41,15 @@
 
     {{-- HERO --}}
     <section
-        class="h-[575px] rounded-[35px] overflow-hidden bg-cover bg-center flex items-center justify-center"
+        class="h-[320px] sm:h-[450px] md:h-[575px] rounded-[24px] sm:rounded-[35px] overflow-hidden bg-cover bg-center flex items-center justify-center px-4"
         style="background-image: linear-gradient(rgba(0,0,0,.35), rgba(0,0,0,.35)), url({{ asset('images/background/pencak-silat.jpg') }});">
 
         <div class="text-center text-white">
-            <h1 class="text-[64px] font-extrabold italic tracking-[3px] leading-tight">
+            <h1 class="text-3xl sm:text-5xl md:text-[64px] font-extrabold italic tracking-[2px] sm:tracking-[3px] leading-tight">
                 DIGITAL SCORING
             </h1>
 
-            <p class="text-[34px] font-bold italic mt-2">
+            <p class="text-lg sm:text-2xl md:text-[34px] font-bold italic mt-2">
                 Ikatan Pencak Silat Indonesia
             </p>
         </div>
@@ -53,52 +57,52 @@
     </section>
 
     {{-- KATEGORI --}}
-    <section id="kategori" class="pt-[50px] pb-40 text-center">
+    <section id="kategori" class="pt-8 sm:pt-[50px] pb-20 sm:pb-40 text-center">
 
-        <h2 class="text-[40px] font-bold mb-[35px]">
+        <h2 class="text-2xl sm:text-3xl md:text-[40px] font-bold mb-6 sm:mb-[35px]">
             Kategori Pertandingan
         </h2>
 
-        <div class="flex justify-center gap-[115px]">
+        <div class="flex flex-wrap justify-center gap-6 sm:gap-10 md:gap-[60px] lg:gap-[115px]">
 
             {{-- TANDING --}}
             <a href="{{ url('/login') }}"
-               class="w-[245px] h-[205px] bg-white rounded-[24px] overflow-hidden shadow-[0_5px_4px_rgba(0,0,0,.25)] block hover:scale-105 transition">
+               class="w-[220px] sm:w-[245px] h-[190px] sm:h-[205px] bg-white rounded-[24px] overflow-hidden shadow-[0_5px_4px_rgba(0,0,0,.25)] block hover:scale-105 transition">
 
-                <div class="h-[145px] bg-[#AEEEFF] flex items-center justify-center">
+                <div class="h-[130px] sm:h-[145px] bg-[#AEEEFF] flex items-center justify-center">
                     <img src="{{ asset('images/icons/tanding.png') }}"
-                         class="w-[75px] h-[75px] object-contain">
+                         class="w-[65px] sm:w-[75px] h-[65px] sm:h-[75px] object-contain">
                 </div>
 
-                <p class="text-[21px] font-semibold mt-[15px] text-center">
+                <p class="text-lg sm:text-[21px] font-semibold mt-2 sm:mt-[15px] text-center">
                     Tanding
                 </p>
             </a>
 
             {{-- TUNGGAL --}}
             <a href="#"
-               class="w-[245px] h-[205px] bg-white rounded-[24px] overflow-hidden shadow-[0_5px_4px_rgba(0,0,0,.25)] block hover:scale-105 transition">
+               class="w-[220px] sm:w-[245px] h-[190px] sm:h-[205px] bg-white rounded-[24px] overflow-hidden shadow-[0_5px_4px_rgba(0,0,0,.25)] block hover:scale-105 transition">
 
-                <div class="h-[145px] bg-[#AEEEFF] flex items-center justify-center">
+                <div class="h-[130px] sm:h-[145px] bg-[#AEEEFF] flex items-center justify-center">
                     <img src="{{ asset('images/icons/tunggal.png') }}"
-                         class="w-[75px] h-[75px] object-contain">
+                         class="w-[65px] sm:w-[75px] h-[65px] sm:h-[75px] object-contain">
                 </div>
 
-                <p class="text-[21px] font-semibold mt-[15px] text-center">
+                <p class="text-lg sm:text-[21px] font-semibold mt-2 sm:mt-[15px] text-center">
                     Tunggal
                 </p>
             </a>
 
             {{-- GANDA --}}
             <a href="#"
-               class="w-[245px] h-[205px] bg-white rounded-[24px] overflow-hidden shadow-[0_5px_4px_rgba(0,0,0,.25)] block hover:scale-105 transition">
+               class="w-[220px] sm:w-[245px] h-[190px] sm:h-[205px] bg-white rounded-[24px] overflow-hidden shadow-[0_5px_4px_rgba(0,0,0,.25)] block hover:scale-105 transition">
 
-                <div class="h-[145px] bg-[#AEEEFF] flex items-center justify-center">
+                <div class="h-[130px] sm:h-[145px] bg-[#AEEEFF] flex items-center justify-center">
                     <img src="{{ asset('images/icons/ganda.png') }}"
-                         class="w-[75px] h-[75px] object-contain">
+                         class="w-[65px] sm:w-[75px] h-[65px] sm:h-[75px] object-contain">
                 </div>
 
-                <p class="text-[21px] font-semibold mt-[15px] text-center">
+                <p class="text-lg sm:text-[21px] font-semibold mt-2 sm:mt-[15px] text-center">
                     Ganda
                 </p>
             </a>

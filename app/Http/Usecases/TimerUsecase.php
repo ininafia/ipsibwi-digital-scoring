@@ -57,11 +57,12 @@ class TimerUsecase extends Usecase
             $shouldBroadcast = true;
         }
 
-        // Sinkronisasi waktu setiap 5 detik agar tidak drift saat playing
-        if ($state['status'] === 'playing' && $state['time_remaining'] % 5 === 0) {
+        // Sinkronisasi waktu setiap detik agar realtime (hilangkan modulus 5)
+        if ($state['status'] === 'playing') {
             $shouldBroadcast = true;
         }
 
+        $state['updated_at'] = time();
         Cache::put($cacheKey, $state);
 
         return ['success' => true, 'state' => $state, 'should_broadcast' => $shouldBroadcast, 'code' => 200];
@@ -70,10 +71,18 @@ class TimerUsecase extends Usecase
     public function getState(int $id_pertandingan)
     {
         $cacheKey = $this->getCacheKey($id_pertandingan);
-        return Cache::get($cacheKey, [
+        $state = Cache::get($cacheKey, [
             'round' => 1,
             'time_remaining' => 120,
-            'status' => 'stopped'
+            'status' => 'stopped',
+            'updated_at' => time()
         ]);
+        
+        if ($state['status'] === 'playing' && isset($state['updated_at'])) {
+            $elapsed = time() - $state['updated_at'];
+            $state['time_remaining'] = max(0, $state['time_remaining'] - $elapsed);
+        }
+        
+        return $state;
     }
 }

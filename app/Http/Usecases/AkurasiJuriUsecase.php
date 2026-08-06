@@ -34,6 +34,16 @@ class AkurasiJuriUsecase extends Usecase
                 return Response::buildErrorService("Tidak ada juri yang ditugaskan pada pertandingan ini");
             }
 
+            // Total sah semua juri untuk pertandingan ini (Jumlah poin sah dari juri)
+            $total_sah_semua_juri = DB::table('score_awards')
+                ->where('match_id', $id_pertandingan)
+                ->whereExists(function ($query) {
+                    $query->select(DB::raw(1))
+                          ->from('score_award_votes')
+                          ->whereColumn('score_award_votes.award_id', 'score_awards.id');
+                })
+                ->count();
+
             $results = [];
 
             foreach ($juris as $juri) {
@@ -84,8 +94,8 @@ class AkurasiJuriUsecase extends Usecase
                     $akurasi_babak_total += $ak_babak;
                 }
 
-                // Akurasi per partai = (Total Sah / Total Input) * 100
-                $persentase = $total_input > 0 ? round(($total_sah / $total_input) * 100, 1) : 0;
+                // Akurasi per partai = (Total Sah / Total Sah Semua Juri) * 100
+                $persentase = $total_sah_semua_juri > 0 ? round(($total_sah / $total_sah_semua_juri) * 100, 1) : 0;
 
                 // Hapus data lama jika dire-finalisasi
                 DB::table('akurasi_juri')
@@ -213,8 +223,24 @@ class AkurasiJuriUsecase extends Usecase
             $total_all_akurasi = 0;
             $count_all_akurasi = 0;
 
+            // Pre-calculate total_sah per match (Jumlah poin sah dari juri)
+            $total_sah_match = [];
+            $allAwardsByMatch = DB::table('score_awards')
+                ->whereExists(function ($query) {
+                    $query->select(DB::raw(1))
+                          ->from('score_award_votes')
+                          ->whereColumn('score_award_votes.award_id', 'score_awards.id');
+                })
+                ->selectRaw('score_awards.match_id, COUNT(*) as total_sah')
+                ->groupBy('score_awards.match_id')
+                ->get();
+            foreach ($allAwardsByMatch as $v) {
+                $total_sah_match[$v->match_id] = $v->total_sah;
+            }
+
             // Calculate Juri's Event Accuracy
             $juriEventStats = [];
+            $total_sah_semua_juri_event = array_sum($total_sah_match);
             foreach ($akurasiRecords as $row) {
                 if (!isset($juriEventStats[$row->id_petugas_global])) {
                     $juriEventStats[$row->id_petugas_global] = [
@@ -231,8 +257,8 @@ class AkurasiJuriUsecase extends Usecase
             $juriEventAccuracies = [];
             $event_juries_list = [];
             foreach ($juriEventStats as $id => $stats) {
-                $acc = $stats['total_input'] > 0 
-                    ? round(($stats['total_sah'] / $stats['total_input']) * 100, 1) 
+                $acc = $total_sah_semua_juri_event > 0 
+                    ? round(($stats['total_sah'] / $total_sah_semua_juri_event) * 100, 1) 
                     : 0;
                 $juriEventAccuracies[$id] = $acc;
                 $event_juries_list[] = [
@@ -240,6 +266,7 @@ class AkurasiJuriUsecase extends Usecase
                     'nama_juri' => $stats['nama_juri'],
                     'total_input' => $stats['total_input'],
                     'total_sah' => $stats['total_sah'],
+                    'total_sah_semua_juri_event' => $total_sah_semua_juri_event,
                     'event_akurasi' => $acc
                 ];
             }
@@ -251,6 +278,21 @@ class AkurasiJuriUsecase extends Usecase
                 }
                 return $b['event_akurasi'] <=> $a['event_akurasi'];
             });
+
+            // Pre-calculate total_sah per match & babak (Jumlah poin sah dari juri)
+            $allVotesByRound = DB::table('score_awards')
+                ->whereExists(function ($query) {
+                    $query->select(DB::raw(1))
+                          ->from('score_award_votes')
+                          ->whereColumn('score_award_votes.award_id', 'score_awards.id');
+                })
+                ->selectRaw('score_awards.match_id, score_awards.round, COUNT(*) as total_sah')
+                ->groupBy('score_awards.match_id', 'score_awards.round')
+                ->get();
+            $totalSahPerMatchBabak = [];
+            foreach ($allVotesByRound as $v) {
+                $totalSahPerMatchBabak[$v->match_id][$v->round] = $v->total_sah;
+            }
 
             foreach ($akurasiRecords as $row) {
                 if (!isset($groupedByMatch[$row->match_id])) {
@@ -293,17 +335,24 @@ class AkurasiJuriUsecase extends Usecase
                     $total_input_babak    = (int) ($eventsByRound[$roundNum] ?? 0);
                     $total_sah_babak      = (int) ($votesByRound[$roundNum] ?? 0);
                     $total_tidak_sah_babak = max(0, $total_input_babak - $total_sah_babak);
-                    $akurasi_babak        = $total_input_babak > 0
-                        ? round(($total_sah_babak / $total_input_babak) * 100, 1)
+                    
+                    $semua_sah_babak = $totalSahPerMatchBabak[$row->match_id][$roundNum] ?? 0;
+                    $akurasi_babak        = $semua_sah_babak > 0
+                        ? round(($total_sah_babak / $semua_sah_babak) * 100, 1)
                         : 0;
 
                     $babakData["babak_$roundNum"] = [
                         'input'     => $total_input_babak,
                         'sah'       => $total_sah_babak,
                         'tidak_sah' => $total_tidak_sah_babak,
-                        'akurasi'   => $akurasi_babak
+                        'akurasi'   => $akurasi_babak,
+                        'total_sah_semua_juri' => $semua_sah_babak
                     ];
                 }
+
+                $calculated_persentase = $total_sah_match[$row->match_id] > 0
+                    ? round(($row->total_nilai_sah / $total_sah_match[$row->match_id]) * 100, 1)
+                    : 0;
 
                 $groupedByMatch[$row->match_id]['juris'][] = [
                     'id_petugas'            => $row->id_petugas_pertandingan,
@@ -312,14 +361,13 @@ class AkurasiJuriUsecase extends Usecase
                     'total_input'           => $row->total_input,
                     'total_nilai_sah'       => $row->total_nilai_sah,
                     'total_nilai_tidak_sah' => $row->total_nilai_tidak_sah,
-                    'persentase_akurasi'    => $row->total_input > 0
-                        ? round(($row->total_nilai_sah / $row->total_input) * 100, 1)
-                        : 0,
+                    'total_sah_semua_juri'  => $total_sah_match[$row->match_id] ?? 0,
+                    'persentase_akurasi'    => $calculated_persentase,
                     'event_akurasi' => $juriEventAccuracies[$row->id_petugas_global] ?? 0,
                     'rounds'        => $babakData
                 ];
                 
-                $total_all_akurasi += $row->persentase_akurasi;
+                $total_all_akurasi += $calculated_persentase;
                 $count_all_akurasi++;
             }
 

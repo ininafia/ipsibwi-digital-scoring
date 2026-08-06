@@ -69,27 +69,36 @@
         let localTimerStatus = 'stopped';
         let localTimerInterval = null;
 
+        let targetEndTime = null;
+
         // Selalu reset interval dari waktu server agar tidak drift
         function syncLocalTimer(serverTime, timerStatus) {
             localTimeRemaining = serverTime;
             localTimerStatus = timerStatus;
 
+            // Reset interval lama
             if (localTimerInterval) {
                 clearInterval(localTimerInterval);
                 localTimerInterval = null;
             }
 
+            // Jalankan interval baru jika sedang playing
             if (timerStatus === 'playing' && localTimeRemaining > 0) {
+                targetEndTime = Date.now() + (localTimeRemaining * 1000);
                 localTimerInterval = setInterval(() => {
-                    if (localTimeRemaining > 0) {
-                        localTimeRemaining--;
+                    let newTime = Math.ceil((targetEndTime - Date.now()) / 1000);
+                    if (newTime < 0) newTime = 0;
+                    if (newTime !== localTimeRemaining) {
+                        localTimeRemaining = newTime;
                         let timerVal = document.getElementById('timer-value');
                         if (timerVal) timerVal.innerText = formatTimer(localTimeRemaining);
-                    } else {
-                        clearInterval(localTimerInterval);
-                        localTimerInterval = null;
+                        
+                        if (localTimeRemaining <= 0) {
+                            clearInterval(localTimerInterval);
+                            localTimerInterval = null;
+                        }
                     }
-                }, 1000);
+                }, 200);
             }
 
             let timerVal = document.getElementById('timer-value');

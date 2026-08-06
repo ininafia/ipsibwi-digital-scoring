@@ -226,28 +226,28 @@
                 <td class="w-12">Nama</td>
                 <td class="w-15" style="text-transform: uppercase;">{{ strtolower($match->winner_corner) == 'biru' ? $match->sudut_biru : (strtolower($match->winner_corner) == 'merah' ? $match->sudut_merah : '-') }}</td>
                 <td colspan="3" class="bg-gray"></td>
-                <td rowspan="5" style="text-align: center; vertical-align: top; padding-top: 10px; border-bottom: none;">
+                <td rowspan="6" style="text-align: center; vertical-align: top; padding-top: 10px; border-bottom: none;">
                     Ketua<br>Pertandingan
                 </td>
-                <td rowspan="5" style="text-align: center; vertical-align: top; padding-top: 10px; border-bottom: none;">
+                <td rowspan="6" style="text-align: center; vertical-align: top; padding-top: 10px; border-bottom: none;">
                     Dewan Wasit<br>Juri
                 </td>
-                <td rowspan="5" style="text-align: center; vertical-align: top; padding-top: 10px; border-bottom: none;">
+                <td rowspan="6" style="text-align: center; vertical-align: top; padding-top: 10px; border-bottom: none;">
                     Juri<br>1
                 </td>
-                <td rowspan="5" style="text-align: center; vertical-align: top; padding-top: 10px; border-bottom: none;">
+                <td rowspan="6" style="text-align: center; vertical-align: top; padding-top: 10px; border-bottom: none;">
                     Juri<br>2
                 </td>
-                <td rowspan="5" style="text-align: center; vertical-align: top; padding-top: 10px; border-bottom: none;">
+                <td rowspan="6" style="text-align: center; vertical-align: top; padding-top: 10px; border-bottom: none;">
                     Juri<br>3
                 </td>
             </tr>
             <tr>
                 <td>Kontingen</td>
                 <td style="text-transform: uppercase;">{{ strtolower($match->winner_corner) == 'biru' ? $match->kontingen_biru : (strtolower($match->winner_corner) == 'merah' ? $match->kontingen_merah : '-') }}</td>
-                <td rowspan="4" class="w-12 grad-blue">{{ $skor->skor_biru ?? 0 }}</td>
-                <td rowspan="4" class="w-3 bg-light th-center">vs</td>
-                <td rowspan="4" class="w-12 grad-red">{{ $skor->skor_merah ?? 0 }}</td>
+                <td rowspan="5" class="w-12 grad-blue">{{ $skor->skor_biru ?? 0 }}</td>
+                <td rowspan="5" class="w-3 bg-light th-center">vs</td>
+                <td rowspan="5" class="w-12 grad-red">{{ $skor->skor_merah ?? 0 }}</td>
             </tr>
             <tr>
                 <td>Kelas</td>
@@ -265,6 +265,10 @@
                 <td>
                     <span class="box-winning">{{ $match->winning_method ?? '-' }}</span>
                 </td>
+            </tr>
+            <tr>
+                <td>Catatan</td>
+                <td>{{ $match->catatan_finalisasi ?? '-' }}</td>
             </tr>
             <tr>
                 <td>Time Stemp</td>

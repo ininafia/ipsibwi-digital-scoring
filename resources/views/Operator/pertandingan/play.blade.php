@@ -387,15 +387,30 @@
     
     let matchId = {{ $data->id ?? 'null' }};
 
+    let targetEndTime = null;
+
     function startLocalTimer() {
-        if (!localTimerInterval) {
-            localTimerInterval = setInterval(() => {
-                if (localTimerStatus === 'playing' && localTimeRemaining > 0) {
-                    localTimeRemaining--;
-                    document.getElementById('displayTimer').innerText = formatTimer(localTimeRemaining);
-                }
-            }, 1000);
+        if (localTimerInterval) {
+            clearInterval(localTimerInterval);
         }
+        targetEndTime = Date.now() + (localTimeRemaining * 1000);
+        localTimerInterval = setInterval(() => {
+            if (localTimerStatus === 'playing') {
+                let newTime = Math.ceil((targetEndTime - Date.now()) / 1000);
+                if (newTime < 0) newTime = 0;
+                if (newTime !== localTimeRemaining) {
+                    localTimeRemaining = newTime;
+                    document.getElementById('displayTimer').innerText = formatTimer(localTimeRemaining);
+                    if (localTimeRemaining <= 0) {
+                        clearInterval(localTimerInterval);
+                        localTimerInterval = null;
+                    }
+                }
+            } else {
+                // Keep target end time moving so when it resumes, it doesn't jump
+                targetEndTime = Date.now() + (localTimeRemaining * 1000);
+            }
+        }, 200);
     }
 
     function updateOperatorUI() {

@@ -90,6 +90,7 @@ class TimerController extends Controller
             $match = \Illuminate\Support\Facades\DB::table('pertandingan')
                 ->where('status', 'playing')
                 ->whereNull('deleted_at')
+                ->orderBy('updated_at', 'desc')
                 ->first();
             if (!$match) return response()->json(['error' => 'No active match'], 404);
             $matchId = $match->id;

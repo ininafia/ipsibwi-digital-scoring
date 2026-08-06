@@ -20,22 +20,22 @@
     @include('Ketua.Monitor-Ketua.header')
 
     <!-- Main Content -->
-    <main class="flex-1 p-6 flex flex-col">
-        <div class="bg-white flex-1 shadow-md border border-gray-200 flex flex-col p-6">
+    <main class="flex-1 p-2 sm:p-4 lg:p-6 flex flex-col">
+        <div class="bg-white flex-1 shadow-md border border-gray-200 flex flex-col p-2 sm:p-4 lg:p-6">
             
             <!-- Peserta -->
             @include('Ketua.Monitor-Ketua.peserta')
 
-            <!-- Grid Content -->
-            <div class="grid grid-cols-5 gap-4 flex-1 items-start">
+            <!-- Grid Content (Always side-by-side) -->
+            <div class="grid grid-cols-5 gap-2 sm:gap-3 lg:gap-4 flex-1 items-start">
                 
                 <!-- Table Kiri -->
-                <div class="col-span-4 overflow-hidden">
+                <div class="col-span-4 w-full overflow-hidden">
                     @include('Ketua.Monitor-Ketua.score-table')
                 </div>
 
                 <!-- Panel Kanan -->
-                <div class="col-span-1">
+                <div class="col-span-1 w-full">
                     @include('Ketua.Monitor-Ketua.right-panel')
                 </div>
 
@@ -87,6 +87,8 @@
         let localTimerInterval = null;
 
         // Selalu reset interval dari waktu server agar tidak drift
+        let targetEndTime = null;
+
         function syncLocalTimer(serverTime, timerStatus) {
             localTimeRemaining = serverTime;
             localTimerStatus = timerStatus;
@@ -97,15 +99,20 @@
             }
 
             if (timerStatus === 'playing' && localTimeRemaining > 0) {
+                targetEndTime = Date.now() + (localTimeRemaining * 1000);
                 localTimerInterval = setInterval(() => {
-                    if (localTimeRemaining > 0) {
-                        localTimeRemaining--;
+                    let newTime = Math.ceil((targetEndTime - Date.now()) / 1000);
+                    if (newTime < 0) newTime = 0;
+                    if (newTime !== localTimeRemaining) {
+                        localTimeRemaining = newTime;
                         setText('timer-value', formatTimer(localTimeRemaining));
-                    } else {
-                        clearInterval(localTimerInterval);
-                        localTimerInterval = null;
+                        
+                        if (localTimeRemaining <= 0) {
+                            clearInterval(localTimerInterval);
+                            localTimerInterval = null;
+                        }
                     }
-                }, 1000);
+                }, 200);
             }
 
             setText('timer-value', formatTimer(localTimeRemaining));
