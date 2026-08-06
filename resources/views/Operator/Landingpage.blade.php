@@ -57,52 +57,52 @@
     </section>
 
     {{-- KATEGORI --}}
-    <section id="kategori" class="pt-8 sm:pt-[50px] pb-20 sm:pb-40 text-center">
+    <section id="kategori" class="pt-8 sm:pt-[50px] pb-16 sm:pb-32 text-center">
 
-        <h2 class="text-2xl sm:text-3xl md:text-[40px] font-bold mb-6 sm:mb-[35px]">
+        <h2 class="text-2xl sm:text-3xl md:text-[36px] font-bold mb-6 sm:mb-[30px]">
             Kategori Pertandingan
         </h2>
 
-        <div class="flex flex-wrap justify-center gap-6 sm:gap-10 md:gap-[60px] lg:gap-[115px]">
+        <div class="flex flex-wrap justify-center gap-3 sm:gap-6 md:gap-8 lg:gap-12">
 
             {{-- TANDING --}}
             <a href="{{ url('/login') }}"
-               class="w-[220px] sm:w-[245px] h-[190px] sm:h-[205px] bg-white rounded-[24px] overflow-hidden shadow-[0_5px_4px_rgba(0,0,0,.25)] block hover:scale-105 transition">
+               class="w-[150px] sm:w-[180px] md:w-[200px] h-[140px] sm:h-[165px] md:h-[180px] bg-white rounded-[18px] sm:rounded-[22px] overflow-hidden shadow-[0_4px_12px_rgba(0,0,0,.15)] block hover:scale-105 transition">
 
-                <div class="h-[130px] sm:h-[145px] bg-[#AEEEFF] flex items-center justify-center">
+                <div class="h-[95px] sm:h-[115px] md:h-[125px] bg-[#AEEEFF] flex items-center justify-center">
                     <img src="{{ asset('images/icons/tanding.png') }}"
-                         class="w-[65px] sm:w-[75px] h-[65px] sm:h-[75px] object-contain">
+                         class="w-[45px] sm:w-[55px] md:w-[65px] h-[45px] sm:h-[55px] md:h-[65px] object-contain">
                 </div>
 
-                <p class="text-lg sm:text-[21px] font-semibold mt-2 sm:mt-[15px] text-center">
+                <p class="text-sm sm:text-base md:text-lg font-semibold mt-2 text-center text-gray-800">
                     Tanding
                 </p>
             </a>
 
             {{-- TUNGGAL --}}
             <a href="#"
-               class="w-[220px] sm:w-[245px] h-[190px] sm:h-[205px] bg-white rounded-[24px] overflow-hidden shadow-[0_5px_4px_rgba(0,0,0,.25)] block hover:scale-105 transition">
+               class="w-[150px] sm:w-[180px] md:w-[200px] h-[140px] sm:h-[165px] md:h-[180px] bg-white rounded-[18px] sm:rounded-[22px] overflow-hidden shadow-[0_4px_12px_rgba(0,0,0,.15)] block hover:scale-105 transition">
 
-                <div class="h-[130px] sm:h-[145px] bg-[#AEEEFF] flex items-center justify-center">
+                <div class="h-[95px] sm:h-[115px] md:h-[125px] bg-[#AEEEFF] flex items-center justify-center">
                     <img src="{{ asset('images/icons/tunggal.png') }}"
-                         class="w-[65px] sm:w-[75px] h-[65px] sm:h-[75px] object-contain">
+                         class="w-[45px] sm:w-[55px] md:w-[65px] h-[45px] sm:h-[55px] md:h-[65px] object-contain">
                 </div>
 
-                <p class="text-lg sm:text-[21px] font-semibold mt-2 sm:mt-[15px] text-center">
+                <p class="text-sm sm:text-base md:text-lg font-semibold mt-2 text-center text-gray-800">
                     Tunggal
                 </p>
             </a>
 
             {{-- GANDA --}}
             <a href="#"
-               class="w-[220px] sm:w-[245px] h-[190px] sm:h-[205px] bg-white rounded-[24px] overflow-hidden shadow-[0_5px_4px_rgba(0,0,0,.25)] block hover:scale-105 transition">
+               class="w-[150px] sm:w-[180px] md:w-[200px] h-[140px] sm:h-[165px] md:h-[180px] bg-white rounded-[18px] sm:rounded-[22px] overflow-hidden shadow-[0_4px_12px_rgba(0,0,0,.15)] block hover:scale-105 transition">
 
-                <div class="h-[130px] sm:h-[145px] bg-[#AEEEFF] flex items-center justify-center">
+                <div class="h-[95px] sm:h-[115px] md:h-[125px] bg-[#AEEEFF] flex items-center justify-center">
                     <img src="{{ asset('images/icons/ganda.png') }}"
-                         class="w-[65px] sm:w-[75px] h-[65px] sm:h-[75px] object-contain">
+                         class="w-[45px] sm:w-[55px] md:w-[65px] h-[45px] sm:h-[55px] md:h-[65px] object-contain">
                 </div>
 
-                <p class="text-lg sm:text-[21px] font-semibold mt-2 sm:mt-[15px] text-center">
+                <p class="text-sm sm:text-base md:text-lg font-semibold mt-2 text-center text-gray-800">
                     Ganda
                 </p>
             </a>
