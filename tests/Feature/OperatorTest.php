@@ -273,15 +273,13 @@ class OperatorTest extends TestCase
     public function test_tc_op_11_tambah_data_petugas()
     {
         $response = $this->post('/operator/petugas/store', [
-            'nama' => 'Juri Testing OP',
-            'tugas' => 'Juri'
+            'nama' => 'Juri Testing OP'
         ]);
 
         $response->assertStatus(302);
 
         $this->assertDatabaseHas('data_petugas', [
-            'nama' => 'Juri Testing OP',
-            'tugas' => 'Juri'
+            'nama' => 'Juri Testing OP'
         ]);
     }
 
@@ -292,13 +290,11 @@ class OperatorTest extends TestCase
     public function test_tc_op_12_edit_data_petugas()
     {
         $petugasId = DB::table('data_petugas')->insertGetId([
-            'nama' => 'Old Name',
-            'tugas' => 'Wasit'
+            'nama' => 'Old Name'
         ]);
 
         $response = $this->put("/operator/petugas/{$petugasId}/update", [
-            'nama' => 'New Name Updated',
-            'tugas' => 'Wasit'
+            'nama' => 'New Name Updated'
         ]);
 
         $response->assertStatus(302);
@@ -316,8 +312,7 @@ class OperatorTest extends TestCase
     public function test_tc_op_13_hapus_data_petugas()
     {
         $petugasId = DB::table('data_petugas')->insertGetId([
-            'nama' => 'Petugas Delete Me',
-            'tugas' => 'Juri'
+            'nama' => 'Petugas Delete Me'
         ]);
 
         $response = $this->delete("/operator/petugas/{$petugasId}");
@@ -330,5 +325,34 @@ class OperatorTest extends TestCase
         
         $petugas = DB::table('data_petugas')->where('id', $petugasId)->first();
         $this->assertNotNull($petugas->deleted_at);
+    }
+
+    /**
+     * TC-OP-14: Cetak Detail Finished Mengubah Status Menjadi Final
+     */
+    public function test_tc_op_14_export_pdf_updates_status_to_final()
+    {
+        $matchId = $this->createDummyMatch('finished');
+
+        $response = $this->get("/operator/tanding/finished/{$matchId}/export-pdf");
+        $response->assertStatus(200);
+
+        $this->assertDatabaseHas('pertandingan', [
+            'id' => $matchId,
+            'status' => 'final'
+        ]);
+    }
+
+    /**
+     * TC-OP-15: Akses Halaman The Final Result
+     */
+    public function test_tc_op_15_halaman_the_final_result()
+    {
+        $matchId = $this->createDummyMatch('final');
+
+        $response = $this->get('/operator/tanding?tab=final');
+        $response->assertStatus(200)
+                 ->assertSee('Hasil Akhir Pertandingan Pencak Silat')
+                 ->assertSee('Kategori tanding');
     }
 }

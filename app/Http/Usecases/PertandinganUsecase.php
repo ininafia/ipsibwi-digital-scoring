@@ -204,6 +204,54 @@ class PertandinganUsecase extends Usecase
 
     /*
     |--------------------------------------------------------------------------
+    | GET FINAL MATCHES
+    | Mengambil data pertandingan yang sudah dicetak / final result
+    |--------------------------------------------------------------------------
+    */
+    public function getFinal(): array
+    {
+        $funcName = $this->className . ".getFinal";
+
+        try {
+            $data = DB::table('pertandingan')
+                ->leftJoin('skor_pertandingan', 'pertandingan.id', '=', 'skor_pertandingan.id_pertandingan')
+                ->where('pertandingan.status', 'final')
+                ->whereNull('pertandingan.deleted_at')
+                ->orderBy('pertandingan.nomor', 'asc')
+                ->get([
+                    'pertandingan.id',
+                    'pertandingan.nomor',
+                    'pertandingan.partai',
+                    'pertandingan.gelanggang',
+                    'pertandingan.kelas',
+                    'pertandingan.golongan',
+                    'pertandingan.jenis_kelamin',
+                    'pertandingan.sudut_biru',
+                    'pertandingan.kontingen_biru',
+                    'pertandingan.sudut_merah',
+                    'pertandingan.kontingen_merah',
+                    'pertandingan.status',
+                    'pertandingan.winner_corner',
+                    'pertandingan.winner_name',
+                    'pertandingan.winning_method',
+                    'pertandingan.final_score_biru',
+                    'pertandingan.final_score_merah',
+                    'skor_pertandingan.skor_merah',
+                    'skor_pertandingan.skor_biru',
+                ]);
+
+            return Response::buildSuccess(
+                data: ['list' => collect($data)->toArray()]
+            );
+        } catch (Exception $e) {
+            Log::error($e->getMessage(), ['func_name' => $funcName]);
+
+            return Response::buildErrorService($e->getMessage());
+        }
+    }
+
+    /*
+    |--------------------------------------------------------------------------
     | FINALIZE MATCH
     | Finalisasi pertandingan beserta hasil kemenangannya.
     | Semua validasi dilakukan server-side, pemenang dihitung dari database.

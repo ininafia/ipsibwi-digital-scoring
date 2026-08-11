@@ -18,6 +18,17 @@ class FinishedController extends Controller
     public function exportPdf($id)
     {
         $data = $this->getMatchData($id);
+
+        // Update status pertandingan menjadi 'final' setelah dicetak
+        DB::table('pertandingan')
+            ->where('id', $id)
+            ->whereNull('deleted_at')
+            ->update([
+                'status'     => 'final',
+                'updated_by' => session('user_id'),
+                'updated_at' => now(),
+            ]);
+
         $pdf = Pdf::loadView('Operator.finished.pdf-detail', $data);
         $pdf->setPaper('a4', 'landscape');
         

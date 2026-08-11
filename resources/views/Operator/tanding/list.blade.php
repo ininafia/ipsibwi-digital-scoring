@@ -99,9 +99,7 @@
     @if($tab === 'finished')
         @include('Operator.finished.list')
     @elseif($tab === 'final')
-        <div class="p-8 mt-4 text-center text-gray-500 italic border border-gray-200 rounded-lg">
-            Halaman The Final Result belum tersedia.
-        </div>
+        @include('Operator.final.list')
     @else
         <div class="overflow-x-auto min-w-0 w-full rounded-lg border border-gray-300">
             <table
