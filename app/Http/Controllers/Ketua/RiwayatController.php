@@ -1,37 +1,51 @@
 <?php
 
-namespace App\Http\Controllers\Operator;
+namespace App\Http\Controllers\Ketua;
 
 use App\Http\Controllers\Controller;
+use App\Http\Usecases\PertandinganUsecase;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Barryvdh\DomPDF\Facade\Pdf;
 
-class FinishedController extends Controller
+class RiwayatController extends Controller
 {
+    protected PertandinganUsecase $pertandinganUsecase;
+
+    public function __construct()
+    {
+        $this->pertandinganUsecase = new PertandinganUsecase();
+    }
+
+    public function index(Request $request)
+    {
+        $tab = $request->input('tab', 'finished');
+
+        if ($tab === 'final') {
+            $result = $this->pertandinganUsecase->getFinal();
+        } else {
+            $result = $this->pertandinganUsecase->getFinished();
+        }
+
+        return view('Ketua.Riwayat.index', [
+            'list' => $result['data']['list'] ?? [],
+            'tab'  => $tab,
+        ]);
+    }
+
     public function detail($id)
     {
         $data = $this->getMatchData($id);
-        return view('Operator.finished.detail', $data);
+        return view('Ketua.Riwayat.detail', $data);
     }
 
     public function exportPdf($id)
     {
         $data = $this->getMatchData($id);
 
-        // Update status pertandingan menjadi 'final' setelah dicetak
-        DB::table('pertandingan')
-            ->where('id', $id)
-            ->whereNull('deleted_at')
-            ->update([
-                'status'     => 'final',
-                'updated_by' => session('user_id'),
-                'updated_at' => now(),
-            ]);
-
         $pdf = Pdf::loadView('Operator.finished.pdf-detail', $data);
         $pdf->setPaper('a4', 'landscape');
-        
+
         return $pdf->stream("Detail_Skor_Partai_{$data['match']->partai}.pdf");
     }
 
@@ -94,7 +108,6 @@ class FinishedController extends Controller
 
         $allVoteEventIds = [];
         if (!empty($awardIds)) {
-            // Lookup sah/tidak-sah berdasarkan score_event_id di score_award_votes
             $allVoteRows = DB::table('score_award_votes')
                 ->whereIn('award_id', $awardIds)
                 ->get();
@@ -130,7 +143,6 @@ class FinishedController extends Controller
 
             $isSah = false;
             if ($evt->status === 'consumed') {
-                // Sah jika event ini tercatat di score_award_votes
                 $isSah = isset($allVoteEventIds[$evt->id]);
             }
 

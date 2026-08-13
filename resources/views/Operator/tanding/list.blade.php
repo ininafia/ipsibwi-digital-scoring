@@ -2,48 +2,48 @@
 
 @section('content')
 
-<div class="bg-white shadow-md border border-gray-200 p-4 sm:p-6 rounded-xl flex-1 flex flex-col min-w-0 w-full overflow-hidden">
+<div class="bg-white shadow-md border border-gray-200 p-3 sm:p-5 rounded-xl flex-1 flex flex-col min-w-0 w-full overflow-hidden">
 
     @if(session('error'))
-        <div x-data="{ show: true }" x-show="show" x-init="setTimeout(() => show = false, 3000)" x-transition.duration.500ms  class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4" role="alert">
+        <div x-data="{ show: true }" x-show="show" x-init="setTimeout(() => show = false, 3000)" x-transition.duration.500ms  class="bg-red-100 border border-red-400 text-red-700 px-4 py-2 rounded relative mb-3" role="alert">
             <span class="block sm:inline">{{ session('error') }}</span>
         </div>
     @endif
 
     @if(session('success'))
-        <div x-data="{ show: true }" x-show="show" x-init="setTimeout(() => show = false, 3000)" x-transition.duration.500ms  class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative mb-4" role="alert">
+        <div x-data="{ show: true }" x-show="show" x-init="setTimeout(() => show = false, 3000)" x-transition.duration.500ms  class="bg-green-100 border border-green-400 text-green-700 px-4 py-2 rounded relative mb-3" role="alert">
             <span class="block sm:inline">{{ session('success') }}</span>
         </div>
     @endif
 
     {{-- TAB --}}
-    <div class="flex items-center justify-start sm:justify-center gap-4 sm:gap-12 md:gap-16 border-b border-gray-200 mb-6 overflow-x-auto whitespace-nowrap">
+    <div class="flex items-center justify-start sm:justify-center gap-4 sm:gap-12 md:gap-16 border-b border-gray-200 mb-3 pt-1 pb-1 overflow-x-auto whitespace-nowrap">
 
         <button
             id="tab-waiting"
             onclick="switchTab('waiting')"
-            class="tab-btn {{ $tab == 'waiting' ? 'border-sky-400 text-sky-500' : 'border-transparent text-gray-700' }} font-bold text-sm sm:text-[15px] pb-3 px-2 sm:px-4 border-b-[3px] transition">
+            class="tab-btn {{ $tab == 'waiting' ? 'border-sky-400 text-sky-500' : 'border-transparent text-gray-700' }} font-bold text-sm sm:text-[15px] py-1.5 px-2 sm:px-4 border-b-[3px] transition">
             WAITING LIST
         </button>
 
         <button
             id="tab-finished"
             onclick="switchTab('finished')"
-            class="tab-btn {{ $tab == 'finished' ? 'border-sky-400 text-sky-500' : 'border-transparent text-gray-700' }} font-bold text-sm sm:text-[15px] pb-3 px-2 sm:px-4 border-b-[3px] transition">
+            class="tab-btn {{ $tab == 'finished' ? 'border-sky-400 text-sky-500' : 'border-transparent text-gray-700' }} font-bold text-sm sm:text-[15px] py-1.5 px-2 sm:px-4 border-b-[3px] transition">
             FINISHED
         </button>
 
         <button
             id="tab-final"
             onclick="switchTab('final')"
-            class="tab-btn {{ $tab == 'final' ? 'border-sky-400 text-sky-500' : 'border-transparent text-gray-700' }} font-bold text-sm sm:text-[15px] pb-3 px-2 sm:px-4 border-b-[3px] transition">
+            class="tab-btn {{ $tab == 'final' ? 'border-sky-400 text-sky-500' : 'border-transparent text-gray-700' }} font-bold text-sm sm:text-[15px] py-1.5 px-2 sm:px-4 border-b-[3px] transition">
             THE FINAL RESULT
         </button>
 
     </div>
 
     {{-- TOOLBAR --}}
-    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-4">
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-3">
 
         {{-- Entries --}}
         <div class="flex items-center gap-2">
@@ -51,15 +51,16 @@
             <select
                 id="entriesPerPage"
                 onchange="changeEntries(this.value)"
-                class="border border-gray-300 rounded px-3 py-1.5 text-sm font-semibold text-gray-700 focus:outline-none focus:ring-2 focus:ring-sky-300">
+                class="border border-gray-300 rounded px-2.5 py-1 text-sm font-semibold text-gray-700 focus:outline-none focus:ring-2 focus:ring-sky-300">
 
-                <option value="8">8</option>
-                <option value="16">16</option>
-                <option value="32">32</option>
+                <option value="10">10</option>
+                <option value="20">20</option>
+                <option value="50">50</option>
+                <option value="100">100</option>
 
             </select>
 
-            <span class="text-sm text-gray-500">
+            <span class="text-xs text-gray-500 font-medium">
                 Entries per page
             </span>
 
@@ -145,12 +146,12 @@
                     <tr class="table-row border-b border-gray-200 hover:bg-gray-50">
 
                         {{-- NO --}}
-                        <td class="border border-gray-300 px-3 py-2.5 text-center font-medium">
+                        <td class="border border-gray-300 px-3 py-1.5 text-center font-medium">
                             {{ $loop->iteration }}
                         </td>
 
                         {{-- PARTAI --}}
-                        <td class="border border-gray-300 px-3 py-2.5 text-center font-medium relative">
+                        <td class="border border-gray-300 px-3 py-1.5 text-center font-medium relative">
                             {{ str_pad($item->partai, 3, '0', STR_PAD_LEFT) }}
                             @if(isset($item->status) && $item->status === 'playing')
                                 <div class="absolute -top-2 -right-2 bg-orange-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow-sm animate-pulse">
@@ -160,7 +161,7 @@
                         </td>
 
                         {{-- KELAS --}}
-                        <td class="border border-gray-300 px-3 py-2.5 text-center">
+                        <td class="border border-gray-300 px-3 py-1.5 text-center">
 
                             <div class="font-semibold text-gray-800">
                                 {{ strtoupper($item->gelanggang ?? '-') }}
@@ -168,14 +169,14 @@
                                 {{ strtoupper($item->kelas ?? '-') }}
                             </div>
 
-                            <span class="inline-block mt-1 bg-yellow-400 text-white text-xs font-bold px-3 py-0.5 rounded">
+                            <span class="inline-block bg-yellow-400 text-white text-xs font-bold px-3 py-0.5 rounded">
                                 {{ ucfirst($item->jenis_kelamin ?? '-') }}
                             </span>
 
                         </td>
 
                         {{-- BIRU --}}
-                        <td class="border border-gray-300 px-3 py-2.5 text-center">
+                        <td class="border border-gray-300 px-3 py-1.5 text-center">
 
                             @if(!empty($item->sudut_biru))
 
@@ -183,7 +184,7 @@
                                 {{ $item->sudut_biru }}
                             </div>
 
-                            <div class="text-gray-500 text-xs mt-1">
+                            <div class="text-gray-500 text-xs">
                                 {{ $item->kontingen_biru ?? '-' }}
                             </div>
 
@@ -198,7 +199,7 @@
                         </td>
 
                         {{-- MERAH --}}
-                        <td class="border border-gray-300 px-3 py-2.5 text-center">
+                        <td class="border border-gray-300 px-3 py-1.5 text-center">
 
                             @if(!empty($item->sudut_merah))
 
@@ -206,7 +207,7 @@
                                 {{ $item->sudut_merah }}
                             </div>
 
-                            <div class="text-gray-500 text-xs mt-1">
+                            <div class="text-gray-500 text-xs">
                                 {{ $item->kontingen_merah ?? '-' }}
                             </div>
 
@@ -221,7 +222,7 @@
                         </td>
 
                         {{-- ACTION --}}
-                        <td class="border border-gray-300 px-3 py-2.5">
+                        <td class="border border-gray-300 px-3 py-1.5">
 
                             <div class="flex items-center justify-center gap-2">
 

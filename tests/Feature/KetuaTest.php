@@ -96,8 +96,7 @@ class KetuaTest extends TestCase
         $matchId = $this->createDummyMatch($status);
 
         $petugasId = DB::table('data_petugas')->insertGetId([
-            'nama' => 'Juri Akurasi Test',
-            'tugas' => 'Juri'
+            'nama' => 'Juri Akurasi Test'
         ]);
 
         $ppId = DB::table('petugas_pertandingan')->insertGetId([
@@ -281,5 +280,80 @@ class KetuaTest extends TestCase
         $response = $this->loginAsKetua()->get('/ketua/persentase-juri/export/999999');
 
         $response->assertStatus(404);
+    }
+
+    /**
+     * TC-KP-12: Akses Halaman Riwayat Pertandingan Ketua
+     */
+    public function test_tc_kp_12_akses_halaman_riwayat_pertandingan()
+    {
+        $response = $this->loginAsKetua()->get('/ketua/riwayat');
+
+        $response->assertStatus(200);
+        $response->assertSee('FINISHED');
+    }
+
+    /**
+     * TC-KP-13: Akses Detail Riwayat Pertandingan Ketua
+     */
+    public function test_tc_kp_13_akses_detail_riwayat_pertandingan()
+    {
+        $data = $this->createDummyMatchWithAkurasi('finished');
+
+        $response = $this->loginAsKetua()->get('/ketua/riwayat/' . $data['match_id'] . '/detail');
+
+        $response->assertStatus(200);
+        $response->assertSee('BLUE CORNER');
+    }
+
+    /**
+     * TC-KP-14: Export PDF Detail Riwayat Pertandingan Ketua
+     */
+    public function test_tc_kp_14_export_pdf_riwayat_pertandingan()
+    {
+        $data = $this->createDummyMatchWithAkurasi('finished');
+
+        $response = $this->loginAsKetua()->get('/ketua/riwayat/' . $data['match_id'] . '/export-pdf');
+
+        $response->assertStatus(200);
+        $response->assertHeader('content-type', 'application/pdf');
+    }
+
+    /**
+     * TC-KP-15: Akses Halaman Video Logging Ketua
+     */
+    public function test_tc_kp_15_akses_halaman_video_logging()
+    {
+        $response = $this->loginAsKetua()->get('/ketua/video-logging');
+
+        $response->assertStatus(200);
+        $response->assertSee('Video Logging Aktivitas Juri');
+    }
+
+    /**
+     * TC-KP-16: Akses Detail Video Logging Ketua
+     */
+    public function test_tc_kp_16_akses_detail_video_logging()
+    {
+        $data = $this->createDummyMatchWithAkurasi('finished');
+
+        // Insert dummy video log
+        DB::table('video_juri_logs')->insert([
+            'id_pertandingan' => $data['match_id'],
+            'posisi_juri'     => 'juri_1',
+            'id_petugas'      => $data['petugas_id'],
+            'nama_juri'       => 'Juri Test',
+            'filename'        => 'test_video.webm',
+            'file_path'       => 'uploads/videos/juri/test_video.webm',
+            'duration_seconds'=> 60,
+            'file_size'       => 1024500,
+            'created_at'      => now(),
+            'updated_at'      => now(),
+        ]);
+
+        $response = $this->loginAsKetua()->get('/ketua/video-logging/' . $data['match_id']);
+
+        $response->assertStatus(200);
+        $response->assertSee('Detail Video Logging Juri');
     }
 }

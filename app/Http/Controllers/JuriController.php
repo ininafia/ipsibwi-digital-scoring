@@ -125,4 +125,73 @@ class JuriController extends Controller
         }
         return response()->json($this->usecase->getHistory($request));
     }
+
+    public function uploadVideo(Request $request): JsonResponse
+    {
+        if ($unauthorized = $this->requireJuriAjax()) {
+            return $unauthorized;
+        }
+
+        $request->validate([
+            'video'           => 'required|file|max:102400',
+            'id_pertandingan' => 'required|numeric',
+            'posisi_juri'     => 'required|string',
+            'duration'        => 'nullable|numeric',
+        ]);
+
+        try {
+            $file = $request->file('video');
+            $matchId = $request->input('id_pertandingan');
+            $posisiJuri = $request->input('posisi_juri');
+            $duration = (int) $request->input('duration', 0);
+
+            $ext = $file->getClientOriginalExtension() ?: 'webm';
+            $filename = 'juri_' . $posisiJuri . '_match_' . $matchId . '_' . time() . '.' . $ext;
+            
+            $destinationPath = public_path('uploads/videos/juri');
+            if (!file_exists($destinationPath)) {
+                mkdir($destinationPath, 0777, true);
+            }
+            $file->move($destinationPath, $filename);
+            $filePath = 'uploads/videos/juri/' . $filename;
+
+            $namaJuri = session('username') ?? 'Juri';
+            $assignment = DB::table('petugas_pertandingan')
+                ->join('data_petugas', 'petugas_pertandingan.id_petugas', '=', 'data_petugas.id')
+                ->where('petugas_pertandingan.id_pertandingan', $matchId)
+                ->where('petugas_pertandingan.posisi', $posisiJuri)
+                ->first(['data_petugas.nama', 'data_petugas.id']);
+
+            if ($assignment) {
+                $namaJuri = $assignment->nama;
+            }
+
+            $recordId = DB::table('video_juri_logs')->insertGetId([
+                'id_pertandingan' => $matchId,
+                'posisi_juri'     => $posisiJuri,
+                'id_petugas'      => $assignment->id ?? session('user_id'),
+                'nama_juri'       => $namaJuri,
+                'filename'        => $filename,
+                'file_path'       => $filePath,
+                'duration_seconds'=> $duration,
+                'file_size'       => filesize($destinationPath . '/' . $filename),
+                'created_at'      => now(),
+                'updated_at'      => now(),
+            ]);
+
+            return response()->json([
+                'success'   => true,
+                'message'   => 'Video aktivitas juri berhasil diunggah',
+                'data'      => [
+                    'id'        => $recordId,
+                    'file_path' => asset($filePath),
+                ]
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal mengunggah video: ' . $e->getMessage()
+            ], 500);
+        }
+    }
 }

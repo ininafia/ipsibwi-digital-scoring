@@ -119,13 +119,11 @@ class JuriTest extends TestCase
         ]);
 
         $petugas1Id = DB::table('data_petugas')->insertGetId([
-            'nama' => 'Juri Satu',
-            'tugas' => 'Juri'
+            'nama' => 'Juri Satu'
         ]);
 
         $petugas2Id = DB::table('data_petugas')->insertGetId([
-            'nama' => 'Juri Dua',
-            'tugas' => 'Juri'
+            'nama' => 'Juri Dua'
         ]);
 
         DB::table('petugas_pertandingan')->insert([
@@ -529,5 +527,32 @@ class JuriTest extends TestCase
 
         // Keduanya harus masuk ke window_id yang SAMA
         $this->assertEquals($windowId1, $windowId2);
+    }
+
+    /**
+     * TC-JR-16: Juri Upload Video Aktivitas Pertandingan
+     */
+    public function test_tc_jr_16_upload_video_aktivitas_juri()
+    {
+        $matchId = $this->createDummyMatchWithJuris('playing');
+        $file = \Illuminate\Http\UploadedFile::fake()->create('juri_video.webm', 500, 'video/webm');
+
+        $response = $this->loginAsJuri1()->postJson('/juri/upload-video', [
+            'video'           => $file,
+            'id_pertandingan' => $matchId,
+            'posisi_juri'     => 'juri_1',
+            'duration'        => 30
+        ]);
+
+        $response->assertStatus(200)
+                 ->assertJson([
+                     'success' => true
+                 ]);
+
+        $this->assertDatabaseHas('video_juri_logs', [
+            'id_pertandingan' => $matchId,
+            'posisi_juri'     => 'juri_1',
+            'duration_seconds'=> 30
+        ]);
     }
 }

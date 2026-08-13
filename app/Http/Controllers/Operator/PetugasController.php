@@ -66,13 +66,7 @@ class PetugasController extends Controller
             return $r;
         }
 
-        $result = $this->usecase->getAll();
-
-        return view('Operator.petugas.list', [
-
-            'list' => $result['data']['list'] ?? [],
-
-        ]);
+        return redirect()->route('operator.tanding.add-petugas');
     }
 
     /**
@@ -86,7 +80,7 @@ class PetugasController extends Controller
             return $r;
         }
 
-        return view('Operator.petugas.add-petugas');
+        return redirect()->route('operator.tanding.add-petugas');
     }
 
     /**
@@ -146,7 +140,7 @@ class PetugasController extends Controller
         if (!$this->isSuccess($result)) {
 
             return redirect()
-                ->route('operator.petugas.data')
+                ->route('operator.tanding.add-petugas')
                 ->with(
                     'error',
                     $result['message']
@@ -194,7 +188,7 @@ class PetugasController extends Controller
         }
 
         return redirect()
-            ->route('operator.petugas.data')
+            ->route('operator.tanding.add-petugas')
             ->with(
                 'success',
                 $result['message']
@@ -230,7 +224,7 @@ class PetugasController extends Controller
         }
 
         return redirect()
-            ->route('operator.petugas.data')
+            ->route('operator.tanding.add-petugas')
             ->with(
                 'success',
                 $result['message']

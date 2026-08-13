@@ -31,12 +31,12 @@
             <span>Input Jadwal</span>
         </a>
 
-        {{-- INPUT PETUGAS — route: operator.tanding.add-petugas --}}
+        {{-- DATA PETUGAS — route: operator.tanding.add-petugas --}}
         <a href="{{ route('operator.tanding.add-petugas') }}"
            class="flex items-center gap-3 h-[60px] pl-14 pr-5 text-[18px] font-medium transition duration-200
-           {{ request()->routeIs('operator.tanding.add-petugas') ? 'bg-[#dff7ff] text-[#57d2ff]' : 'text-[#57d2ff] hover:bg-gray-50' }}">
+           {{ request()->routeIs('operator.tanding.add-petugas') || request()->routeIs('operator.petugas.*') ? 'bg-[#dff7ff] text-[#57d2ff]' : 'text-[#57d2ff] hover:bg-gray-50' }}">
             <i class="fa-solid fa-users text-[18px]"></i>
-            <span>Input Petugas</span>
+            <span>Data Petugas</span>
         </a>
 
         <div class="px-5 mt-2 mb-3 text-[#a7e8ff] text-[18px] font-bold">

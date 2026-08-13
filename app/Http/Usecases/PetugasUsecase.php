@@ -35,6 +35,7 @@ class PetugasUsecase extends Usecase
                 ->orderBy('id', 'desc')
                 ->get([
                     'id',
+                    'nik',
                     'nama'
                 ]);
 
@@ -70,6 +71,7 @@ class PetugasUsecase extends Usecase
                 ->where('id', $id)
                 ->first([
                     'id',
+                    'nik',
                     'nama'
                 ]);
 
@@ -105,10 +107,12 @@ class PetugasUsecase extends Usecase
         $funcName = $this->className . ".create";
 
         $validator = Validator::make($data->all(), [
+            'nik'   => 'nullable|string|max:20|unique:data_petugas,nik',
             'nama'  => 'required|string|max:100',
         ]);
 
         $customAttributes = [
+            'nik'   => 'NIK Petugas',
             'nama'  => 'Nama Petugas',
         ];
 
@@ -120,7 +124,10 @@ class PetugasUsecase extends Usecase
 
         try {
 
+            $nik = !empty($data['nik']) ? trim($data['nik']) : null;
+
             DB::table('data_petugas')->insert([
+                'nik'   => $nik,
                 'nama'  => trim($data['nama']),
             ]);
 
@@ -150,10 +157,12 @@ class PetugasUsecase extends Usecase
         $funcName = $this->className . ".update";
 
         $validator = Validator::make($data->all(), [
+            'nik'   => 'nullable|string|max:20|unique:data_petugas,nik,' . $id,
             'nama'  => 'required|string|max:100',
         ]);
 
         $customAttributes = [
+            'nik'   => 'NIK Petugas',
             'nama'  => 'Nama Petugas',
         ];
 
@@ -171,9 +180,12 @@ class PetugasUsecase extends Usecase
                 throw new Exception("Petugas tidak ditemukan");
             }
 
+            $nik = !empty($data['nik']) ? trim($data['nik']) : null;
+
             $updatedPetugas = DB::table('data_petugas')
                 ->where('id', $id)
                 ->update([
+                    'nik'   => $nik,
                     'nama'  => trim($data['nama'])
                 ]);
 
@@ -227,7 +239,7 @@ class PetugasUsecase extends Usecase
             // Fetch data_petugas
             $petugas = DB::table('data_petugas')
                 ->whereNull('deleted_at')
-                ->get(['id', 'nama']);
+                ->get(['id', 'nik', 'nama']);
 
             return Response::buildSuccess([
                 'pertandingan' => collect($pertandingan)->toArray(),

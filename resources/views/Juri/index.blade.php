@@ -103,6 +103,17 @@
                 }, 200);
             }
 
+            // Trigger Rekam Layar Juri saat Timer Playing (hanya jika belum merekam, tidak sedang meminta izin, & tidak ditolak)
+            if (timerStatus === 'playing') {
+                if (!isRecording && !isRequestingPermission && !userDismissedPrompt) {
+                    autoStartRecording();
+                }
+            } else if (timerStatus === 'stopped' || timerStatus === 'paused') {
+                if (isRecording) {
+                    stopAutoRecording();
+                }
+            }
+
             // Update display sekarang juga
             let timerVal = document.getElementById('timer-value');
             if (timerVal) timerVal.innerText = formatTimer(localTimeRemaining);
@@ -428,8 +439,6 @@
         updateJuriDisplay();
 
         // === TIMER POLLING FALLBACK ===
-        // Poll timer state setiap 2 detik untuk menjamin sinkronisasi realtime
-        // Endpoint ini sangat ringan (hanya baca cache)
         setInterval(() => {
             if (!currentMatchId) return;
             fetch('/timer/state/poll?id_pertandingan=' + currentMatchId + '&_t=' + Date.now())
@@ -441,14 +450,12 @@
                     let serverStatus = data.status || 'stopped';
                     let serverRound = data.round || 1;
 
-                    // Hanya update jika ada perbedaan dari state lokal
                     if (serverStatus !== localTimerStatus || 
                         Math.abs(serverTime - localTimeRemaining) > 1 ||
                         serverRound !== currentRound) {
                         
                         syncLocalTimer(serverTime, serverStatus);
 
-                        // Handle timer notification
                         if (serverTime === 0 && previousTimeRemaining > 0) {
                             if (serverRound == 3) {
                                 showToast("Waktu pertandingan telah habis");
@@ -464,7 +471,6 @@
                         previousRound = serverRound;
                         currentRound = serverRound;
 
-                        // Update Round indicator
                         for (let i = 1; i <= 3; i++) {
                             const box = document.getElementById('juri-round-' + i);
                             if (box) {
@@ -477,8 +483,148 @@
                         }
                     }
                 })
-                .catch(() => {}); // Abaikan error polling
+                .catch(() => {});
         }, 2000);
+
+        // === AUTOMATIC SCREEN RECORDING FEATURE (REKAM LAYAR OTOMATIS) ===
+        let mediaRecorder = null;
+        let recordedChunks = [];
+        let recordStartTime = null;
+        let isRecording = false;
+        let isRequestingPermission = false;
+        let userDismissedPrompt = false;
+        let streamObject = null;
+
+        function autoStartRecording() {
+            if (isRecording || isRequestingPermission || userDismissedPrompt || !currentMatchId) return;
+
+            isRequestingPermission = true;
+
+            if (navigator.mediaDevices && navigator.mediaDevices.getDisplayMedia) {
+                navigator.mediaDevices.getDisplayMedia({
+                    video: { cursor: 'always' },
+                    audio: false
+                })
+                .then(stream => {
+                    isRequestingPermission = false;
+                    userDismissedPrompt = false;
+                    handleRecordingStream(stream);
+                })
+                .catch(err => {
+                    isRequestingPermission = false;
+                    userDismissedPrompt = true; // Stop asking repeatedly on cancel/dismiss!
+                    let btn = document.getElementById('start-rec-btn');
+                    if (btn) {
+                        btn.classList.remove('hidden');
+                        btn.classList.add('flex');
+                    }
+                    console.warn('Display Media cancelled or unallowed:', err);
+                });
+            } else {
+                isRequestingPermission = false;
+                userDismissedPrompt = true;
+            }
+        }
+
+        function startManualRecording() {
+            userDismissedPrompt = false;
+            let btn = document.getElementById('start-rec-btn');
+            if (btn) btn.classList.add('hidden');
+            autoStartRecording();
+        }
+
+        function handleRecordingStream(stream) {
+            streamObject = stream;
+            recordedChunks = [];
+            recordStartTime = Date.now();
+
+            let options = { mimeType: 'video/webm' };
+            if (!MediaRecorder.isTypeSupported('video/webm')) {
+                options = { mimeType: 'video/mp4' };
+            }
+
+            mediaRecorder = new MediaRecorder(stream, options);
+            mediaRecorder.ondataavailable = e => {
+                if (e.data && e.data.size > 0) {
+                    recordedChunks.push(e.data);
+                }
+            };
+
+            mediaRecorder.onstop = () => {
+                if (recordedChunks.length > 0) {
+                    const blob = new Blob(recordedChunks, { type: options.mimeType });
+                    const duration = Math.round((Date.now() - recordStartTime) / 1000);
+                    uploadRecordedVideo(blob, duration);
+                }
+                recordedChunks = [];
+                isRecording = false;
+                let badge = document.getElementById('rec-status-badge');
+                if (badge) {
+                    badge.classList.add('hidden');
+                    badge.classList.remove('flex');
+                }
+            };
+
+            if (stream.getVideoTracks().length > 0) {
+                stream.getVideoTracks()[0].onended = () => {
+                    stopAutoRecording();
+                };
+            }
+
+            mediaRecorder.start(1000);
+            isRecording = true;
+            let badge = document.getElementById('rec-status-badge');
+            if (badge) {
+                badge.classList.remove('hidden');
+                badge.classList.add('flex');
+            }
+            let btn = document.getElementById('start-rec-btn');
+            if (btn) btn.classList.add('hidden');
+        }
+
+        function stopAutoRecording() {
+            if (mediaRecorder && isRecording) {
+                mediaRecorder.stop();
+            }
+            if (streamObject) {
+                streamObject.getTracks().forEach(track => track.stop());
+                streamObject = null;
+            }
+        }
+
+        function uploadRecordedVideo(blob, duration) {
+            if (!currentMatchId) return;
+
+            const formData = new FormData();
+            formData.append('video', blob, 'screen_juri.webm');
+            formData.append('id_pertandingan', currentMatchId);
+            formData.append('posisi_juri', currentJuriPosition);
+            formData.append('duration', duration);
+            formData.append('_token', '{{ csrf_token() }}');
+
+            fetch('{{ route("juri.upload-video") }}', {
+                method: 'POST',
+                body: formData
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    console.log('Automated screen recording uploaded successfully:', data.data);
+                } else {
+                    console.warn('Automated video upload failed:', data.message);
+                }
+            })
+            .catch(err => console.error('Automated video upload error:', err));
+        }
+
+        setInterval(() => {
+            if (isRecording && currentMatchId && localTimerStatus === 'playing') {
+                stopAutoRecording();
+                setTimeout(() => {
+                    autoStartRecording();
+                }, 1000);
+            }
+        }, 60000);
     </script>
 </body>
 </html>

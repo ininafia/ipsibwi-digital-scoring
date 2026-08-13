@@ -54,6 +54,24 @@
 
         </a>
 
+        <!-- RIWAYAT PERTANDINGAN -->
+        <a href="{{ route('ketua.riwayat') }}"
+            class="flex items-center gap-3 h-[60px] pl-12 pr-5 {{ request()->routeIs('ketua.riwayat*') ? 'bg-[#dcf8ff] text-[#4fcfff]' : 'text-[#4fcfff] hover:bg-gray-100' }} text-base font-medium transition">
+
+            <i class="fa-solid fa-clock-rotate-left w-5 text-center"></i>
+            <span>Riwayat Pertandingan</span>
+
+        </a>
+
+        <!-- VIDEO LOGGING -->
+        <a href="{{ route('ketua.video-logging') }}"
+            class="flex items-center gap-3 h-[60px] pl-12 pr-5 {{ request()->routeIs('ketua.video-logging*') ? 'bg-[#dcf8ff] text-[#4fcfff]' : 'text-[#4fcfff] hover:bg-gray-100' }} text-base font-medium transition">
+
+            <i class="fa-solid fa-video w-5 text-center"></i>
+            <span>Video Logging</span>
+
+        </a>
+
         <!-- TITLE -->
         <div class="px-5 mt-1 mb-3 text-[#9fe6ff] text-base font-bold">
             Pages

@@ -43,7 +43,7 @@
 
 
     {{-- SIDEBAR --}}
-    @if(request()->routeIs('operator.tanding.*'))
+    @if(request()->routeIs('operator.tanding.*') || request()->routeIs('operator.petugas.*'))
         @include('Operator.layout.sidebar-tanding')
     @else
         @include('Operator.layout.sidebar')

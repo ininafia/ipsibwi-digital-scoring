@@ -87,8 +87,7 @@ class DewanTest extends TestCase
         ]);
 
         $petugasId = DB::table('data_petugas')->insertGetId([
-            'nama' => 'Dewan Petugas Test',
-            'tugas' => 'Dewan'
+            'nama' => 'Dewan Petugas Test'
         ]);
 
         DB::table('petugas_pertandingan')->insert([
@@ -390,12 +389,12 @@ class DewanTest extends TestCase
      */
     public function test_tc_dw_17_menyimpan_data_penugasan_petugas()
     {
-        $ketuaId = DB::table('data_petugas')->insertGetId(['nama' => 'Ketua Test', 'tugas' => 'Ketua Pertandingan']);
-        $dewanId = DB::table('data_petugas')->insertGetId(['nama' => 'Dewan Test', 'tugas' => 'Dewan']);
-        $wasitId = DB::table('data_petugas')->insertGetId(['nama' => 'Wasit Test', 'tugas' => 'Wasit']);
-        $juri1Id = DB::table('data_petugas')->insertGetId(['nama' => 'Juri 1 Test', 'tugas' => 'Juri']);
-        $juri2Id = DB::table('data_petugas')->insertGetId(['nama' => 'Juri 2 Test', 'tugas' => 'Juri']);
-        $juri3Id = DB::table('data_petugas')->insertGetId(['nama' => 'Juri 3 Test', 'tugas' => 'Juri']);
+        $ketuaId = DB::table('data_petugas')->insertGetId(['nama' => 'Ketua Test']);
+        $dewanId = DB::table('data_petugas')->insertGetId(['nama' => 'Dewan Test']);
+        $wasitId = DB::table('data_petugas')->insertGetId(['nama' => 'Wasit Test']);
+        $juri1Id = DB::table('data_petugas')->insertGetId(['nama' => 'Juri 1 Test']);
+        $juri2Id = DB::table('data_petugas')->insertGetId(['nama' => 'Juri 2 Test']);
+        $juri3Id = DB::table('data_petugas')->insertGetId(['nama' => 'Juri 3 Test']);
 
         $matchId = $this->createDummyMatchWithDewan('waiting');
 

@@ -72,10 +72,56 @@ class AkurasiJuriController extends Controller
         $response = $usecase->getAllAkurasi();
         $allData = $response['success'] ? $response['data']['matches'] : [];
         
-        // Filter array for the specific match_id
-        $akurasiData = array_filter($allData, function($match) use ($id) {
-            return $match['match_id'] == $id;
-        });
+        $akurasiData = array_values(array_filter($allData, function($match) use ($id) {
+            $mId = is_array($match) ? ($match['match_id'] ?? null) : ($match->match_id ?? null);
+            return (string)$mId === (string)$id;
+        }));
+
+        if (empty($akurasiData)) {
+            $match = \Illuminate\Support\Facades\DB::table('pertandingan')->where('id', $id)->first();
+            if ($match) {
+                $juris = \Illuminate\Support\Facades\DB::table('akurasi_juri')
+                    ->join('petugas_pertandingan', 'akurasi_juri.id_petugas_pertandingan', '=', 'petugas_pertandingan.id')
+                    ->join('data_petugas', 'petugas_pertandingan.id_petugas', '=', 'data_petugas.id')
+                    ->where('akurasi_juri.id_pertandingan', $id)
+                    ->select(
+                        'petugas_pertandingan.id as id_petugas_pertandingan',
+                        'data_petugas.nama as nama_juri',
+                        'petugas_pertandingan.posisi',
+                        'akurasi_juri.total_input',
+                        'akurasi_juri.total_nilai_sah',
+                        'akurasi_juri.total_nilai_tidak_sah',
+                        'akurasi_juri.persentase_akurasi'
+                    )
+                    ->get();
+                    
+                $jList = [];
+                foreach ($juris as $j) {
+                    $jList[] = [
+                        'id_petugas' => $j->id_petugas_pertandingan,
+                        'nama_juri' => $j->nama_juri,
+                        'posisi' => $j->posisi,
+                        'total_input' => $j->total_input,
+                        'total_nilai_sah' => $j->total_nilai_sah,
+                        'total_nilai_tidak_sah' => $j->total_nilai_tidak_sah,
+                        'total_sah_semua_juri' => 0,
+                        'persentase_akurasi' => $j->persentase_akurasi,
+                        'event_akurasi' => 0,
+                        'rounds' => []
+                    ];
+                }
+
+                $akurasiData = [[
+                    'match_id' => $match->id,
+                    'partai' => $match->partai,
+                    'gelanggang' => $match->gelanggang,
+                    'kelas' => $match->kelas,
+                    'golongan' => $match->golongan,
+                    'tanggal_dihitung' => now(),
+                    'juris' => $jList
+                ]];
+            }
+        }
 
         if (empty($akurasiData)) {
             abort(404, 'Data pertandingan tidak ditemukan');

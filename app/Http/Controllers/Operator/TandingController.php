@@ -213,7 +213,7 @@ class TandingController extends Controller
 
     /**
      * =========================
-     * FORM ADD PETUGAS
+     * FORM ADD PETUGAS & LIST
      * =========================
      */
     public function addPetugas(): View|Response|RedirectResponse
@@ -222,7 +222,12 @@ class TandingController extends Controller
             return $r;
         }
 
-        return view('Operator.tanding.add-petugas');
+        $petugasUsecase = new \App\Http\Usecases\PetugasUsecase();
+        $result = $petugasUsecase->getAll();
+
+        return view('Operator.tanding.add-petugas', [
+            'list' => $result['data']['list'] ?? [],
+        ]);
     }
 
     /**

@@ -401,18 +401,26 @@ class JuriUsecase extends Usecase
     {
         $funcName = $this->className . '.deleteScore';
 
-        $idPertandingan = $request->input('id_pertandingan');
-        $idBabak        = $request->input('id_babak');
-        $juriPosition   = session('juri_position');
-        $sudut          = $request->input('sudut');
-        $idKategoriNilai = (int) $request->input('id_kategori_nilai');
+        $idPertandingan  = $request->input('id_pertandingan');
+        $idBabak         = $request->input('id_babak');
+        $juriPosition    = session('juri_position');
+        $sudut           = $request->input('sudut');
+        $idKategoriNilai = $request->input('id_kategori_nilai');
 
-        if (!$idPertandingan || !$idBabak || !$juriPosition || !in_array($sudut, ['merah', 'biru'], true) || !isset(self::TECHNIQUE_MAP[$idKategoriNilai])) {
+        if (!$idPertandingan || !$idBabak || !$juriPosition || !in_array($sudut, ['merah', 'biru'], true)) {
             return Response::buildErrorService('Parameter tidak valid');
         }
 
+        $technique = null;
+        if ($idKategoriNilai !== null && $idKategoriNilai !== '') {
+            $idKategoriNilaiInt = (int) $idKategoriNilai;
+            if (!isset(self::TECHNIQUE_MAP[$idKategoriNilaiInt])) {
+                return Response::buildErrorService('Parameter tidak valid');
+            }
+            $technique = self::TECHNIQUE_MAP[$idKategoriNilaiInt];
+        }
+
         $athlete = $sudut === 'merah' ? 'red' : 'blue';
-        $technique = self::TECHNIQUE_MAP[$idKategoriNilai];
 
         try {
             return DB::transaction(function () use ($idPertandingan, $idBabak, $juriPosition, $athlete, $technique) {
@@ -425,14 +433,19 @@ class JuriUsecase extends Usecase
                     return Response::buildErrorService('Penugasan tidak ditemukan untuk posisi ' . strtoupper(str_replace('_', ' ', $juriPosition)));
                 }
 
-                $lastInput = DB::table('score_events')
+                $query = DB::table('score_events')
                     ->where('match_id', $idPertandingan)
                     ->where('round', $idBabak)
                     ->where('judge_id', $petugasPertandingan->id)
                     ->where('athlete', $athlete)
-                    ->where('technique', $technique)
-                    ->where('status', 'pending')
-                    ->orderBy('created_at', 'desc')
+                    ->where('status', 'pending');
+
+                if ($technique !== null) {
+                    $query->where('technique', $technique);
+                }
+
+                $lastInput = $query->orderBy('created_at', 'desc')
+                    ->orderBy('id', 'desc')
                     ->lockForUpdate()
                     ->first();
 

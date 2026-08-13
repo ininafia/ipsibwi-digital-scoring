@@ -83,7 +83,7 @@
                             <select name="delegasi_teknik" class="w-full appearance-none border border-gray-300 rounded-md px-3 py-2 text-sm text-gray-700 outline-none focus:border-[#62cbf5]">
                                 <option value="">Pilih Delegasi Teknik</option>
                                 @foreach($delegasiList as $p)
-                                <option value="{{ $p->id }}" {{ old('delegasi_teknik') == $p->id ? 'selected' : '' }}>{{ $p->nama }}</option>
+                                <option value="{{ $p->id }}" {{ old('delegasi_teknik') == $p->id ? 'selected' : '' }}>{{ $p->nama }} (NIK: {{ !empty($p->nik) ? $p->nik : '-' }})</option>
                                 @endforeach
                             </select>
                             <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-black">
@@ -99,7 +99,7 @@
                             <select name="ketua" class="w-full appearance-none border border-gray-300 rounded-md px-3 py-2 text-sm text-gray-700 outline-none focus:border-[#62cbf5]">
                                 <option value="">Pilih Ketua Pertandingan</option>
                                 @foreach($ketuaList as $p)
-                                <option value="{{ $p->id }}" {{ old('ketua') == $p->id ? 'selected' : '' }}>{{ $p->nama }}</option>
+                                <option value="{{ $p->id }}" {{ old('ketua') == $p->id ? 'selected' : '' }}>{{ $p->nama }} (NIK: {{ !empty($p->nik) ? $p->nik : '-' }})</option>
                                 @endforeach
                             </select>
                             <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-black">
@@ -115,7 +115,7 @@
                             <select name="dewan" class="w-full appearance-none border border-gray-300 rounded-md px-3 py-2 text-sm text-gray-700 outline-none focus:border-[#62cbf5]">
                                 <option value="">Pilih Dewan</option>
                                 @foreach($dewanList as $p)
-                                <option value="{{ $p->id }}" {{ old('dewan') == $p->id ? 'selected' : '' }}>{{ $p->nama }}</option>
+                                <option value="{{ $p->id }}" {{ old('dewan') == $p->id ? 'selected' : '' }}>{{ $p->nama }} (NIK: {{ !empty($p->nik) ? $p->nik : '-' }})</option>
                                 @endforeach
                             </select>
                             <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-black">
@@ -136,7 +136,7 @@
                             <select name="wasit" class="w-full appearance-none border border-gray-300 rounded-md px-3 py-2 text-sm text-gray-700 outline-none focus:border-[#62cbf5]">
                                 <option value="">Pilih Wasit</option>
                                 @foreach($wasitList as $p)
-                                <option value="{{ $p->id }}" {{ old('wasit') == $p->id ? 'selected' : '' }}>{{ $p->nama }}</option>
+                                <option value="{{ $p->id }}" {{ old('wasit') == $p->id ? 'selected' : '' }}>{{ $p->nama }} (NIK: {{ !empty($p->nik) ? $p->nik : '-' }})</option>
                                 @endforeach
                             </select>
                             <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-black">
@@ -152,7 +152,7 @@
                             <select name="juri1" class="w-full appearance-none border border-gray-300 rounded-md px-3 py-2 text-sm text-gray-700 outline-none focus:border-[#62cbf5]">
                                 <option value="">Pilih Juri 1</option>
                                 @foreach($juriList as $p)
-                                <option value="{{ $p->id }}" {{ old('juri1') == $p->id ? 'selected' : '' }}>{{ $p->nama }}</option>
+                                <option value="{{ $p->id }}" {{ old('juri1') == $p->id ? 'selected' : '' }}>{{ $p->nama }} (NIK: {{ !empty($p->nik) ? $p->nik : '-' }})</option>
                                 @endforeach
                             </select>
                             <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-black">
@@ -168,7 +168,7 @@
                             <select name="juri2" class="w-full appearance-none border border-gray-300 rounded-md px-3 py-2 text-sm text-gray-700 outline-none focus:border-[#62cbf5]">
                                 <option value="">Pilih Juri 2</option>
                                 @foreach($juriList as $p)
-                                <option value="{{ $p->id }}" {{ old('juri2') == $p->id ? 'selected' : '' }}>{{ $p->nama }}</option>
+                                <option value="{{ $p->id }}" {{ old('juri2') == $p->id ? 'selected' : '' }}>{{ $p->nama }} (NIK: {{ !empty($p->nik) ? $p->nik : '-' }})</option>
                                 @endforeach
                             </select>
                             <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-black">
@@ -184,7 +184,7 @@
                             <select name="juri3" class="w-full appearance-none border border-gray-300 rounded-md px-3 py-2 text-sm text-gray-700 outline-none focus:border-[#62cbf5]">
                                 <option value="">Pilih Juri 3</option>
                                 @foreach($juriList as $p)
-                                <option value="{{ $p->id }}" {{ old('juri3') == $p->id ? 'selected' : '' }}>{{ $p->nama }}</option>
+                                <option value="{{ $p->id }}" {{ old('juri3') == $p->id ? 'selected' : '' }}>{{ $p->nama }} (NIK: {{ !empty($p->nik) ? $p->nik : '-' }})</option>
                                 @endforeach
                             </select>
                             <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-black">
