@@ -502,32 +502,48 @@
         function autoStartRecording() {
             if (isRecording || isRequestingPermission || userDismissedPrompt || !currentMatchId) return;
 
-            isRequestingPermission = true;
+            // If stream is already active, reuse it without prompting browser again
+            if (streamObject && streamObject.active && streamObject.getVideoTracks().length > 0 && streamObject.getVideoTracks()[0].readyState === 'live') {
+                handleRecordingStream(streamObject);
+                return;
+            }
 
-            if (navigator.mediaDevices && navigator.mediaDevices.getDisplayMedia) {
-                navigator.mediaDevices.getDisplayMedia({
-                    video: { cursor: 'always' },
-                    audio: false
-                })
-                .then(stream => {
-                    isRequestingPermission = false;
-                    userDismissedPrompt = false;
-                    handleRecordingStream(stream);
-                })
-                .catch(err => {
-                    isRequestingPermission = false;
-                    userDismissedPrompt = true; // Stop asking repeatedly on cancel/dismiss!
-                    let btn = document.getElementById('start-rec-btn');
-                    if (btn) {
-                        btn.classList.remove('hidden');
-                        btn.classList.add('flex');
-                    }
-                    console.warn('Display Media cancelled or unallowed:', err);
-                });
-            } else {
+            if (!navigator.mediaDevices || !navigator.mediaDevices.getDisplayMedia) {
                 isRequestingPermission = false;
                 userDismissedPrompt = true;
+                let btn = document.getElementById('start-rec-btn');
+                if (btn) {
+                    btn.classList.remove('hidden');
+                    btn.classList.add('flex');
+                    btn.innerText = '⚠️ Rekam Layar butuh HTTPS di Server';
+                    btn.disabled = true;
+                    btn.className = 'fixed bottom-4 right-4 bg-amber-600 text-white px-4 py-2 rounded-lg text-xs font-bold shadow-lg flex items-center gap-2 z-50 cursor-not-allowed opacity-90';
+                }
+                console.warn('Display Media API is not available (requires HTTPS or localhost).');
+                return;
             }
+
+            isRequestingPermission = true;
+
+            navigator.mediaDevices.getDisplayMedia({
+                video: { cursor: 'always' },
+                audio: false
+            })
+            .then(stream => {
+                isRequestingPermission = false;
+                userDismissedPrompt = false;
+                handleRecordingStream(stream);
+            })
+            .catch(err => {
+                isRequestingPermission = false;
+                userDismissedPrompt = true; // Stop asking repeatedly on cancel/dismiss!
+                let btn = document.getElementById('start-rec-btn');
+                if (btn) {
+                    btn.classList.remove('hidden');
+                    btn.classList.add('flex');
+                }
+                console.warn('Display Media cancelled or unallowed:', err);
+            });
         }
 
         function startManualRecording() {
@@ -571,7 +587,7 @@
 
             if (stream.getVideoTracks().length > 0) {
                 stream.getVideoTracks()[0].onended = () => {
-                    stopAutoRecording();
+                    stopAutoRecording(true);
                 };
             }
 
@@ -586,11 +602,11 @@
             if (btn) btn.classList.add('hidden');
         }
 
-        function stopAutoRecording() {
+        function stopAutoRecording(closeStream = true) {
             if (mediaRecorder && isRecording) {
                 mediaRecorder.stop();
             }
-            if (streamObject) {
+            if (closeStream && streamObject) {
                 streamObject.getTracks().forEach(track => track.stop());
                 streamObject = null;
             }
@@ -622,11 +638,14 @@
         }
 
         setInterval(() => {
-            if (isRecording && currentMatchId && localTimerStatus === 'playing') {
-                stopAutoRecording();
+            if (isRecording && mediaRecorder && currentMatchId && localTimerStatus === 'playing') {
+                // Request chunk video upload without killing the active screen capture track
+                stopAutoRecording(false);
                 setTimeout(() => {
-                    autoStartRecording();
-                }, 1000);
+                    if (streamObject && streamObject.active) {
+                        handleRecordingStream(streamObject);
+                    }
+                }, 500);
             }
         }, 60000);
     </script>
