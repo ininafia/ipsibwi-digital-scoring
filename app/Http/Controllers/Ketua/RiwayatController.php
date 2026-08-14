@@ -187,7 +187,11 @@ class RiwayatController extends Controller
             }
         }
 
-        $juriInputCounters = ['juri_1' => 0, 'juri_2' => 0, 'juri_3' => 0];
+        $juriInputCounters = [
+            1 => ['juri_1' => 0, 'juri_2' => 0, 'juri_3' => 0],
+            2 => ['juri_1' => 0, 'juri_2' => 0, 'juri_3' => 0],
+            3 => ['juri_1' => 0, 'juri_2' => 0, 'juri_3' => 0],
+        ];
 
         foreach ($allEvents as $evt) {
             $juriPosisi = null;
@@ -204,7 +208,11 @@ class RiwayatController extends Controller
                 $isSah = isset($allVoteEventIds[$evt->id]);
             }
 
-            $juriInputCounters[$juriPosisi]++;
+            $r = $evt->round;
+            if (!isset($juriInputCounters[$r])) {
+                $juriInputCounters[$r] = ['juri_1' => 0, 'juri_2' => 0, 'juri_3' => 0];
+            }
+            $juriInputCounters[$r][$juriPosisi]++;
 
             $wId = (string) $evt->window_id;
             $pairInfo = ($isSah && isset($windowPairs[$wId])) ? $windowPairs[$wId] : null;
@@ -213,7 +221,7 @@ class RiwayatController extends Controller
                 'value'       => $evt->score_value,
                 'sah'         => $isSah,
                 'window_id'   => $evt->window_id,
-                'input_index' => $juriInputCounters[$juriPosisi],
+                'input_index' => $juriInputCounters[$r][$juriPosisi],
                 'pair_info'   => $pairInfo,
             ];
         }
@@ -222,9 +230,17 @@ class RiwayatController extends Controller
         for ($r = 1; $r <= 3; $r++) {
             $awardHistory[$r] = ['blue' => [], 'red' => []];
         }
-        $awardCounter = ['blue' => 0, 'red' => 0];
+        $awardCounter = [
+            1 => ['blue' => 0, 'red' => 0],
+            2 => ['blue' => 0, 'red' => 0],
+            3 => ['blue' => 0, 'red' => 0],
+        ];
         foreach ($awards as $awd) {
-            $awardCounter[$awd->athlete]++;
+            $r = $awd->round;
+            if (!isset($awardCounter[$r])) {
+                $awardCounter[$r] = ['blue' => 0, 'red' => 0];
+            }
+            $awardCounter[$r][$awd->athlete]++;
             $wId = (string) $awd->window_id;
             $pairInfo = isset($windowPairs[$wId]) ? $windowPairs[$wId] : null;
 
@@ -232,7 +248,7 @@ class RiwayatController extends Controller
                 'value'       => $awd->score_value,
                 'award_id'    => (string) $awd->id,
                 'window_id'   => $awd->window_id,
-                'input_index' => $awardCounter[$awd->athlete],
+                'input_index' => $awardCounter[$r][$awd->athlete],
                 'pair_info'   => $pairInfo,
             ];
         }
