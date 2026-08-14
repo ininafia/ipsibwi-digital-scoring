@@ -141,7 +141,7 @@
                                         } else {
                                             showTimerNotification("Waktu babak " + currentRound + " telah habis");
                                         }
-                                    } else if (previousTimerStatus === 'playing' && (currentTimerStatus === 'stopped' || currentTimerStatus === 'paused')) {
+                                    } else if (previousTimerStatus === 'playing' && (currentTimerStatus === 'stopped' || currentTimerStatus === 'paused') && serverTime > 0) {
                                         showTimerNotification("Waktu babak " + currentRound + " di jeda");
                                     }
                                     previousTimerStatus = currentTimerStatus;
@@ -188,7 +188,7 @@
                             } else {
                                 showTimerNotification("Waktu babak " + currentRound + " telah habis");
                             }
-                        } else if (previousTimerStatus === 'playing' && (currentTimerStatus === 'stopped' || currentTimerStatus === 'paused')) {
+                        } else if (previousTimerStatus === 'playing' && (currentTimerStatus === 'stopped' || currentTimerStatus === 'paused') && currentTimeRemaining > 0) {
                             showTimerNotification("Waktu babak " + currentRound + " di jeda");
                         }
                         
@@ -281,7 +281,7 @@
                             } else {
                                 showTimerNotification("Waktu babak " + currentRound + " telah habis");
                             }
-                        } else if (previousTimerStatus === 'playing' && (currentTimerStatus === 'stopped' || currentTimerStatus === 'paused')) {
+                        } else if (previousTimerStatus === 'playing' && (currentTimerStatus === 'stopped' || currentTimerStatus === 'paused') && serverTime > 0) {
                             showTimerNotification("Waktu babak " + currentRound + " di jeda");
                         }
                         previousTimerStatus = currentTimerStatus;
@@ -331,7 +331,7 @@
                             } else {
                                 showTimerNotification("Waktu babak " + serverRound + " telah habis");
                             }
-                        } else if (previousTimerStatus === 'playing' && (serverStatus === 'stopped' || serverStatus === 'paused')) {
+                        } else if (previousTimerStatus === 'playing' && (serverStatus === 'stopped' || serverStatus === 'paused') && serverTime > 0) {
                             showTimerNotification("Waktu babak " + serverRound + " di jeda");
                         }
                         

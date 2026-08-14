@@ -109,6 +109,64 @@ class FinishedController extends Controller
             ->orderBy('server_time', 'asc')
             ->get();
 
+        // Build window_id mapping for consumed events to identify paired inputs
+        $windowMap = [];
+        foreach ($allEvents as $evt) {
+            if ($evt->status !== 'consumed' || empty($evt->window_id)) {
+                continue;
+            }
+            
+            $juriPosisi = null;
+            foreach ($juriMap as $pos => $pp_id) {
+                if ($pp_id == $evt->judge_id) {
+                    $juriPosisi = $pos;
+                    break;
+                }
+            }
+            if (!$juriPosisi) continue;
+            
+            $juriNum = str_replace('juri_', '', $juriPosisi);
+            $juriName = 'Juri ' . $juriNum;
+            
+            $wId = (string) $evt->window_id;
+            if (!isset($windowMap[$wId])) {
+                $windowMap[$wId] = [
+                    'round'   => $evt->round,
+                    'athlete' => $evt->athlete,
+                    'juris'   => [],
+                ];
+            }
+            if (!in_array($juriName, $windowMap[$wId]['juris'], true)) {
+                $windowMap[$wId]['juris'][] = $juriName;
+            }
+        }
+
+        $pairCounters = [
+            1 => ['blue' => 0, 'red' => 0],
+            2 => ['blue' => 0, 'red' => 0],
+            3 => ['blue' => 0, 'red' => 0],
+        ];
+
+        $windowPairs = [];
+        foreach ($windowMap as $wId => $info) {
+            $r = $info['round'];
+            $a = $info['athlete'];
+            if (!isset($pairCounters[$r][$a])) {
+                $pairCounters[$r][$a] = 0;
+            }
+            $pairCounters[$r][$a]++;
+            $num = $pairCounters[$r][$a];
+            
+            sort($info['juris']);
+            $jurisStr = implode(', ', $info['juris']);
+            
+            $windowPairs[$wId] = [
+                'pair_number' => $num,
+                'juris'       => $info['juris'],
+                'pair_label'  => "Pasangan #{$num} ({$jurisStr})",
+            ];
+        }
+
         $eventHistory = [];
         foreach (['juri_1', 'juri_2', 'juri_3'] as $posisi) {
             for ($r = 1; $r <= 3; $r++) {
@@ -136,11 +194,15 @@ class FinishedController extends Controller
 
             $juriInputCounters[$juriPosisi]++;
 
+            $wId = (string) $evt->window_id;
+            $pairInfo = ($isSah && isset($windowPairs[$wId])) ? $windowPairs[$wId] : null;
+
             $eventHistory[$juriPosisi][$evt->round][$evt->athlete][] = [
                 'value'       => $evt->score_value,
                 'sah'         => $isSah,
                 'window_id'   => $evt->window_id,
                 'input_index' => $juriInputCounters[$juriPosisi],
+                'pair_info'   => $pairInfo,
             ];
         }
 
@@ -151,11 +213,15 @@ class FinishedController extends Controller
         $awardCounter = ['blue' => 0, 'red' => 0];
         foreach ($awards as $awd) {
             $awardCounter[$awd->athlete]++;
+            $wId = (string) $awd->window_id;
+            $pairInfo = isset($windowPairs[$wId]) ? $windowPairs[$wId] : null;
+
             $awardHistory[$awd->round][$awd->athlete][] = [
                 'value'       => $awd->score_value,
                 'award_id'    => (string) $awd->id,
                 'window_id'   => $awd->window_id,
                 'input_index' => $awardCounter[$awd->athlete],
+                'pair_info'   => $pairInfo,
             ];
         }
 

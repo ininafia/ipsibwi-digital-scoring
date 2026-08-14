@@ -18,15 +18,24 @@ function renderEvents($events, $athlete) {
     $html = '<div class="flex flex-wrap gap-1 justify-start items-center p-1">';
     foreach ($events as $idx => $evt) {
         $inputNum = $evt['input_index'] ?? ($idx + 1);
-        $tooltipText = "Input ke-" . $inputNum;
-        $html .= '<div class="relative group inline-block">';
-        if ($evt['sah']) {
-            $html .= '<span title="' . $tooltipText . '" class="inline-flex items-center justify-center min-w-[20px] h-5 px-1 text-xs font-bold rounded-sm cursor-pointer transition-transform group-hover:scale-110 ' . getBoxColor($evt['window_id'], $athlete, true) . '">' . $evt['value'] . '</span>';
+        $sah = $evt['sah'] ?? true;
+        if (isset($evt['pair_info']) && $evt['pair_info']) {
+            $pairInfo = $evt['pair_info'];
+            $tooltipText = "Input ke-{$inputNum} • " . $pairInfo['pair_label'];
+        } elseif ($sah) {
+            $tooltipText = "Input ke-{$inputNum} (Sah)";
         } else {
-            $html .= '<span title="' . $tooltipText . '" class="inline-flex items-center justify-center min-w-[20px] h-5 px-1 text-xs font-bold text-gray-500 line-through cursor-pointer transition-transform group-hover:scale-110">' . $evt['value'] . '</span>';
+            $tooltipText = "Input ke-{$inputNum} • Tidak Sah (Tidak Berpasangan)";
+        }
+        
+        $html .= '<div class="relative group inline-block">';
+        if ($sah) {
+            $html .= '<span title="' . htmlspecialchars($tooltipText, ENT_QUOTES) . '" class="inline-flex items-center justify-center min-w-[20px] h-5 px-1 text-xs font-bold rounded-sm cursor-pointer transition-transform group-hover:scale-110 ' . getBoxColor($evt['window_id'], $athlete, true) . '">' . $evt['value'] . '</span>';
+        } else {
+            $html .= '<span title="' . htmlspecialchars($tooltipText, ENT_QUOTES) . '" class="inline-flex items-center justify-center min-w-[20px] h-5 px-1 text-xs font-bold text-gray-500 line-through cursor-pointer transition-transform group-hover:scale-110">' . $evt['value'] . '</span>';
         }
         $html .= '<div class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-1.5 hidden group-hover:flex flex-col items-center z-50 pointer-events-none">';
-        $html .= '<span class="bg-gray-900 text-white text-[10px] font-bold py-0.5 px-2 rounded shadow-lg whitespace-nowrap">' . $tooltipText . '</span>';
+        $html .= '<span class="bg-gray-900 text-white text-[10px] font-bold py-0.5 px-2 rounded shadow-lg whitespace-nowrap">' . htmlspecialchars($tooltipText, ENT_QUOTES) . '</span>';
         $html .= '<div class="w-1.5 h-1.5 bg-gray-900 rotate-45 -mt-1"></div>';
         $html .= '</div>';
         $html .= '</div>';
@@ -40,11 +49,17 @@ function renderAwards($awards, $athlete) {
     foreach ($awards as $idx => $awd) {
         $colorKey = $awd['window_id'] ?? $awd['award_id'];
         $inputNum = $awd['input_index'] ?? ($idx + 1);
-        $tooltipText = "Input ke-" . $inputNum;
+        if (isset($awd['pair_info']) && $awd['pair_info']) {
+            $pairInfo = $awd['pair_info'];
+            $tooltipText = "Skor ke-{$inputNum} • " . $pairInfo['pair_label'];
+        } else {
+            $tooltipText = "Skor ke-{$inputNum} (Sah)";
+        }
+        
         $html .= '<div class="relative group inline-block">';
-        $html .= '<span title="' . $tooltipText . '" class="inline-flex items-center justify-center min-w-[20px] h-5 px-1 text-xs font-bold rounded-sm cursor-pointer transition-transform group-hover:scale-110 ' . getBoxColor($colorKey, $athlete, true) . '">' . $awd['value'] . '</span>';
+        $html .= '<span title="' . htmlspecialchars($tooltipText, ENT_QUOTES) . '" class="inline-flex items-center justify-center min-w-[20px] h-5 px-1 text-xs font-bold rounded-sm cursor-pointer transition-transform group-hover:scale-110 ' . getBoxColor($colorKey, $athlete, true) . '">' . $awd['value'] . '</span>';
         $html .= '<div class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-1.5 hidden group-hover:flex flex-col items-center z-50 pointer-events-none">';
-        $html .= '<span class="bg-gray-900 text-white text-[10px] font-bold py-0.5 px-2 rounded shadow-lg whitespace-nowrap">' . $tooltipText . '</span>';
+        $html .= '<span class="bg-gray-900 text-white text-[10px] font-bold py-0.5 px-2 rounded shadow-lg whitespace-nowrap">' . htmlspecialchars($tooltipText, ENT_QUOTES) . '</span>';
         $html .= '<div class="w-1.5 h-1.5 bg-gray-900 rotate-45 -mt-1"></div>';
         $html .= '</div>';
         $html .= '</div>';

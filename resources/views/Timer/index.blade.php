@@ -178,15 +178,11 @@
                         if (status === 'playing') {
                             if (currentRound < 3) {
                                 showTimerNotification("Waktu babak " + currentRound + " telah habis");
-                                currentRound++;
-                                timeRemaining = 120;
-                                // Reset end time for next round if it automatically starts (though usually it pauses)
-                                targetEndTime = Date.now() + (timeRemaining * 1000);
                             } else {
                                 showTimerNotification("Waktu pertandingan telah habis");
-                                timeRemaining = 0;
                             }
                         }
+                        timeRemaining = 0;
                         status = 'stopped';
                         clearInterval(timerInterval);
                         timerInterval = null;
@@ -200,6 +196,12 @@
             roundBtns.forEach(btn => {
                 btn.addEventListener('click', () => {
                     currentRound = parseInt(btn.innerText);
+                    timeRemaining = 120;
+                    status = 'stopped';
+                    if (timerInterval) {
+                        clearInterval(timerInterval);
+                        timerInterval = null;
+                    }
                     updateDisplay();
                     syncState();
                 });
@@ -207,6 +209,12 @@
 
             btnRoundReset.addEventListener('click', () => {
                 currentRound = 1;
+                timeRemaining = 120;
+                status = 'stopped';
+                if (timerInterval) {
+                    clearInterval(timerInterval);
+                    timerInterval = null;
+                }
                 updateDisplay();
                 syncState();
             });
@@ -223,6 +231,12 @@
                     }
                 } else {
                     // Start it
+                    if (timeRemaining <= 0) {
+                        if (currentRound < 3) {
+                            currentRound++;
+                        }
+                        timeRemaining = 120;
+                    }
                     status = 'playing';
                     startInterval();
                 }

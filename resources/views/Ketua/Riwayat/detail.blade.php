@@ -25,7 +25,7 @@ function getAssignedBoxColor($key, $athlete, $sah) {
     return $colors[abs($hash) % count($colors)];
 }
 
-function renderBoxList($items, $athlete) {
+function renderBoxList($items, $athlete, $isScoreRow = false) {
     if (empty($items)) return '';
     $html = '<div class="flex flex-wrap items-center justify-center gap-1 p-0.5">';
     foreach ($items as $idx => $item) {
@@ -33,12 +33,21 @@ function renderBoxList($items, $athlete) {
         $colorKey = $item['window_id'] ?? ($item['award_id'] ?? null);
         $boxClass = getAssignedBoxColor($colorKey, $athlete, $sah);
         $inputNum = $item['input_index'] ?? ($idx + 1);
-        $tooltipText = "Input ke-" . $inputNum;
+        $typeLabel = $isScoreRow ? "Skor ke-{$inputNum}" : "Input ke-{$inputNum}";
+        
+        if (isset($item['pair_info']) && $item['pair_info']) {
+            $pairInfo = $item['pair_info'];
+            $tooltipText = "{$typeLabel} • " . $pairInfo['pair_label'];
+        } elseif ($sah) {
+            $tooltipText = "{$typeLabel} (Sah)";
+        } else {
+            $tooltipText = "{$typeLabel} • Tidak Sah (Tidak Berpasangan)";
+        }
         
         $html .= '<div class="relative group inline-block">';
-        $html .= '<span title="' . $tooltipText . '" class="inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 text-xs font-bold rounded shadow-sm cursor-pointer transition-transform group-hover:scale-110 ' . $boxClass . '">' . $item['value'] . '</span>';
+        $html .= '<span title="' . htmlspecialchars($tooltipText, ENT_QUOTES) . '" class="inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 text-xs font-bold rounded shadow-sm cursor-pointer transition-transform group-hover:scale-110 ' . $boxClass . '">' . $item['value'] . '</span>';
         $html .= '<div class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-1.5 hidden group-hover:flex flex-col items-center z-50 pointer-events-none">';
-        $html .= '<span class="bg-gray-900 text-white text-[10px] font-bold py-0.5 px-2 rounded shadow-lg whitespace-nowrap">' . $tooltipText . '</span>';
+        $html .= '<span class="bg-gray-900 text-white text-[10px] font-bold py-0.5 px-2 rounded shadow-lg whitespace-nowrap">' . htmlspecialchars($tooltipText, ENT_QUOTES) . '</span>';
         $html .= '<div class="w-1.5 h-1.5 bg-gray-900 rotate-45 -mt-1"></div>';
         $html .= '</div>';
         $html .= '</div>';
@@ -209,9 +218,9 @@ function renderBoxList($items, $athlete) {
                         <!-- Detail Score Val Kiri -->
                         <td class="w-auto bg-white border-r-2 border-black">
                             @if($index < 3)
-                                {!! renderBoxList($eventHistory[$key][$r]['blue'] ?? [], 'blue') !!}
+                                {!! renderBoxList($eventHistory[$key][$r]['blue'] ?? [], 'blue', false) !!}
                             @elseif($key === 'score')
-                                {!! renderBoxList($awardHistory[$r]['blue'] ?? [], 'blue') !!}
+                                {!! renderBoxList($awardHistory[$r]['blue'] ?? [], 'blue', true) !!}
                             @elseif($key === 'jatuhan')
                                 {{ count($penaltiesPerRound[$r]['blue']['jatuhan'] ?? []) > 0 ? implode(', ', $penaltiesPerRound[$r]['blue']['jatuhan']) : '-' }}
                             @elseif($key === 'hukuman')
@@ -237,9 +246,9 @@ function renderBoxList($items, $athlete) {
                         <!-- Detail Score Val Kanan -->
                         <td class="w-auto bg-white border-l-2 border-black">
                             @if($index < 3)
-                                {!! renderBoxList($eventHistory[$key][$r]['red'] ?? [], 'red') !!}
+                                {!! renderBoxList($eventHistory[$key][$r]['red'] ?? [], 'red', false) !!}
                             @elseif($key === 'score')
-                                {!! renderBoxList($awardHistory[$r]['red'] ?? [], 'red') !!}
+                                {!! renderBoxList($awardHistory[$r]['red'] ?? [], 'red', true) !!}
                             @elseif($key === 'jatuhan')
                                 {{ count($penaltiesPerRound[$r]['red']['jatuhan'] ?? []) > 0 ? implode(', ', $penaltiesPerRound[$r]['red']['jatuhan']) : '-' }}
                             @elseif($key === 'hukuman')

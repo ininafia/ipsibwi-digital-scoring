@@ -45,7 +45,7 @@
             return `${m}:${s}`;
         }
 
-        function showToast(message) {
+        function showTimerNotification(message) {
             let toast = document.getElementById('timer-toast');
             if (!toast) {
                 toast = document.createElement('div');
@@ -61,6 +61,10 @@
                 toast.classList.remove('opacity-100');
                 toast.classList.add('opacity-0');
             }, 3000);
+        }
+
+        function showToast(message) {
+            showTimerNotification(message);
         }
 
         let previousTimerStatus = null;
@@ -248,7 +252,7 @@
                                         } else {
                                             showToast("Waktu babak " + currentRound + " telah habis");
                                         }
-                                    } else if (previousTimerStatus === 'playing' && (currentTimerStatus === 'stopped' || currentTimerStatus === 'paused')) {
+                                    } else if (previousTimerStatus === 'playing' && (currentTimerStatus === 'stopped' || currentTimerStatus === 'paused') && serverTime > 0) {
                                         showToast("Waktu babak " + currentRound + " di jeda");
                                     }
                                     previousTimerStatus = currentTimerStatus;
@@ -293,7 +297,7 @@
                             } else {
                                 showToast("Waktu babak " + currentRound + " telah habis");
                             }
-                        } else if (previousTimerStatus === 'playing' && (currentTimerStatus === 'stopped' || currentTimerStatus === 'paused')) {
+                        } else if (previousTimerStatus === 'playing' && (currentTimerStatus === 'stopped' || currentTimerStatus === 'paused') && currentTimeRemaining > 0) {
                             showToast("Waktu babak " + currentRound + " di jeda");
                         }
                         previousRound = currentRound;
@@ -411,7 +415,7 @@
                             } else {
                                 showToast("Waktu babak " + newRound + " telah habis");
                             }
-                        } else if (previousTimerStatus === 'playing' && (currentTimerStatus === 'stopped' || currentTimerStatus === 'paused')) {
+                        } else if (previousTimerStatus === 'playing' && (currentTimerStatus === 'stopped' || currentTimerStatus === 'paused') && currentTimeRem > 0) {
                             showToast("Waktu babak " + newRound + " di jeda");
                         }
 
@@ -462,7 +466,7 @@
                             } else {
                                 showToast("Waktu babak " + serverRound + " telah habis");
                             }
-                        } else if (previousTimerStatus === 'playing' && (serverStatus === 'stopped' || serverStatus === 'paused')) {
+                        } else if (previousTimerStatus === 'playing' && (serverStatus === 'stopped' || serverStatus === 'paused') && serverTime > 0) {
                             showToast("Waktu babak " + serverRound + " di jeda");
                         }
                         

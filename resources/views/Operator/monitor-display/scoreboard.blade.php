@@ -198,7 +198,7 @@
                         } else {
                             showTimerNotification("Waktu babak " + activeRound + " telah habis");
                         }
-                    } else if (previousTimerStatus === 'playing' && (currentTimerStatus === 'stopped' || currentTimerStatus === 'paused')) {
+                    } else if (previousTimerStatus === 'playing' && (currentTimerStatus === 'stopped' || currentTimerStatus === 'paused') && currentTimeRemaining > 0) {
                         showTimerNotification("Waktu babak " + activeRound + " di jeda");
                     }
                     
@@ -326,7 +326,7 @@
                     } else {
                         showTimerNotification("Waktu babak " + activeRound + " telah habis");
                     }
-                } else if (previousTimerStatus === 'playing' && (currentTimerStatus === 'stopped' || currentTimerStatus === 'paused')) {
+                } else if (previousTimerStatus === 'playing' && (currentTimerStatus === 'stopped' || currentTimerStatus === 'paused') && serverTime > 0) {
                     showTimerNotification("Waktu babak " + activeRound + " di jeda");
                 }
                 
@@ -376,7 +376,7 @@
                         } else {
                             showTimerNotification("Waktu babak " + serverRound + " telah habis");
                         }
-                    } else if (previousTimerStatus === 'playing' && (serverStatus === 'stopped' || serverStatus === 'paused')) {
+                    } else if (previousTimerStatus === 'playing' && (serverStatus === 'stopped' || serverStatus === 'paused') && serverTime > 0) {
                         showTimerNotification("Waktu babak " + serverRound + " di jeda");
                     }
                     
