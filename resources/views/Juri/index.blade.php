@@ -9,15 +9,15 @@
     @vite(['resources/js/app.js'])
 </head>
 
-<body class="bg-gray-200 h-screen flex flex-col font-sans overflow-hidden">
+<body class="bg-gray-200 min-h-screen flex flex-col font-sans overflow-y-auto lg:overflow-hidden lg:h-screen">
 
     {{-- HEADER --}}
     @include('Juri.header')
 
     {{-- CONTENT --}}
-    <main class="p-2 sm:p-3 flex-1 flex flex-col justify-center overflow-hidden">
+    <main class="p-1 sm:p-3 flex-1 flex flex-col justify-center overflow-y-auto lg:overflow-hidden">
 
-        <div class="bg-gray-100 border border-gray-300 rounded-xl shadow-md p-3 sm:p-4 w-full flex flex-col gap-3 sm:gap-4 my-auto overflow-hidden">
+        <div class="bg-gray-100 border border-gray-300 rounded-xl shadow-md p-2 sm:p-4 w-full flex flex-col gap-1.5 sm:gap-4 my-auto overflow-y-auto lg:overflow-hidden">
 
             {{-- PESERTA --}}
             @include('Juri.peserta')
@@ -521,15 +521,20 @@
             if (!navigator.mediaDevices || !navigator.mediaDevices.getDisplayMedia) {
                 isRequestingPermission = false;
                 userDismissedPrompt = true;
+                let isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
                 let btn = document.getElementById('start-rec-btn');
                 if (btn) {
                     btn.classList.remove('hidden');
                     btn.classList.add('flex');
-                    btn.innerText = '⚠️ Rekam Layar butuh HTTPS di Server';
+                    if (isMobile) {
+                        btn.innerText = '⚠️ Rekam Layar Juri Khusus Laptop/PC';
+                    } else {
+                        btn.innerText = '⚠️ Rekam Layar butuh HTTPS di Server';
+                    }
                     btn.disabled = true;
                     btn.className = 'fixed bottom-4 right-4 bg-amber-600 text-white px-4 py-2 rounded-lg text-xs font-bold shadow-lg flex items-center gap-2 z-50 cursor-not-allowed opacity-90';
                 }
-                console.warn('Display Media API is not available (requires HTTPS or localhost).');
+                console.warn('Display Media API is not available.');
                 return;
             }
 
