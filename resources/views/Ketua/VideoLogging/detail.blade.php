@@ -18,6 +18,13 @@
         </a>
     </div>
 
+    @if(session('success'))
+        <div class="mb-4 p-3 bg-emerald-100 border border-emerald-300 text-emerald-800 rounded-lg text-xs font-bold flex items-center justify-between shadow-sm">
+            <span><i class="fa-solid fa-circle-check mr-1.5 text-sm"></i> {{ session('success') }}</span>
+            <button onclick="this.parentElement.remove()" class="text-emerald-600 hover:text-emerald-900 font-extrabold text-sm ml-2">&times;</button>
+        </div>
+    @endif
+
     <!-- MATCH CARD SUMMARY -->
     <div class="flex justify-between items-center mb-6 px-6 py-4 bg-slate-900 text-white rounded-xl shadow-md">
         <!-- Biru -->
@@ -88,12 +95,21 @@
                                 </video>
                             </div>
 
-                            <div class="flex items-center justify-between text-[11px] text-gray-500 pt-1">
+                            <div class="flex items-center justify-between text-[11px] text-gray-500 pt-1 border-t border-gray-100 mt-1">
                                 <span>Durasi: <strong class="text-gray-700">{{ $v->duration_seconds > 0 ? gmdate('i:s', $v->duration_seconds) : '-' }}</strong></span>
                                 <span>Ukuran: <strong class="text-gray-700">{{ round($v->file_size / (1024 * 1024), 2) }} MB</strong></span>
-                                <a href="{{ asset($v->file_path) }}" download class="text-sky-600 hover:text-sky-800 font-bold flex items-center gap-1">
-                                    <i class="fa-solid fa-download"></i> Unduh
-                                </a>
+                                <div class="flex items-center gap-2">
+                                    <a href="{{ asset($v->file_path) }}" download class="text-sky-600 hover:text-sky-800 font-bold flex items-center gap-1">
+                                        <i class="fa-solid fa-download"></i> Unduh
+                                    </a>
+                                    <form action="{{ route('ketua.video-logging.delete-item', $v->id) }}" method="POST" onsubmit="return confirm('Apakah Anda yakin ingin menghapus berkas video ini?');" class="inline">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" class="text-rose-600 hover:text-rose-800 font-bold flex items-center gap-1" title="Hapus Video">
+                                            <i class="fa-solid fa-trash"></i> Hapus
+                                        </button>
+                                    </form>
+                                </div>
                             </div>
                         </div>
                     @endforeach

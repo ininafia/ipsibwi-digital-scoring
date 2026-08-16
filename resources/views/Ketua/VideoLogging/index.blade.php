@@ -24,21 +24,36 @@
             Total Pertandingan Terekam: <span class="text-sky-600 font-extrabold">{{ count($matches) }}</span>
         </div>
 
-        <form method="GET" action="{{ route('ketua.video-logging') }}" class="relative">
-            <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
+        <form method="GET" action="{{ route('ketua.video-logging') }}" class="relative" id="searchForm">
+            <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                     <circle cx="11" cy="11" r="8" />
                     <path d="M21 21l-4.35-4.35" />
                 </svg>
             </span>
             <input
-                type="text"
+                type="search"
                 name="search"
+                id="searchInput"
                 value="{{ $search }}"
                 placeholder="Cari Partai / Nama Atlet..."
-                class="border border-gray-300 rounded-lg pl-9 pr-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-300 w-64">
+                oninput="if (this.value.trim() === '') this.form.submit();"
+                onsearch="if (this.value.trim() === '') this.form.submit();"
+                class="border border-gray-300 rounded-lg pl-9 {{ !empty($search) ? 'pr-8' : 'pr-4' }} py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-300 w-64">
+            @if(!empty($search))
+                <button type="button" onclick="document.getElementById('searchInput').value=''; document.getElementById('searchForm').submit();" class="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition" title="Hapus pencarian">
+                    <i class="fa-solid fa-xmark text-xs"></i>
+                </button>
+            @endif
         </form>
     </div>
+
+    @if(session('success'))
+        <div class="mb-4 p-3 bg-emerald-100 border border-emerald-300 text-emerald-800 rounded-lg text-xs font-bold flex items-center justify-between shadow-sm">
+            <span><i class="fa-solid fa-circle-check mr-1.5 text-sm"></i> {{ session('success') }}</span>
+            <button onclick="this.parentElement.remove()" class="text-emerald-600 hover:text-emerald-900 font-extrabold text-sm ml-2">&times;</button>
+        </div>
+    @endif
 
     <!-- TABLE MATCHES -->
     <div class="overflow-x-auto min-w-0 w-full rounded-lg border border-gray-300 mb-8">
@@ -51,7 +66,7 @@
                     <th class="border border-gray-300 px-3 py-2.5 bg-red-600 text-white font-bold w-56 text-center">Merah</th>
                     <th class="border border-gray-300 px-3 py-2.5 bg-gray-100 font-bold text-center w-28">Total Video</th>
                     <th class="border border-gray-300 px-3 py-2.5 bg-gray-100 font-bold text-center w-36">Terakhir Rekam</th>
-                    <th class="border border-gray-300 px-3 py-2.5 bg-gray-100 font-bold text-center w-28">Aksi</th>
+                    <th class="border border-gray-300 px-3 py-2.5 bg-gray-100 font-bold text-center w-36">Aksi</th>
                 </tr>
             </thead>
             <tbody>
@@ -84,10 +99,20 @@
                             {{ \Carbon\Carbon::parse($m->last_recorded)->diffForHumans() }}
                         </td>
                         <td class="border border-gray-300 px-3 py-3 text-center">
-                            <a href="{{ route('ketua.video-logging.detail', $m->match_id) }}" class="bg-sky-500 hover:bg-sky-600 text-white rounded px-3 py-1.5 font-bold text-xs inline-flex items-center gap-1.5 shadow-sm transition">
-                                <i class="fa-solid fa-play text-[10px]"></i>
-                                <span>Lihat</span>
-                            </a>
+                            <div class="flex items-center justify-center gap-1.5">
+                                <a href="{{ route('ketua.video-logging.detail', $m->match_id) }}" class="bg-sky-500 hover:bg-sky-600 text-white rounded px-2.5 py-1.5 font-bold text-xs inline-flex items-center gap-1 shadow-sm transition">
+                                    <i class="fa-solid fa-play text-[10px]"></i>
+                                    <span>Lihat</span>
+                                </a>
+                                <form action="{{ route('ketua.video-logging.delete', $m->match_id) }}" method="POST" onsubmit="return confirm('Apakah Anda yakin ingin menghapus seluruh rekaman video untuk Partai {{ str_pad($m->partai ?? 0, 3, '0', STR_PAD_LEFT) }}?');" class="inline">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button type="submit" class="bg-rose-500 hover:bg-rose-600 text-white rounded px-2.5 py-1.5 font-bold text-xs inline-flex items-center gap-1 shadow-sm transition" title="Hapus Rekaman Video">
+                                        <i class="fa-solid fa-trash text-[10px]"></i>
+                                        <span>Hapus</span>
+                                    </button>
+                                </form>
+                            </div>
                         </td>
                     </tr>
                 @empty

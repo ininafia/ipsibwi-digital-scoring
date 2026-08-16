@@ -47,15 +47,23 @@ class VideoLoggingController extends Controller
                 'pertandingan.kontingen_merah',
                 'pertandingan.status'
             )
-            ->orderBy('last_recorded', 'desc');
+            ->orderBy(DB::raw('CAST(pertandingan.partai AS UNSIGNED)'), 'asc');
 
         if (!empty($search)) {
-            $query->where(function ($q) use ($search) {
-                $q->where('pertandingan.sudut_biru', 'like', "%{$search}%")
-                  ->orWhere('pertandingan.sudut_merah', 'like', "%{$search}%")
-                  ->orWhere('pertandingan.kontingen_biru', 'like', "%{$search}%")
-                  ->orWhere('pertandingan.kontingen_merah', 'like', "%{$search}%")
-                  ->orWhere('pertandingan.partai', 'like', "%{$search}%");
+            $cleanSearch = trim($search);
+            $unpaddedSearch = ltrim($cleanSearch, '0');
+            if ($unpaddedSearch === '') {
+                $unpaddedSearch = '0';
+            }
+
+            $query->where(function ($q) use ($cleanSearch, $unpaddedSearch) {
+                $q->where('pertandingan.sudut_biru', 'like', "%{$cleanSearch}%")
+                  ->orWhere('pertandingan.sudut_merah', 'like', "%{$cleanSearch}%")
+                  ->orWhere('pertandingan.kontingen_biru', 'like', "%{$cleanSearch}%")
+                  ->orWhere('pertandingan.kontingen_merah', 'like', "%{$cleanSearch}%")
+                  ->orWhere('pertandingan.partai', 'like', "%{$cleanSearch}%")
+                  ->orWhere('pertandingan.partai', 'like', "%{$unpaddedSearch}%")
+                  ->orWhere(DB::raw("LPAD(pertandingan.partai, 3, '0')"), 'like', "%{$cleanSearch}%");
             });
         }
 
@@ -117,5 +125,56 @@ class VideoLoggingController extends Controller
         }
 
         return view('Ketua.VideoLogging.detail', compact('match', 'videos', 'videosByJuri'));
+    }
+
+    public function destroy($id)
+    {
+        if (!session('user_id')) {
+            return redirect('/login/ketua');
+        }
+        if (session('role') != 2) {
+            abort(403, 'Akses ditolak');
+        }
+
+        $videos = DB::table('video_juri_logs')
+            ->where('id_pertandingan', $id)
+            ->get();
+
+        foreach ($videos as $v) {
+            if (!empty($v->file_path) && file_exists(public_path($v->file_path))) {
+                @unlink(public_path($v->file_path));
+            }
+        }
+
+        DB::table('video_juri_logs')
+            ->where('id_pertandingan', $id)
+            ->delete();
+
+        return redirect()->route('ketua.video-logging')->with('success', 'Semua rekaman video untuk pertandingan tersebut berhasil dihapus.');
+    }
+
+    public function destroyItem($id)
+    {
+        if (!session('user_id')) {
+            return redirect('/login/ketua');
+        }
+        if (session('role') != 2) {
+            abort(403, 'Akses ditolak');
+        }
+
+        $video = DB::table('video_juri_logs')
+            ->where('id', $id)
+            ->first();
+
+        if ($video) {
+            if (!empty($video->file_path) && file_exists(public_path($video->file_path))) {
+                @unlink(public_path($video->file_path));
+            }
+            DB::table('video_juri_logs')
+                ->where('id', $id)
+                ->delete();
+        }
+
+        return redirect()->back()->with('success', 'Rekaman video berhasil dihapus.');
     }
 }

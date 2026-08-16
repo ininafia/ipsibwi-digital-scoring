@@ -102,6 +102,8 @@ Route::middleware(['role:2'])->prefix('ketua')->name('ketua.')->group(function (
     Route::controller(\App\Http\Controllers\Ketua\VideoLoggingController::class)->prefix('video-logging')->group(function () {
         Route::get('/', 'index')->name('video-logging');
         Route::get('/{id}', 'detail')->name('video-logging.detail');
+        Route::delete('/{id}', 'destroy')->name('video-logging.delete');
+        Route::delete('/item/{id}', 'destroyItem')->name('video-logging.delete-item');
     });
 });
 

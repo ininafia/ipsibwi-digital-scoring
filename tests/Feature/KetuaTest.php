@@ -356,4 +356,107 @@ class KetuaTest extends TestCase
         $response->assertStatus(200);
         $response->assertSee('Detail Video Logging Juri');
     }
+
+    /**
+     * TC-KP-17: Pencarian Video Logging berdasarkan Nomor Partai (006 dan 6)
+     */
+    public function test_tc_kp_17_pencarian_video_logging_nomor_partai()
+    {
+        $matchId = DB::table('pertandingan')->insertGetId([
+            'nomor' => 6,
+            'partai' => 6,
+            'gelanggang' => 'A',
+            'kelas' => 'A',
+            'golongan' => 'dewasa',
+            'jenis_kelamin' => 'putra',
+            'sudut_merah' => 'Atlet Merah Partai 6',
+            'kontingen_merah' => 'Kontingen Merah',
+            'sudut_biru' => 'Atlet Biru Partai 6',
+            'kontingen_biru' => 'Kontingen Biru',
+            'status' => 'finished',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        DB::table('video_juri_logs')->insert([
+            'id_pertandingan' => $matchId,
+            'posisi_juri'     => 'juri_1',
+            'nama_juri'       => 'Juri Test',
+            'filename'        => 'test_video_6.webm',
+            'file_path'       => 'uploads/videos/juri/test_video_6.webm',
+            'duration_seconds'=> 30,
+            'file_size'       => 500000,
+            'created_at'      => now(),
+            'updated_at'      => now(),
+        ]);
+
+        // Search with padded format '006'
+        $responsePadded = $this->loginAsKetua()->get('/ketua/video-logging?search=006');
+        $responsePadded->assertStatus(200);
+        $responsePadded->assertSee('006');
+        $responsePadded->assertSee('Atlet Merah Partai 6');
+
+        // Search with unpadded format '6'
+        $responseUnpadded = $this->loginAsKetua()->get('/ketua/video-logging?search=6');
+        $responseUnpadded->assertStatus(200);
+        $responseUnpadded->assertSee('006');
+        $responseUnpadded->assertSee('Atlet Merah Partai 6');
+    }
+
+    /**
+     * TC-KP-18: Hapus Seluruh Video Logging untuk Pertandingan Spesifik
+     */
+    public function test_tc_kp_18_hapus_seluruh_video_logging_pertandingan()
+    {
+        $matchId = $this->createDummyMatch('finished');
+
+        $videoLogId = DB::table('video_juri_logs')->insertGetId([
+            'id_pertandingan' => $matchId,
+            'posisi_juri'     => 'juri_1',
+            'nama_juri'       => 'Juri Test',
+            'filename'        => 'test_delete_all.webm',
+            'file_path'       => 'uploads/videos/juri/test_delete_all.webm',
+            'duration_seconds'=> 30,
+            'file_size'       => 500000,
+            'created_at'      => now(),
+            'updated_at'      => now(),
+        ]);
+
+        $response = $this->loginAsKetua()->delete('/ketua/video-logging/' . $matchId);
+
+        $response->assertStatus(302);
+        $response->assertRedirect(route('ketua.video-logging'));
+
+        $this->assertDatabaseMissing('video_juri_logs', [
+            'id_pertandingan' => $matchId
+        ]);
+    }
+
+    /**
+     * TC-KP-19: Hapus Item Video Logging Spesifik
+     */
+    public function test_tc_kp_19_hapus_item_video_logging()
+    {
+        $matchId = $this->createDummyMatch('finished');
+
+        $videoLogId = DB::table('video_juri_logs')->insertGetId([
+            'id_pertandingan' => $matchId,
+            'posisi_juri'     => 'juri_2',
+            'nama_juri'       => 'Juri Test 2',
+            'filename'        => 'test_delete_item.webm',
+            'file_path'       => 'uploads/videos/juri/test_delete_item.webm',
+            'duration_seconds'=> 45,
+            'file_size'       => 700000,
+            'created_at'      => now(),
+            'updated_at'      => now(),
+        ]);
+
+        $response = $this->loginAsKetua()->delete('/ketua/video-logging/item/' . $videoLogId);
+
+        $response->assertStatus(302);
+
+        $this->assertDatabaseMissing('video_juri_logs', [
+            'id' => $videoLogId
+        ]);
+    }
 }
