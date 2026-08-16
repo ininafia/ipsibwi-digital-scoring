@@ -102,6 +102,16 @@
                         if (localTimeRemaining <= 0) {
                             clearInterval(localTimerInterval);
                             localTimerInterval = null;
+                            localTimerStatus = 'stopped';
+
+                            if (previousTimeRemaining > 0) {
+                                if (currentRound == 3) {
+                                    showToast("Waktu pertandingan telah habis");
+                                } else {
+                                    showToast("Waktu babak " + currentRound + " telah habis");
+                                }
+                                previousTimeRemaining = 0;
+                            }
                         }
                     }
                 }, 200);
@@ -488,7 +498,7 @@
                     }
                 })
                 .catch(() => {});
-        }, 2000);
+        }, 1000);
 
         // === AUTOMATIC SCREEN RECORDING FEATURE (REKAM LAYAR OTOMATIS) ===
         let mediaRecorder = null;
