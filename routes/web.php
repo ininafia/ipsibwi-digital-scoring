@@ -98,13 +98,6 @@ Route::middleware(['role:2'])->prefix('ketua')->name('ketua.')->group(function (
         Route::get('/{id}/detail', 'detail')->name('riwayat.detail');
         Route::get('/{id}/export-pdf', 'exportPdf')->name('riwayat.export-pdf');
     });
-
-    Route::controller(\App\Http\Controllers\Ketua\VideoLoggingController::class)->prefix('video-logging')->group(function () {
-        Route::get('/', 'index')->name('video-logging');
-        Route::get('/{id}', 'detail')->name('video-logging.detail');
-        Route::delete('/{id}', 'destroy')->name('video-logging.delete');
-        Route::delete('/item/{id}', 'destroyItem')->name('video-logging.delete-item');
-    });
 });
 
 
@@ -150,7 +143,6 @@ Route::middleware(['role:5'])->group(function () {
             Route::post('/input-score', 'inputScore')->name('input-score');
             Route::post('/delete-score', 'deleteScore')->name('delete-score');
             Route::get('/history', 'getHistory')->name('history');
-            Route::post('/upload-video', 'uploadVideo')->name('upload-video');
         });
     });
 });

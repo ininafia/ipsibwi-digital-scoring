@@ -345,24 +345,5 @@ CREATE TABLE log_activity_juri (
 
 
 -- =========================================
--- 17. VIDEO JURI LOGS
--- =========================================
-DROP TABLE IF EXISTS video_juri_logs;
-
-CREATE TABLE video_juri_logs (
-    id BIGINT AUTO_INCREMENT PRIMARY KEY,
-    id_pertandingan BIGINT UNSIGNED NULL,
-    posisi_juri VARCHAR(50) NULL,
-    id_petugas BIGINT UNSIGNED NULL,
-    nama_juri VARCHAR(150) NULL,
-    filename VARCHAR(255) NOT NULL,
-    file_path VARCHAR(255) NOT NULL,
-    duration_seconds INT NOT NULL DEFAULT 0,
-    file_size BIGINT NOT NULL DEFAULT 0,
-    created_at TIMESTAMP NULL DEFAULT NULL,
-    updated_at TIMESTAMP NULL DEFAULT NULL,
-    INDEX idx_video_juri_match (id_pertandingan),
-    INDEX idx_video_juri_posisi (posisi_juri)
-) ENGINE=InnoDB;
 
 SET FOREIGN_KEY_CHECKS = 1;
