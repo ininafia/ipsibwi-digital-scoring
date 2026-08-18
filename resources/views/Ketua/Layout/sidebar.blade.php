@@ -1,3 +1,6 @@
+<!-- MOBILE OVERLAY BACKDROP -->
+<div x-show="open" @click="open = false" class="fixed inset-0 bg-black/40 z-30 lg:hidden" x-transition.opacity></div>
+
 <aside x-show="open"
     x-transition:enter="transition-transform duration-300"
     x-transition:enter-start="-translate-x-full"
@@ -5,7 +8,7 @@
     x-transition:leave="transition-transform duration-300"
     x-transition:leave-start="translate-x-0"
     x-transition:leave-end="-translate-x-full"
-    class="w-[240px] bg-white border-r border-gray-200 shadow-sm shrink-0 h-screen sticky top-0 overflow-y-auto overflow-x-hidden">
+    class="fixed lg:sticky top-0 left-0 z-40 w-[240px] bg-white border-r border-gray-200 shadow-lg lg:shadow-sm shrink-0 h-screen overflow-y-auto overflow-x-hidden">
 
     <!-- LOGO -->
     <div class="h-[82px] flex items-center px-5">
@@ -20,7 +23,7 @@
 
         <!-- DASHBOARD -->
         <a href="{{ route('ketua.dashboard') }}"
-            class="flex items-center gap-3 h-[60px] px-5 bg-[#dcf8ff] text-[#4fcfff] text-base font-medium whitespace-nowrap">
+            class="flex items-center gap-3 h-[60px] px-5 {{ request()->routeIs('ketua.dashboard') ? 'bg-[#dcf8ff] text-[#4fcfff]' : 'text-[#4fcfff] hover:bg-gray-100' }} text-base font-medium transition whitespace-nowrap">
 
             <i class="fa-solid fa-user-tie w-5 text-center"></i>
             <span>Ketua Pertandingan</span>

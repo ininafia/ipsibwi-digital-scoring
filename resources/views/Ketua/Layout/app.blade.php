@@ -28,7 +28,11 @@
 
 
     <!-- SIDEBAR -->
-    @yield('sidebar')
+    @hasSection('sidebar')
+        @yield('sidebar')
+    @else
+        @include('Ketua.Layout.sidebar')
+    @endif
 
     <!-- MAIN -->
     <main class="flex-1 min-w-0">

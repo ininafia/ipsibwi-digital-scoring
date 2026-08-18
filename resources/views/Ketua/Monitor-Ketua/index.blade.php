@@ -240,9 +240,14 @@
             setText('timer-value', '00:00');
         }
 
+        let isFetchingMonitor = false;
         function updateMonitor() {
+            if (isFetchingMonitor) return;
+            isFetchingMonitor = true;
+
             fetch('{{ route("ketua.monitor.data") }}?_t=' + new Date().getTime())
                 .then(res => {
+                    isFetchingMonitor = false;
                     if (!res.ok) throw new Error('HTTP ' + res.status);
                     return res.json();
                 })
@@ -430,6 +435,7 @@
                     previousTimeRemaining = currentTimeRemaining;
                 })
                 .catch(err => {
+                    isFetchingMonitor = false;
                     console.error('Monitor fetch error:', err);
                 });
         }
@@ -445,40 +451,11 @@
         
         updateMonitor();
 
-        // === TIMER POLLING FALLBACK ===
+        // === REALTIME POLLING FALLBACK ===
+        // Memastikan data nilai juri, penalti, & timer selalu ter-update secara otomatis tanpa refresh page
         setInterval(() => {
-            if (!currentMatchId) return;
-            fetch('/timer/state/poll?id_pertandingan=' + currentMatchId + '&_t=' + Date.now())
-                .then(res => res.json())
-                .then(data => {
-                    if (data.error) return;
-                    let serverTime = Math.round(data.time_remaining || 0);
-                    let serverStatus = data.status || 'stopped';
-
-                    let serverRound = data.round || 1;
-
-                    if (serverStatus !== localTimerStatus || 
-                        Math.abs(serverTime - localTimeRemaining) > 1 || 
-                        serverRound !== previousRound) {
-                        syncLocalTimer(serverTime, serverStatus);
-
-                        if (serverTime === 0 && previousTimeRemaining > 0) {
-                            if (serverRound == 3) {
-                                showTimerNotification("Waktu pertandingan telah habis");
-                            } else {
-                                showTimerNotification("Waktu babak " + serverRound + " telah habis");
-                            }
-                        } else if (previousTimerStatus === 'playing' && (serverStatus === 'stopped' || serverStatus === 'paused') && serverTime > 0) {
-                            showTimerNotification("Waktu babak " + serverRound + " di jeda");
-                        }
-                        
-                        previousTimerStatus = serverStatus;
-                        previousTimeRemaining = serverTime;
-                        previousRound = serverRound;
-                    }
-                })
-                .catch(() => {});
-        }, 2000);
+            updateMonitor();
+        }, 1000);
     </script>
 
 </body>
